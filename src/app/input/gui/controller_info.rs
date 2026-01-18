@@ -6,6 +6,7 @@ use crate::app::input::context::Context;
 use crate::app::input::device_info::SdlValue;
 use crate::app::input::event::handler_events::HandlerEvent;
 use crate::app::input::sdl_loop;
+use crate::config::get_config;
 
 pub fn draw(ctx: &Context, ectx: &egui::Context, open: &mut bool) {
     egui::Window::new("🎮 Gamepads")
@@ -123,7 +124,7 @@ pub fn draw(ctx: &Context, ectx: &egui::Context, open: &mut bool) {
                             let enable = if device.viiper_device.is_some() {
                                 true
                             } else {
-                                device.steam_handle > 0 && ctx.viiper_available
+                                (device.steam_handle > 0 || get_config().steam.no_steam.unwrap_or(false)) && ctx.viiper_available
                             };
                             ui.add_enabled_ui(enable, |ui| {
                                 ui.horizontal_wrapped(|ui| {
@@ -160,7 +161,7 @@ pub fn draw(ctx: &Context, ectx: &egui::Context, open: &mut bool) {
                                     }
                                 });
                                 if !enable {
-                                    if device.steam_handle == 0 {
+                                    if device.steam_handle == 0 && !get_config().steam.no_steam.unwrap_or(false) {
                                         ui.label(RichText::new("No Steam handle").weak().small());
                                     } else if !ctx.viiper_available {
                                         ui.label(RichText::new("VIIPER not available").weak().small());

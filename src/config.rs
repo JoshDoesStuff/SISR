@@ -208,6 +208,17 @@ pub struct ControllerEmulation {
 pub struct SteamOpts {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[arg(
+        long = "no-steam",
+        value_name = "BOOL",
+        num_args = 0..=1,
+        default_missing_value = "false",
+        env = "SISR_NO_STEAM",
+        help = "Support redirecting controller WITHOUT Steam running (true/false) [default: false]"
+    )]
+    pub no_steam: Option<bool>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[arg(
         long = "disable-steam-cef-debug",
         value_name = "BOOL",
         num_args = 0..=1,
@@ -265,6 +276,7 @@ impl Default for Config {
                 }),
             },
             steam: SteamOpts {
+                no_steam: Some(false),
                 cef_debug_disable: Some(false),
                 steam_launch_timeout_secs: Some(1),
                 steam_path: None,

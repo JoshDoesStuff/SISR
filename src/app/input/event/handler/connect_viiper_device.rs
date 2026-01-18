@@ -8,6 +8,7 @@ use crate::app::input::event::handler_events::HandlerEvent;
 use crate::app::input::event::router::{EventHandler, ListenEvent, RoutedEvent};
 use crate::app::input::sdl_loop::Subsystems;
 use crate::app::input::viiper_bridge::ViiperBridge;
+use crate::config::get_config;
 
 pub struct Handler {
     ctx: Arc<Mutex<Context>>,
@@ -64,7 +65,7 @@ impl EventHandler for Handler {
             );
             return;
         }
-        if device.steam_handle == 0 {
+        if device.steam_handle == 0 && !get_config().steam.no_steam.unwrap_or(false) {
             tracing::warn!(
                 "Device id {} has no Steam handle; cannot connect to VIIPER device",
                 device_id

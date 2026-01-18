@@ -68,6 +68,14 @@ impl EventHandler for Handler {
         } else {
             0
         };
+        if get_config().steam.no_steam.unwrap_or(false) && steam_handle != 0 {
+            tracing::debug!(
+                "Ignoring steam handle {:016x} for SDL id {} due to no_steam config",
+                steam_handle,
+                which
+            );
+            return;
+        }
 
         let require_controllers_connected_before_launch = get_config()
             .controller_emulation
@@ -182,7 +190,7 @@ impl EventHandler for Handler {
             ctx.devices.insert(device_id, device.clone());
             tracing::info!("Added new device {:?}", device.clone().lock().ok());
 
-            if steam_handle != 0 {
+            if steam_handle != 0 || get_config().steam.no_steam.unwrap_or(false) {
                 let viiper_bridge = self.viiper_bridge.clone();
 
                 std::thread::spawn(move || {
@@ -232,7 +240,9 @@ impl EventHandler for Handler {
         sdl_device.update_info();
         tracing::info!("Added SDL id {} to existing device {:?}", which, device);
 
-        if device.steam_handle != 0 && device.viiper_device.is_none() {
+        if (device.steam_handle != 0 || !get_config().steam.no_steam.unwrap_or(false))
+            && device.viiper_device.is_none()
+        {
             let default_device_type = get_config()
                 .controller_emulation
                 .default_controller_type

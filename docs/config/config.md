@@ -193,6 +193,9 @@ path = "C:/Users/<UserName>/AppData/Roaming/SISR/data/SISR.log"
 file_level = "info"
 
 [steam]
+# Support redirecting controllers WITHOUT Steam running
+no_steam = false
+
 # Disable Steam CEF remote debugging
 cef_debug_disable = false
 

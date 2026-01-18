@@ -25,7 +25,7 @@ use crate::app::steam_utils::util::{
 };
 use crate::app::window::{self, RunnerEvent};
 use crate::app::{gui, signals, steam_utils};
-use crate::config::{self, CONFIG};
+use crate::config::{self, CONFIG, get_config};
 
 static SPAWNED_VIIPER: RwLock<Option<Child>> = RwLock::new(None);
 static TOKIO_HANDLE: OnceLock<tokio::runtime::Handle> = OnceLock::new();
@@ -204,6 +204,12 @@ impl App {
         &self,
         window_ready: Arc<Notify>,
     ) {
+
+        if get_config().steam.no_steam.unwrap_or(false) {
+                    info!("Skipping steam stuff due to no_steam ");
+                    return;
+        }
+
         get_tokio_handle().spawn(async move {
             window_ready.notified().await;
             let running = ensure_steam_running().await;

@@ -5,6 +5,7 @@ use crate::app::input::context::Context;
 use crate::app::input::event::router::{EventHandler, ListenEvent, RoutedEvent};
 use crate::app::input::sdl_loop::Subsystems;
 use crate::app::input::viiper_bridge::ViiperBridge;
+use crate::config::get_config;
 
 pub struct Handler {
     ctx: Arc<Mutex<Context>>,
@@ -47,7 +48,7 @@ impl EventHandler for Handler {
             tracing::error!("Failed to lock Device mutex for SDL id {}", which);
             return;
         };
-        if device.steam_handle == 0 {
+        if device.steam_handle == 0 && !get_config().steam.no_steam.unwrap_or(false) {
             tracing::trace!(
                 "Ignoring gamepad update complete for SDL id {} because no Steam handle",
                 which

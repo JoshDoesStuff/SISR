@@ -15,6 +15,7 @@ use crate::app::input::sdl_loop::Subsystems;
 use crate::app::input::viiper_bridge::{DeviceOutput, ViiperBridge, ViiperEvent};
 use crate::app::steam_utils::binding_enforcer::binding_enforcer;
 use crate::app::window;
+use crate::config::get_config;
 
 pub struct Handler {
     ctx: Arc<Mutex<Context>>,
@@ -110,6 +111,10 @@ impl EventHandler for Handler {
 
                         return;
                     };
+                    if get_config().steam.no_steam.unwrap_or(false) {
+                        tracing::info!("Skipping steam binding enforcement due to no_steam config");
+                        return;
+                    }
                     if !enforcer.is_active() {
                         enforcer.activate();
                     }

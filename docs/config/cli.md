@@ -109,6 +109,13 @@ File logging level used together with `--log-file`
 
 ### Steam
 
+#### `--no-steam [true|false]`
+
+Support redirecting controllers WITHOUT Steam running
+
+- Default: `false`
+- Env var: `SISR_NO_STEAM`
+
 #### `--disable-steam-cef-debug [true|false]`
 
 Disable Steam CEF remote debugging
