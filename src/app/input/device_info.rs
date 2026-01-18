@@ -64,6 +64,7 @@ impl SDLDeviceInfo {
                 "has_rumble_triggers".into(),
                 SdlValue::Bool(unsafe { js.has_rumble_triggers() }),
             );
+            i.insert("has_led".into(), SdlValue::Bool(unsafe { js.has_led() }));
             if let Ok(power) = js.power_info() {
                 i.insert(
                     "power_info".into(),
@@ -126,6 +127,15 @@ impl SDLDeviceInfo {
             i.insert(
                 "has_rumble_triggers".into(),
                 SdlValue::Bool(unsafe { gp.has_rumble_triggers() }),
+            );
+            i.insert("has_led".into(), SdlValue::Bool(unsafe { gp.has_led() }));
+            i.insert(
+                "has_gyro".into(),
+                SdlValue::Bool(unsafe { gp.has_sensor(sdl3::sensor::SensorType::Gyroscope) }),
+            );
+            i.insert(
+                "has_accelerometer".into(),
+                SdlValue::Bool(unsafe { gp.has_sensor(sdl3::sensor::SensorType::Accelerometer) }),
             );
             let touchpads = gp.touchpads_count();
             i.insert("has_touchpads".into(), SdlValue::Bool(touchpads > 0));
