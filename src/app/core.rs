@@ -24,7 +24,7 @@ use crate::app::steam_utils::util::{
     launched_via_steam, load_steam_overlay, try_set_marker_steam_env,
 };
 use crate::app::window::{self, RunnerEvent};
-use crate::app::{gui, signals, steam_utils};
+use crate::app::{gui, hid_hooks, signals, steam_utils};
 use crate::config::{self, CONFIG, get_config};
 
 static SPAWNED_VIIPER: RwLock<Option<Child>> = RwLock::new(None);
@@ -69,7 +69,9 @@ impl App {
             .set(dialogs::Registry::new())
             .expect("Failed to init dialog registry");
 
-        if !launched_via_steam() {
+        hid_hooks::hid_check::enumerate_hid_exports();
+
+        if !launched_via_steam() && !get_config().steam.no_steam.unwrap_or(false) {
             match try_set_marker_steam_env() {
                 Ok(_) => {
                     info!("Successfully set marker Steam environment variables");
@@ -80,6 +82,11 @@ impl App {
                     // TODO: some error handling, whatever
                 }
             }
+        }
+
+        let hooked_by_steam = hid_hooks::hid_check::detect_hid_hooks();
+        for hook in &hooked_by_steam {
+            tracing::info!("Detected HID hook by Steam: {}", hook);
         }
 
         let dispatcher = self.gui_dispatcher.clone();

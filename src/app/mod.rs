@@ -7,4 +7,5 @@ pub mod window;
 
 pub use core::App;
 
+pub mod hid_hooks;
 pub mod input;
