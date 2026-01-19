@@ -1,8 +1,5 @@
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-pub mod windows;
+pub use super::windows::rehook::*;
 
 #[cfg(not(all(target_os = "windows", target_arch = "x86_64")))]
-pub mod linux;
-
-pub mod hid_check;
-pub mod rehook;
+pub use super::linux::rehook::*;

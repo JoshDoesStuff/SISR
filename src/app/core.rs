@@ -69,6 +69,7 @@ impl App {
             .set(dialogs::Registry::new())
             .expect("Failed to init dialog registry");
 
+
         hid_hooks::hid_check::enumerate_hid_exports();
 
         if !launched_via_steam() && !get_config().steam.no_steam.unwrap_or(false) {
@@ -84,9 +85,24 @@ impl App {
             }
         }
 
-        let hooked_by_steam = hid_hooks::hid_check::detect_hid_hooks();
-        for hook in &hooked_by_steam {
-            tracing::info!("Detected HID hook by Steam: {}", hook);
+        #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+        {
+            let hooked_by_steam = hid_hooks::hid_check::detect_hid_hooks();
+
+            if let Some(baselines) = hid_hooks::hid_check::EXPORTS_BASELINE.get() {
+                for (name, bytes) in baselines {
+                    let mut hex = String::from("0x");
+                    for b in *bytes {
+                        hex.push_str(&format!("{:02x}", b));
+                    }
+                    tracing::trace!("Baseline bytes: {}: \"{}\"", name, hex);
+                }
+            }
+
+            for hook in &hooked_by_steam {
+                tracing::info!("Detected HID hook by Steam: {}", hook);
+                hid_hooks::rehook::rehook(hook);
+            }
         }
 
         let dispatcher = self.gui_dispatcher.clone();
