@@ -124,6 +124,9 @@ impl EventHandler for Handler {
             );
             viiper_device.init_state();
         }
+        if viiper_device.device.r#type == "xbox360" {
+            return;
+        }
 
         match sensor {
             sdl3::sensor::SensorType::Gyroscope => {
