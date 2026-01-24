@@ -71,31 +71,31 @@ impl EventHandler for Handler {
         {
             unsafe {
                 if gp.has_sensor(sdl3::sensor::SensorType::Gyroscope) {
-                    let Ok(()) = gp.sensor_set_enabled(sdl3::sensor::SensorType::Gyroscope, true)
-                    else {
+                    if let Ok(()) = gp.sensor_set_enabled(sdl3::sensor::SensorType::Gyroscope, true)
+                    {
+                        tracing::debug!("Enabled gyroscope sensor on gamepad for SDL id {}", which);
+                    } else {
                         tracing::error!(
                             "Failed to enable gyroscope sensor on gamepad for SDL id {}",
                             which
                         );
-                        return;
                     };
-                    tracing::debug!("Enabled gyroscope sensor on gamepad for SDL id {}", which);
                 }
 
                 if gp.has_sensor(sdl3::sensor::SensorType::Accelerometer) {
-                    let Ok(()) =
+                    if let Ok(()) =
                         gp.sensor_set_enabled(sdl3::sensor::SensorType::Accelerometer, true)
-                    else {
+                    {
+                        tracing::debug!(
+                            "Enabled accelerometer sensor on gamepad for SDL id {}",
+                            which
+                        );
+                    } else {
                         tracing::error!(
                             "Failed to enable accelerometer sensor on gamepad for SDL id {}",
                             which
                         );
-                        return;
                     };
-                    tracing::debug!(
-                        "Enabled accelerometer sensor on gamepad for SDL id {}",
-                        which
-                    );
                 }
             }
         }
