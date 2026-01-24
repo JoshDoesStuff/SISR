@@ -18,7 +18,7 @@ pub struct Device {
     pub viiper_device: Option<ViiperDevice>,
     ///  holds virtual_device created by steam for real devices
     /// or real_device for virtual_steam_devices
-    pub corresponding_device_id: Option<u64>, // TODO: map on connect !!!
+    pub corresponding_device_id: Option<u64>, // TODO:
 }
 
 impl Device {
@@ -59,6 +59,7 @@ impl Device {
 
         let Some(steam_device_id) = devices.iter_mut().find_map(|r| {
             if r.key() == &self.id {
+                // avoid deadlock / self match
                 return None;
             }
             let Ok(mut dev) = r.value().lock() else {
@@ -102,7 +103,7 @@ impl Device {
         Some(steam_device_id)
     }
 
-    pub fn non_steam_sdl_controller(&self, ctx: &Context) -> Option<sdl3::gamepad::Gamepad> {
+    pub fn non_steam_sdl_id(&self, ctx: &Context) -> Option<u64> {
         // TODO: better correlation // maybe add gui; whatever, this works for an initial bringup...
 
         if self.steam_handle == 0 {
@@ -127,45 +128,52 @@ impl Device {
             return None;
         };
 
-        // search for device with SteamHandle 0!!! but with a gamepad that has the same name
-        let Some(real_sdl_gamepad) = ctx.devices.iter().find_map(|r| {
+        let mut devices: Vec<_> = ctx.devices.iter_mut().collect();
+
+        let Some(steam_device_id) = devices.iter_mut().find_map(|r| {
             if r.key() == &self.id {
+                // avoid deadlock / self match
                 return None;
             }
-            let Ok(dev) = r.value().lock() else {
+            let Ok(mut dev) = r.value().lock() else {
                 return None;
             };
             if dev.steam_handle != 0 {
                 return None;
             }
-            dev.sdl_devices.iter().find_map(|sdl_device| {
-                let gp = sdl_device.gamepad.as_ref()?;
+            dev.sdl_devices.iter_mut().find_map(|sdl_device| {
+                // Now this is silly that it ahs to be mut
+                let gp = sdl_device.gamepad.as_mut()?;
                 let gp_name = gp.name()?;
-                if gp_name == name {
-                    tracing::debug!(
-                        "Found non-steam SDL controller '{}' for device id {}",
+                // TODO: hack! steamdeck
+                if gp_name.starts_with("Steam Deck") && name.starts_with("Steam Deck") {
+                    tracing::trace!(
+                        "Found steam SDL controller '{}' for device id {}",
                         gp_name,
                         self.id
                     );
-                    let Ok(gp_id) = gp.id() else {
-                        return None;
-                    };
-                    let Ok(real_gp) = gp.subsystem().get(gp_id) else {
-                        return None;
-                    };
-                    return Some(real_gp);
+
+                    return Some(*r.key());
+                }
+                if gp_name == name {
+                    tracing::trace!(
+                        "Found steam SDL controller '{}' for device id {}",
+                        gp_name,
+                        self.id
+                    );
+                    return Some(*r.key());
                 }
                 None
             })
         }) else {
             tracing::debug!(
-                "No matching non-steam SDL controller found for device id {}",
+                "No matching steam SDL controller found for device id {}",
                 self.id
             );
             return None;
         };
 
-        Some(real_sdl_gamepad)
+        Some(steam_device_id)
     }
 }
 pub struct ViiperDevice {

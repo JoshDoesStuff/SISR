@@ -83,9 +83,10 @@ impl EventHandler for Handler {
 
         let mut maybe_sd_arc: Option<Arc<Mutex<Device>>> = None;
         let mut device = if device.steam_handle == 0 {
-            let Some(id) = device.steam_device_id(&mut ctx) else {
-                // tracing::debug!(
-                //     "Device id {} has no steam handle, cannot process sensor update",
+            let Some(id) = device.corresponding_device_id else {
+                // tracing::warn!(
+                //     "No corresponding device id found for SDL id {} in device id {}",
+                //     which,
                 //     device.id
                 // );
                 return;
