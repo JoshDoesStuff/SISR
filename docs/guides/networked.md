@@ -43,12 +43,8 @@ Refer to the [USBIP setup guide](../getting-started/usbip.md)
     If you have previously installed SISR on the receiving machine,
     VIIPER should already be setup correctly and you can skip this step
 
-VIIPER comes bundled with SISR on Windows, but on Linux it must always be installed as a system service.
-
-For networked scenarios you will have to run VIIPER on the receiving machine yourself.  
-
-Instead of always interacting with the receiving machine yourself, VIIPER can be run as a background service
-that automatically starts with the system.  
+For networked scenarios you will have to install [VIIPER](https://alia5.github.io/VIIPER/) as a background "service".  
+_(VIIPER is used by SISR to emulate controllers!)_
 
 VIIPER provides [easy to use installation scripts](https://alia5.github.io/VIIPER/stable/getting-started/installation/#automated-install-script)
 for both Windows and Linux.  
@@ -123,6 +119,11 @@ USBIP and VIIPER are not required, only SISR itself
 
 <br />
 <br />
+
+!!! info "Multiple device forwarding"
+    SISR will not only forward the Steam Decks built-in controller,
+    but any other controller that is connected to the Deck (or other PC) as well!  
+    (As long as the controller is picked up by Steam)
 
 !!! tip "SISR overlay"
     If you want to stop/start forwarding or change settings while in-game,
