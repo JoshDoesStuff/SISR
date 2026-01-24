@@ -63,6 +63,43 @@ impl EventHandler for Handler {
             }
         };
 
+        if get_config()
+            .controller_emulation
+            .gyro_passthrough
+            .unwrap_or(true)
+            && let Some(gp) = &gamepad
+        {
+            unsafe {
+                if gp.has_sensor(sdl3::sensor::SensorType::Gyroscope) {
+                    if let Ok(()) = gp.sensor_set_enabled(sdl3::sensor::SensorType::Gyroscope, true)
+                    {
+                        tracing::debug!("Enabled gyroscope sensor on gamepad for SDL id {}", which);
+                    } else {
+                        tracing::error!(
+                            "Failed to enable gyroscope sensor on gamepad for SDL id {}",
+                            which
+                        );
+                    };
+                }
+
+                if gp.has_sensor(sdl3::sensor::SensorType::Accelerometer) {
+                    if let Ok(()) =
+                        gp.sensor_set_enabled(sdl3::sensor::SensorType::Accelerometer, true)
+                    {
+                        tracing::debug!(
+                            "Enabled accelerometer sensor on gamepad for SDL id {}",
+                            which
+                        );
+                    } else {
+                        tracing::error!(
+                            "Failed to enable accelerometer sensor on gamepad for SDL id {}",
+                            which
+                        );
+                    };
+                }
+            }
+        }
+
         let steam_handle = if let Some(gamepad) = &gamepad {
             get_gamepad_steam_handle(gamepad)
         } else {
@@ -186,7 +223,34 @@ impl EventHandler for Handler {
                 viiper_type: Some(device_type.clone()),
 
                 viiper_device: None,
+                corresponding_device_id: None,
             }));
+            if steam_handle != 0 {
+                let Ok(mut device) = device.lock() else {
+                    tracing::error!("Failed to lock new Device mutex");
+                    return;
+                };
+                let corresponding_device_id = device.non_steam_sdl_id(&ctx);
+                if let Some(corresponding_device_id) = corresponding_device_id {
+                    tracing::info!(
+                        "Device id {} (probably) corresponds to non-steam device id {}",
+                        device_id,
+                        corresponding_device_id
+                    );
+                    device.corresponding_device_id = Some(corresponding_device_id);
+                    let non_steam_device = ctx.device_for_id(corresponding_device_id);
+                    if let Some(non_steam_device) = non_steam_device {
+                        let Ok(mut non_steam_device) = non_steam_device.lock() else {
+                            tracing::error!(
+                                "Failed to lock non-steam device id {}",
+                                corresponding_device_id
+                            );
+                            return;
+                        };
+                        non_steam_device.corresponding_device_id = Some(device_id);
+                    }
+                }
+            }
             ctx.devices.insert(device_id, device.clone());
             tracing::info!("Added new device {:?}", device.clone().lock().ok());
 
@@ -223,6 +287,27 @@ impl EventHandler for Handler {
                 steam_handle
             );
             device.steam_handle = steam_handle;
+        } else {
+            let corresponding_device_id = device.non_steam_sdl_id(&ctx);
+            if let Some(corresponding_device_id) = corresponding_device_id {
+                tracing::info!(
+                    "Device id {} (probably) corresponds to non-steam device id {}",
+                    device.id,
+                    corresponding_device_id
+                );
+                device.corresponding_device_id = Some(corresponding_device_id);
+                let non_steam_device = ctx.device_for_id(corresponding_device_id);
+                if let Some(non_steam_device) = non_steam_device {
+                    let Ok(mut non_steam_device) = non_steam_device.lock() else {
+                        tracing::error!(
+                            "Failed to lock non-steam device id {}",
+                            corresponding_device_id
+                        );
+                        return;
+                    };
+                    non_steam_device.corresponding_device_id = Some(device.id);
+                }
+            }
         }
         let Some(sdl_device) = device.sdl_devices.iter_mut().find(|d| d.id == which) else {
             tracing::warn!(

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::process::ExitCode;
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
-use std::thread;
+use std::{env, thread};
 use tokio::sync::Notify;
 use tracing::{debug, error, info, trace, warn};
 
@@ -24,7 +24,7 @@ use crate::app::steam_utils::util::{
     launched_via_steam, load_steam_overlay, try_set_marker_steam_env,
 };
 use crate::app::window::{self, RunnerEvent};
-use crate::app::{gui, signals, steam_utils};
+use crate::app::{gui, hid_hooks, signals, steam_utils};
 use crate::config::{self, CONFIG, get_config};
 
 static SPAWNED_VIIPER: RwLock<Option<Child>> = RwLock::new(None);
@@ -69,7 +69,10 @@ impl App {
             .set(dialogs::Registry::new())
             .expect("Failed to init dialog registry");
 
-        if !launched_via_steam() {
+
+        hid_hooks::hid_check::enumerate_hid_exports();
+
+        if !launched_via_steam() && !get_config().steam.no_steam.unwrap_or(false) {
             match try_set_marker_steam_env() {
                 Ok(_) => {
                     info!("Successfully set marker Steam environment variables");
@@ -81,6 +84,27 @@ impl App {
                 }
             }
         }
+
+        #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+        {
+            let hooked_by_steam = hid_hooks::hid_check::detect_hid_hooks();
+
+            if let Some(baselines) = hid_hooks::hid_check::EXPORTS_BASELINE.get() {
+                for (name, bytes) in baselines {
+                    let mut hex = String::from("0x");
+                    for b in *bytes {
+                        hex.push_str(&format!("{:02x}", b));
+                    }
+                    tracing::trace!("Baseline bytes: {}: \"{}\"", name, hex);
+                }
+            }
+
+            for hook in &hooked_by_steam {
+                tracing::info!("Detected HID hook by Steam: {}", hook);
+                 hid_hooks::rehook::rehook(hook);
+            }
+        }
+
 
         let dispatcher = self.gui_dispatcher.clone();
         window::set_continuous_redraw(self.cfg.window.continous_draw.unwrap_or(false));
