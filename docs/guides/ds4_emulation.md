@@ -17,7 +17,7 @@ otherwise pose issues or inconveniences using Steam Input.
 
     - Gyro calibration:  
         Normally controllers provide their own gyro calibration data, SISR does not translate this in any way
-        This means that for the emulated DS4 controllery you have to calibrate the gyro on the emulated controller itself, be it via Steam or in-game options
+        This means that for the emulated DS4 controller you have to calibrate the gyro on the emulated controller itself, be it via Steam or in-game options
 
     - Steam Controller / Deck specific:  
         Gyro data is not transmitted to SISR unless gyro is bound to something other than "_None_" in Steam Input configuration.  

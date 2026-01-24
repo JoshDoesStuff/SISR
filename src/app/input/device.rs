@@ -69,7 +69,7 @@ impl Device {
                 return None;
             }
             dev.sdl_devices.iter_mut().find_map(|sdl_device| {
-                // Now this is silly that it ahs to be mut
+                // Now this is silly that it has to be mut
                 let gp = sdl_device.gamepad.as_mut()?;
                 let gp_name = gp.name()?;
                 // TODO: hack! steamdeck
@@ -142,7 +142,7 @@ impl Device {
                 return None;
             }
             dev.sdl_devices.iter_mut().find_map(|sdl_device| {
-                // Now this is silly that it ahs to be mut
+                // Now this is silly that it has to be mut
                 let gp = sdl_device.gamepad.as_mut()?;
                 let gp_name = gp.name()?;
                 // TODO: hack! steamdeck
@@ -167,7 +167,7 @@ impl Device {
             })
         }) else {
             tracing::debug!(
-                "No matching steam SDL controller found for device id {}",
+                "No matching real SDL controller found for device id {}",
                 self.id
             );
             return None;

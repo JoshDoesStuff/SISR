@@ -50,7 +50,7 @@ impl EventHandler for Handler {
                     data,
                 } => (*which, sensor, data),
                 _ => {
-                    tracing::warn!("Received non-device-added event ");
+                    tracing::warn!("Received non-sensor-updated event ");
                     return;
                 }
             },
