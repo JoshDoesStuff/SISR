@@ -106,12 +106,37 @@
 ??? question "Can I use this with "Steam Link" / "Remote Play"?"
 
     Theoretically(?)
-    But practically don't expect it to work or be a good experience.  
+    But don't expect it to also stream your game/display.
 
-    Look into setting up Sunshine/Apollo and Moonlight instead!  
+    Take a look at the [Networked usage guide](../guides/networked.md) for more details
+
+    **If** you want game/display-streaming as well, you should  
+    look into setting up Sunshine/Apollo and Moonlight   
     Note that Sunshine/Apollo and Moonlight come with their own remote-input solution, that possibly interferes with SISR.  
     I have not yet had the time to write documentation for this  
     <sup>If you have used SISR with Sunshine/Apollo and Moonlight successfully, consider contributing to the documentation</sup>
+
+## How does this compare to Sunshine/Apollo's "input only mode" {.toc-anchor}
+
+??? question "How does this compare to Sunshine/Apollo's _input only mode_"
+
+    Sunshine/Apollo/WhateverTheFuck use the good old, but _unmaintained(!)_ ViGEm driver (on Windows)  
+    SISR uses a different underlying tool [VIIPER](https://alia5.github.io/VIIPER/stable/) for both controller as well as keyboard/mouse inputs.
+
+    At the **current** stage, differences (to an input-only mode) are _mostly_ technical to an end-user... however:
+
+    - SISR does not use _unmaintained_ technologies, duh.
+    - Uses the same input-emulation technique across platforms
+    - SISRs controller devices are (not yet, lol) blocked by any anticheat (as opposed to ViGEms)
+    - Emulates mouse/keyboard in a way that is indistinguishable from real hardware, too!
+    - SISR supports emulating a DS4 controller (as does ViGEm), but with **full gyro-passthrough**  
+    Touchpad passthrough will follow.  
+    You can even decide this **per device**  
+    - SISR will (_at a later stage_, probably™️) support Steam Controller 2 (_"Triton"_) re-emulation, allowing you to have full Steam-Input functionality on the controller receiving machine, not only on the controller-host (eg. Deck)
+    - Maybe more to come.
+
+    And of course, SISR is **only** concerned about controllers/input-devices - no display-streaming baggage needed.  
+    SISR is primarily a tool to circumvent Steam Input issues, after all.
 
 ## Why would I want to use this instead of _directly_ using USBIP/VirtualHere to forward controllers? {.toc-anchor}
 
