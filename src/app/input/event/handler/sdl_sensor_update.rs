@@ -109,7 +109,7 @@ impl EventHandler for Handler {
 
         let device_id = device.id;
         let Some(viiper_device) = device.viiper_device.as_mut() else {
-            tracing::warn!(
+            tracing::trace!(
                 "No Viiper device found for SDL id {} in device id {}",
                 which,
                 device.id

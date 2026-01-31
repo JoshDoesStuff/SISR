@@ -30,7 +30,7 @@ impl Handler {
 
     fn update_device_gamepad_state(&self, device: &mut Device, which: u32) {
         let Some(viiper_device) = device.viiper_device.as_mut() else {
-            tracing::warn!(
+            tracing::trace!(
                 "No Viiper device found for SDL id {} in device id {}",
                 which,
                 device.id
