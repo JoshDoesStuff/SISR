@@ -37,7 +37,7 @@ anyhow = "1.0.100"
 tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
 ron = "0.12"
 directories = "6.0"
-reqwest = "0.12.24"
+reqwest = { version = "0.12.24", features = ["json"] }
 sysinfo = { version = "0.37.2", features = ["windows", "serde"] }
 tokio-tungstenite = "0.28.0"
 futures-util = "0.3.31"

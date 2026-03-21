@@ -162,6 +162,14 @@ impl App {
             window_ready.clone(),
         );
 
+        {
+            let window_ready = window_ready.clone();
+            get_tokio_handle().spawn(async move {
+                window_ready.notified().await;
+                super::updater::check_update().await;
+            });
+        }
+
         let mut window_runner = WindowRunner::new(
             self.gui_dispatcher.clone().expect("GUI dispatcher does not exist"),
             window_ready,

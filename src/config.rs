@@ -84,6 +84,15 @@ pub struct Config {
     )]
     pub kbm_emulation: Option<bool>,
 
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[arg(
+        long = "update-notify",
+        value_name = "CHANNEL",
+        env = "SISR_UPDATE_NOTIFY",
+        help = "Update notification channel: none, stable, prerelease [default: stable]"
+    )]
+    pub update_notify: Option<UpdateNotify>,
+
     #[command(flatten)]
     pub window: WindowOpts,
 
@@ -111,6 +120,15 @@ pub enum ControllerType {
     #[default]
     Xbox360,
     Dualshock4,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[serde(rename_all = "lowercase")]
+pub enum UpdateNotify {
+    None,
+    #[default]
+    Stable,
+    Prerelease,
 }
 
 impl ControllerType {
@@ -277,6 +295,7 @@ impl Default for Config {
             viiper_address: Some("localhost:3242".to_string()),
             viiper_password: None,
             kbm_emulation: Some(false),
+            update_notify: Some(UpdateNotify::Stable),
             window: WindowOpts {
                 create: Some(false),
                 fullscreen: Some(true),

@@ -3,6 +3,7 @@ pub mod gui;
 pub mod signals;
 pub mod steam_utils;
 pub mod tray;
+pub mod updater;
 pub mod window;
 
 pub use core::App;

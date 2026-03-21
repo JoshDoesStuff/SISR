@@ -8,7 +8,7 @@ use crate::app::window::{self, RunnerEvent};
 
 pub static REGISTRY: OnceLock<Registry> = OnceLock::new();
 
-pub type GuiCallback = Box<dyn Fn(&egui::Context) + Send + Sync + 'static>;
+pub type GuiCallback = Box<dyn Fn(&mut egui::Ui) + Send + Sync + 'static>;
 pub type Callback = Box<dyn Fn() + Send + Sync + 'static>;
 
 pub fn push_dialog(dialog: Dialog) -> Result<(), Error> {
@@ -39,6 +39,7 @@ pub struct Dialog {
     pub message: String,
     pub positive_label: Option<String>,
     pub negative_label: Option<String>,
+    pub buttons_hidden: bool,
     //
     pub draw_callback: Option<GuiCallback>,
     pub on_positive: Option<Callback>,
@@ -203,36 +204,38 @@ impl Dialog {
                         .auto_shrink(true)
                         .show(ui, |ui| {
                             if let Some(callback) = &self.draw_callback {
-                                (callback)(ctx);
+                                (callback)(ui);
                             } else {
                                 ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
                                 ui.label(&self.message);
                             }
                         });
-                    ui.separator();
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
-                        let pos_label = self.positive_label.as_deref().unwrap_or("OK");
-                        let pos_button =
-                            egui::Button::new(pos_label).fill(ui.visuals().selection.bg_fill);
-                        if ui.add(pos_button).clicked() {
-                            if let Some(pos_callback) = &self.on_positive {
-                                (pos_callback)();
+                    if !self.buttons_hidden {
+                        ui.separator();
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                            let pos_label = self.positive_label.as_deref().unwrap_or("OK");
+                            let pos_button =
+                                egui::Button::new(pos_label).fill(ui.visuals().selection.bg_fill);
+                            if ui.add(pos_button).clicked() {
+                                if let Some(pos_callback) = &self.on_positive {
+                                    (pos_callback)();
+                                }
+                                _ = pop_dialog().inspect_err(|e| {
+                                    error!("Failed to pop dialog after positive button clicked: {}", e);
+                                })
                             }
-                            _ = pop_dialog().inspect_err(|e| {
-                                error!("Failed to pop dialog after positive button clicked: {}", e);
-                            })
-                        }
-                        if let Some(neg_label) = &self.negative_label
-                            && ui.button(neg_label).clicked()
-                        {
-                            if let Some(neg_callback) = &self.on_negative {
-                                (neg_callback)();
+                            if let Some(neg_label) = &self.negative_label
+                                && ui.button(neg_label).clicked()
+                            {
+                                if let Some(neg_callback) = &self.on_negative {
+                                    (neg_callback)();
+                                }
+                                _ = pop_dialog().inspect_err(|e| {
+                                    error!("Failed to pop dialog after negative button clicked: {}", e);
+                                })
                             }
-                            _ = pop_dialog().inspect_err(|e| {
-                                error!("Failed to pop dialog after negative button clicked: {}", e);
-                            })
-                        }
-                    });
+                        });
+                    }
                 });
             });
     }
