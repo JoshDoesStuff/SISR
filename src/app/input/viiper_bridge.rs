@@ -162,6 +162,7 @@ impl ViiperBridge {
                         r#type: Some(device_type),
                         id_vendor: None,
                         id_product: None,
+                        device_specific: None,
                     },
                 )
                 .await
