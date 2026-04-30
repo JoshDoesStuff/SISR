@@ -8,9 +8,7 @@
   SDL3 is built from source via CMake w/ Ninja
 - Node.js
   Required to build the javascript parts interacting with Steams CEF remote debugging interface
-- pnpm  
-  is just better than npm  
-  [pnpm.io](https://pnpm.io/installation)
+
 
 !!! info "SDL3"
     SDL3 is compiled from source via `sdl3-sys`. `build.rs` sets `CMAKE_GENERATOR=Ninja`.
@@ -40,8 +38,8 @@ Build the CEF injectee first, then build SISR
 
 ```bash
 cd cef_injectee
-pnpm install
-pnpm run build
+npm install
+npm run build
 cd ..
 ```
 
