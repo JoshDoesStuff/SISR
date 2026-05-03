@@ -28,6 +28,8 @@ do not support Steam Input or otherwise pose challenges, like (but not limited t
 - Windows Store games/apps
 - Games with broken Steam Input support
 
+All while still providing you the full feature set of SteamInput!
+
 SISR can also be used to "tunnel"/forward Steam Input configurations over the network to other machines, including Keyboard/Mouse.  
 This makes it possible to use devices like a Steam Deck as a dedicated controller without the need to stream the entire game.
 
@@ -41,22 +43,23 @@ Expect bugs, crashes, and missing features.
 
 > [!CAUTION]
 If you are a Youtuber, and intend cover this software (aside from just mentioning it), **please talk to me first**  
-I **really** want to avoid people publicly saying wrong things about my Software, because of features missed.  
-It happens too often
+- The software is an active WIP, not ready for wide usage, with a bigger update in the following days
+- I want to avoid people with significant reach stating false information.  
 
 ## ✨🛣️ Features / Roadmap
 
-- ✅ Steam Input redirection to system level (localhost or network)  
-    - Indistinguishable from real hardware
-- ✅ Xbox 360 controller emulation
-- ✅ Keyboard/Mouse emulation (only in network scenarios)  
-    - Allows use of devices like the Steam Deck as dedicated controller
-- ✅ Flexible configuration (CLI, config files, environment variables)
-- ✅ Multi-platform support (Windows, Linux)
-- ✅ Multiple operation modes
-    - Standalone background service
+- Full SteamInput featureset while emulating compatible controllers (indistinguishable from real hardware)
+  - Xbox360 _or_
+  - DualShock 4
+- **Non Steam Mode*
+-  Xbox 360 controller emulation
+- Multi-platform support (Windows, Linux)
+   Multiple operation modes
+    - Standalone background service (To be improved)
     - Steam overlay window mode
-- ✅ PS4 controller emulation
+-  PS4 controller emulation
+- Networked operation across computers
+  - Use devices like a SteamDeck as dedicated controller without streaming the whole game/display
 - ~~🚧 Xbox One controller emulation~~
 - ~~🚧 Generic controller emulation~~
 - 🚧 Gyro Passthrough
