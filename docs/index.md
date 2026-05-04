@@ -34,9 +34,10 @@ Unlike its predecessor [GlosSI](https://github.com/Alia5/GlosSI), it does not us
 
 !!! danger
     If you are a Youtuber, and intend cover this software (aside from just mentioning it), **consider talking to me first**  
-    You are not required to, but I'd greatly appreciate it.
+    You are not required to, but I'd greatly appreciate it.  
+    
     - The software is an active WIP, not ready for wide usage, with a bigger update in the next few days.
-    - I want to avoid people with significant reach stating false information.  
+    - I want to avoid people with significant reach stating false information.
     - If something is unclear, I'm happy to help and/or improve my documentation
 
 ## ✨🛣️ Features / Roadmap
