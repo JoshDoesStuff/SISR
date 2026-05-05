@@ -41,6 +41,11 @@ Unlike its predecessor [GlosSI](https://github.com/Alia5/GlosSI), it does not us
 **Highly experimental work in progress.** Everything is subject to change and may or may not work.  
 Expect bugs, crashes, and missing features.
 
+> [!IMPORTANT]
+You **do** get the full functionality of SteamInput, _without having to launch your games from Steam_  
+For this Steam must still be running in the background, though.   
+**Alternatively** SISR also has an **even more _experimental_** **no-Steam mode**, but it isn*t really the intended use-case.
+
 > [!CAUTION]
 If you are a Youtuber, and intend cover this software (aside from just mentioning it), **consider talking to me first**  
 You are not required to, but I'd greatly appreciate it.  <br />  
