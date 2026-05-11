@@ -281,7 +281,7 @@ pub struct SteamOpts {
         long = "no-steam",
         value_name = "BOOL",
         num_args = 0..=1,
-        default_missing_value = "false",
+        default_missing_value = "true",
         env = "SISR_NO_STEAM",
         help = "Support redirecting controller WITHOUT Steam running (true/false) [default: false]"
     )]
