@@ -37,7 +37,44 @@ pub async fn restart_sisr(State(_state): State<AppState>) -> impl IntoResponse {
 
     #[cfg(windows)]
     {
-        if let Err(e) = Command::new("explorer.exe")
+        if launched_from_terminal() {
+            let ps_quote = |value: &str| format!("'{}'", value.replace('\'', "''"));
+
+            let exe = ps_quote(&current_exe.as_os_str().to_string_lossy());
+            let arg_list = if current_args.is_empty() {
+                String::from("@()")
+            } else {
+                format!(
+                    "@({})",
+                    current_args
+                        .iter()
+                        .map(|arg| ps_quote(&arg.to_string_lossy()))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            };
+            let current_pid = std::process::id();
+            let command = format!(
+                "& {{ while (Get-Process -Id {current_pid} -ErrorAction SilentlyContinue) {{ Start-Sleep -Milliseconds 200 }}; Start-Process -FilePath {exe} -ArgumentList {arg_list} }}"
+            );
+
+            if let Err(e) = Command::new("powershell")
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-WindowStyle",
+                    "Hidden",
+                    "-Command",
+                    &command,
+                ])
+                .spawn()
+            {
+                tracing::error!("Failed to schedule SISR restart: {}", e);
+                return ProblemDetails::from_status_code(StatusCode::FAILED_DEPENDENCY)
+                    .with_detail(format!("Failed to schedule SISR restart: {}", e))
+                    .into_response();
+            }
+        } else if let Err(e) = Command::new("explorer.exe")
             .arg(&current_exe)
             .args(&current_args)
             .spawn()
@@ -81,4 +118,81 @@ pub async fn restart_sisr(State(_state): State<AppState>) -> impl IntoResponse {
     }
 
     (StatusCode::OK, Json(serde_json::json!({}))).into_response()
+}
+
+#[cfg(windows)]
+fn launched_from_terminal() -> bool {
+    use windows_sys::Win32::System::Diagnostics::ToolHelp::{
+        CreateToolhelp32Snapshot, Process32FirstW, Process32NextW, PROCESSENTRY32W,
+        TH32CS_SNAPPROCESS,
+    };
+
+    unsafe {
+        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if snapshot == windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE {
+            return false;
+        }
+
+        let current_pid = std::process::id();
+        let mut entry: PROCESSENTRY32W = std::mem::zeroed();
+        entry.dwSize = std::mem::size_of::<PROCESSENTRY32W>() as u32;
+
+        let mut parent_pid = 0;
+        if Process32FirstW(snapshot, &mut entry) != 0 {
+            loop {
+                if entry.th32ProcessID == current_pid {
+                    parent_pid = entry.th32ParentProcessID;
+                    break;
+                }
+
+                if Process32NextW(snapshot, &mut entry) == 0 {
+                    break;
+                }
+            }
+        }
+
+        windows_sys::Win32::Foundation::CloseHandle(snapshot);
+
+        if parent_pid == 0 {
+            return false;
+        }
+
+        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if snapshot == windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE {
+            return false;
+        }
+
+        let mut entry: PROCESSENTRY32W = std::mem::zeroed();
+        entry.dwSize = std::mem::size_of::<PROCESSENTRY32W>() as u32;
+
+        let mut terminal_parent = false;
+        if Process32FirstW(snapshot, &mut entry) != 0 {
+            loop {
+                if entry.th32ProcessID == parent_pid {
+                    let len = entry
+                        .szExeFile
+                        .iter()
+                        .position(|&ch| ch == 0)
+                        .unwrap_or(entry.szExeFile.len());
+                    let exe_name = String::from_utf16_lossy(&entry.szExeFile[..len]);
+                    terminal_parent = matches!(
+                        exe_name.to_ascii_lowercase().as_str(),
+                        "cmd.exe"
+                            | "powershell.exe"
+                            | "pwsh.exe"
+                            | "windowsterminal.exe"
+                            | "conhost.exe"
+                    );
+                    break;
+                }
+
+                if Process32NextW(snapshot, &mut entry) == 0 {
+                    break;
+                }
+            }
+        }
+
+        windows_sys::Win32::Foundation::CloseHandle(snapshot);
+        terminal_parent
+    }
 }
