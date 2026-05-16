@@ -3,6 +3,9 @@
 !!! note "Steam must be running"
     Make sure Steam is running before installing/running SISR.
 
+!!! danger "Introduction Post"
+    Please read the [introduction post](/getting-started/introduction/) before you get started.  
+
 ## 🤖 Automatic Installation Scripts
 
 !!! warning

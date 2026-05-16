@@ -44,14 +44,8 @@ Expect bugs, crashes, and missing features.
 > [!IMPORTANT]
 You **do** get the full functionality of SteamInput, _without having to launch your games from Steam_  
 For this Steam must still be running in the background, though.   
-**Alternatively** SISR also has a **no-Steam mode**, but it isn't really the intended use-case.
+**Please read the [introduction post](https://alia5.github.io/SISR/main/getting-started/introduction/) before you get started.**    
 
-> [!CAUTION]
-If you are a Media outlet / Youtuber or whateverelse with *significant reach*, and intend cover this software (aside from just mentioning it), **consider talking to me first**  
-You are not required to, but I'd greatly appreciate it.  <br />  
-  -The software is an active WIP, not ready for wide usage, with a bigger update in the next few days.  
- -I want to avoid people with significant reach stating false information.    
- -If something is unclear, I'm happy to help and/or improve my documentation  
 
 ## ✨🛣️ Features / Roadmap
 

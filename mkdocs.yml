@@ -7,29 +7,29 @@ repo_url: https://github.com/Alia5/SISR
 theme:
   name: material
   logo: SISR.svg
-  palette: 
-    - scheme: default
-      primary: blue grey
-      toggle:
-        icon: material/brightness-7 
-        name: Switch to dark mode
+  palette:
+  - scheme: default
+    primary: blue grey
+    toggle:
+      icon: material/brightness-7
+      name: Switch to dark mode
 
-    - scheme: slate
-      primary: black
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
+  - scheme: slate
+    primary: black
+    toggle:
+      icon: material/brightness-4
+      name: Switch to light mode
 
   features:
-    - navigation.instant
-    - navigation.tracking
-    - navigation.tabs
-    - navigation.sections
-    - navigation.expand
-    - navigation.top
-    - search.suggest
-    - search.highlight
-    - content.code.copy
+  - navigation.instant
+  - navigation.tracking
+  - navigation.tabs
+  - navigation.sections
+  - navigation.expand
+  - navigation.top
+  - search.suggest
+  - search.highlight
+  - content.code.copy
 
 extra:
   version:
@@ -37,43 +37,44 @@ extra:
     default: stable
 
 extra_css:
-  - stylesheets/extra.css
+- stylesheets/extra.css
 
 extra_javascript:
-  - javascript/downloads.js
+- javascript/downloads.js
 
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.superfences
-  - pymdownx.tilde
-  - pymdownx.tabbed:
-      alternate_style: true
-  - admonition
-  - pymdownx.details
-  - attr_list
-  - md_in_html
-  - tables
+- pymdownx.highlight:
+    anchor_linenums: true
+- pymdownx.superfences
+- pymdownx.tilde
+- pymdownx.tabbed:
+    alternate_style: true
+- admonition
+- pymdownx.details
+- attr_list
+- md_in_html
+- tables
 
 nav:
-  - Home: index.md
-  - Installation:
-    - Installation: getting-started/installation.md
-    - USBIP: getting-started/usbip.md
-  - Configuration:
-    - Configuration: config/config.md
-    - CLI Reference: config/cli.md
-  - Guides:
-    - Overview: guides/overview.md
-    - Installation: getting-started/installation.md
-    - General Usage: guides/usage.md
-    - Multiple Configurations / GlosSI like usage: guides/multi_configs.md  
-    - Networked usage: guides/networked.md
-    - DualShock4 Emulation: guides/ds4_emulation.md
-  - Troubleshooting: misc/troubleshooting.md
-  - FAQ: misc/faq.md
-  - Community & Support: misc/support.md
-  - Development:
-    - Building: dev/building.md
-  - Changelog: changelog/
-  - Downloads: downloads/
+- Home: index.md
+- Introduction: getting-started/introduction.md
+- Installation:
+  - Installation: getting-started/installation.md
+  - USBIP: getting-started/usbip.md
+- Configuration:
+  - Configuration: config/config.md
+  - CLI Reference: config/cli.md
+- Guides:
+  - Overview: guides/overview.md
+  - Installation: getting-started/installation.md
+  - General Usage: guides/usage.md
+  - Multiple Configurations / GlosSI like usage: guides/multi_configs.md
+  - Networked usage: guides/networked.md
+  - DualShock4 Emulation: guides/ds4_emulation.md
+- Troubleshooting: misc/troubleshooting.md
+- FAQ: misc/faq.md
+- Community & Support: misc/support.md
+- Development:
+  - Building: dev/building.md
+- Changelog: changelog/
+- Downloads: downloads/
