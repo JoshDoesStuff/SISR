@@ -62,10 +62,11 @@ jobs:
                     fi
                   fi
 
-            - name: Copy installation scripts to docs
+            - name: Copy install/uninstall scripts to docs
               run: |
                   cp scripts/install.sh docs/install.sh
                   cp scripts/install.ps1 docs/install.ps1
+                  cp scripts/uninstall.ps1 docs/uninstall.ps1
 
             - name: Generate changelog for main
               if: github.ref == 'refs/heads/main'
