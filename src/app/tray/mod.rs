@@ -57,8 +57,13 @@ impl TrayContext {
 
         let mut menu_ids = HashMap::new();
 
-        let version_item =
-            MenuItem::new(format!("SISR v{}", env!("CARGO_PKG_VERSION")), false, None);
+        let version = option_env!("SISR_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
+        let display_version = if version.starts_with('v') {
+            version.to_string()
+        } else {
+            format!("v{}", version)
+        };
+        let version_item = MenuItem::new(format!("SISR {}", display_version), false, None);
         menu.append(&version_item)
             .expect("Failed to add version entry");
 
