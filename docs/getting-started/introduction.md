@@ -30,7 +30,7 @@ In practice this means, that you can use SISR as a tool to _workaround_ of havin
 in order to use Steam Input, which for instance is "required" for the Steam Controller.  
 
 However, the approach of "taking Steam Input inputs and redirecting them" makes SISR rather flexible,
-not specific to any controller, and allows for different use cases.  
+**not specific to any controller**, and allows for different use cases.  
 I, for example, have used it in the past to use my Steam Deck as a dedicated controller,
 but I imagine this is not why most of you are interested in SISR.  
 
