@@ -2,19 +2,22 @@
 
 ## Foreword
 
-My little toy project seems to gather a lot more attention that it really deserves, so it's time for an introduction
+My little toy project seems to gather a lot more attention that it really deserves, or needs, so it's time for an introduction
 and a short explainer of what SISR is, and how to use it.  
 
-Let me preface this by saying that SISR works fine, but it is a **toy project** of mine and a work in progress
+Let me preface this by saying that SISR works fine, but it is a **toy project** of mine and a work in progress  
 I **do not** consider it good enough for wide usage of the average non-technically inclined user.  
-It does work, but It is my no means a finished or polished product and it most likely will never be.  
+**It is by no means a finished or polished product and it most likely never will be.**  
 
 If you are new to Steam Input in general, I'd urge you to get familiar with Steam Input first,
-and only then come back to SISR, if it even is required at all _(which it most likely isn't)_.
+and only then come back, if SISR is even required at all _(which it most likely isn't)_.  
 
 This introduction is mostly targeted at those who recently got their shiny new Steam Controller 2 and want
 to use this software on Windows.  
+It is dumbed down to what I would consider the bare minimum a user needs to know before getting started.  
+
 If you are **not** one of those users, check out the rest of the documentation, you'll most likely find everything you need to know there.  
+Or just fuck around and find out.  
 <sup>(_**Note**: While linux builds exist, this software is **not** really useful on Linux, aside from forwarding SteamInput to another machine_)</sup>
 
 ## Okay so what is SISR?
