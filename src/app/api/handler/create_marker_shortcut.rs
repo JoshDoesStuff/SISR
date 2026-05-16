@@ -33,16 +33,34 @@ pub async fn create_marker_shortcut(State(_state): State<AppState>) -> impl Into
                 .with_detail("Steam path not found.".to_string())
                 .into_response();
         };
-    let Some(active_user_id) = steam::util::active_user_id() else {
+    let mut active_user_id = None;
+    for _ in 0..10 {
+        if let Some(id) = steam::util::active_user_id()
+            && id != 0 {
+                active_user_id = Some(id);
+                break;
+            }
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+    }
+
+    let Some(active_user_id) = active_user_id else {
         return ProblemDetails::from_status_code(StatusCode::CONFLICT)
             .with_detail("No active Steam user found.".to_string())
             .into_response();
     };
 
-    let Some(shortcuts_path) = steam::util::get_shortcuts_path(&steam_path, active_user_id) else {
-        return ProblemDetails::from_status_code(StatusCode::CONFLICT)
-            .with_detail("Shortcuts path not found.".to_string())
-            .into_response();
+    let shortcuts_path = match steam::util::get_shortcuts_path(&steam_path, active_user_id) {
+        Some(path) => path,
+        None => {
+            // hack, sometimes steam is to slow and this breaks, just wait and retry
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+            let Some(path) = steam::util::get_shortcuts_path(&steam_path, active_user_id) else {
+                return ProblemDetails::from_status_code(StatusCode::CONFLICT)
+                    .with_detail("Shortcuts path not found.".to_string())
+                    .into_response();
+            };
+            path
+        }
     };
     let marker_exists = steam::util::shortcuts_has_sisr_marker(&shortcuts_path);
     if marker_exists > 0{
