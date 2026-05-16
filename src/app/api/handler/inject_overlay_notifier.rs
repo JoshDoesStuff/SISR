@@ -25,8 +25,9 @@ pub async fn inject_overlay_notifier(
 ) -> impl IntoResponse {
     tracing::debug!("Received request to inject overlay notifier");
 
-    let file_present = steam::cef_inject::util::debug_enable_file_present();
-    if !file_present {
+    let cef_debugging_enabled = steam::cef_inject::util::cef_debugging_enabled();
+    let steam_running = steam::util::steam_running();
+    if !steam_running || !cef_debugging_enabled {
         return ProblemDetails::from_status_code(StatusCode::CONFLICT)
             .with_detail(
                 "Steam CEF remote debugging is not enabled."
@@ -34,7 +35,10 @@ pub async fn inject_overlay_notifier(
             )
             .into_response();
     }
-    let reachable = steam::cef_inject::util::cef_remote_debug_reachable(8080).await;
+    let reachable = steam::cef_inject::util::cef_remote_debug_reachable(
+        steam::cef_inject::util::cef_remote_debug_port(),
+    )
+    .await;
     if !reachable {
         return ProblemDetails::from_status_code(StatusCode::CONFLICT)
             .with_detail(

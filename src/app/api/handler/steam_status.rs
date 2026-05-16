@@ -67,11 +67,22 @@ pub async fn steam_status(
         })
         .unwrap_or(0);
 
-    let steam_running = steam::util::steam_running();
+    let mut steam_running = steam::util::steam_running();
 
-    let steam_cef_port = 8080; // TODO: compatibility with stupid millenium (it changes the port via hooking into steam)
+    let steam_cef_port = steam::cef_inject::util::cef_remote_debug_port();
 
-    let cef_enable_file_present = steam::cef_inject::util::debug_enable_file_present();
+    let mut cef_debugging_enabled = steam::cef_inject::util::cef_debugging_enabled();
+    let cef_reachable = if steam_running && cef_debugging_enabled {
+        steam::cef_inject::util::cef_remote_debug_reachable(steam_cef_port).await
+    } else {
+        false
+    };
+    if !steam_running && cef_reachable {
+        steam_running = true;
+    }
+    if cef_reachable {
+        cef_debugging_enabled = true;
+    }
 
     (
         StatusCode::OK,
@@ -79,7 +90,7 @@ pub async fn steam_status(
             initial_launch: !steam::util::initial_setup_done(),
             no_steam_mode: get_config().steam.no_steam.unwrap_or(false),
             remote_debug: RemoteDebugStatus {
-                enabled: cef_enable_file_present,
+                enabled: cef_debugging_enabled,
                 port: steam_cef_port,
             },
             running: steam_running,

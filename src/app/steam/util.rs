@@ -544,7 +544,7 @@ pub fn try_set_marker_steam_env() -> anyhow::Result<()> {
 pub async fn open_controller_config(app_id: u32) {
     use crate::app::steam::cef_inject::{injector, util as cef_util};
 
-    if cef_util::debug_enable_file_present() {
+    if cef_util::cef_debugging_enabled() {
         let js = format!("SteamClient.Input.OpenDesktopConfigurator({});", app_id);
         match injector::inject::<serde_json::Value>(&js).await {
             Ok(_) => return,

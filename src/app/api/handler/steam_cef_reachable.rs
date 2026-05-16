@@ -25,10 +25,11 @@ pub async fn steam_cef_reachable() -> (StatusCode, Json<RemoteCefReachable>) {
     tracing::debug!("Received request for Steam CEF remote debugging reachability");
    
     let steam_running = steam::util::steam_running();
-    let cef_enable_file_present = steam::cef_inject::util::debug_enable_file_present();
+    let cef_debugging_enabled = steam::cef_inject::util::cef_debugging_enabled();
 
-    let cef_reachable = if steam_running && cef_enable_file_present {
-        cef_inject::util::cef_remote_debug_reachable(8080).await
+    let cef_reachable = if steam_running && cef_debugging_enabled {
+        cef_inject::util::cef_remote_debug_reachable(cef_inject::util::cef_remote_debug_port())
+            .await
     } else {
         false
     };

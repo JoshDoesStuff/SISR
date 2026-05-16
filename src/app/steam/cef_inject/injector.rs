@@ -9,7 +9,6 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 use crate::app::{api, steam::cef_inject::util};
 
 pub const DEFAULT_INJECT_TAB: &str = "SharedJSContext";
-const DEFAULT_CEF_DEBUG_PORT: u16 = 8080;
 const DEFAULT_INJECT_TIMEOUT: Duration = Duration::from_secs(5);
 const DEFAULT_TAB_WAIT_TIMEOUT: Duration = Duration::from_secs(5);
 const TAB_RETRY_INTERVAL: Duration = Duration::from_millis(1250);
@@ -49,12 +48,13 @@ where
 
 	let port = api::get_api_port()
 		.ok_or_else(|| anyhow!("API port is not available yet"))?;
+	let cef_debug_port = util::cef_remote_debug_port();
 	let prefixed_js = format!("window.__SISR_API_URL = \"http://localhost:{port}\";\n{js}");
 
 	let websocket_url = if retry {
 		let deadline = tokio::time::Instant::now() + DEFAULT_TAB_WAIT_TIMEOUT;
 		loop {
-			let tabs = util::get_cef_tabs(DEFAULT_CEF_DEBUG_PORT)
+			let tabs = util::get_cef_tabs(cef_debug_port)
 				.await
 				.context("failed to read Steam CEF tabs from remote debug endpoint")?;
 			tracing::debug!("inject_into_tab: got {} tabs from CEF debug endpoint", tabs.len());
@@ -73,7 +73,7 @@ where
 			tokio::time::sleep(TAB_RETRY_INTERVAL).await;
 		}
 	} else {
-		let tabs = util::get_cef_tabs(DEFAULT_CEF_DEBUG_PORT)
+		let tabs = util::get_cef_tabs(cef_debug_port)
 			.await
 			.context("failed to read Steam CEF tabs from remote debug endpoint")?;
 		tracing::debug!("inject_into_tab: got {} tabs from CEF debug endpoint", tabs.len());

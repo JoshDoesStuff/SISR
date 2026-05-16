@@ -67,13 +67,14 @@ pub async fn create_marker_shortcut(State(_state): State<AppState>) -> impl Into
         return (StatusCode::OK, Json(serde_json::json!({}))).into_response()
     };
 
-    let file_present = steam::cef_inject::util::debug_enable_file_present();
-    if !file_present {
+    let cef_debugging_enabled = steam::cef_inject::util::cef_debugging_enabled();
+    let steam_running = steam::util::steam_running();
+    if !steam_running || !cef_debugging_enabled {
         return ProblemDetails::from_status_code(StatusCode::CONFLICT)
             .with_detail("Steam CEF remote debugging is not enabled.".to_string())
             .into_response();
     }
-    let reachable = steam::cef_inject::util::cef_remote_debug_reachable(8080).await;
+    let reachable = steam::cef_inject::util::cef_remote_debug_reachable(steam::cef_inject::util::cef_remote_debug_port()).await;
     if !reachable {
         return ProblemDetails::from_status_code(StatusCode::CONFLICT)
             .with_detail("Steam CEF remote debugging is not reachable.".to_string())

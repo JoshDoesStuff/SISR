@@ -1,7 +1,14 @@
 use crate::app::steam;
 use serde::Deserialize;
 
-use std::{io, path::Path, process::Command, time::Duration};
+use std::{
+    io,
+    path::Path,
+    process::Command,
+    time::Duration,
+};
+
+pub const DEFAULT_CEF_DEBUG_PORT: u16 = 8080;
 
 #[derive(Deserialize)]
 pub struct TabInfo {
@@ -21,11 +28,31 @@ pub struct TabInfo {
     pub websocket_debugger_url: String,
 }
 
-pub fn debug_enable_file_present() -> bool {
+pub fn cef_debugging_enabled() -> bool {
     let Some(steam_path) = steam::util::steam_path() else {
         return false;
     };
-    steam_path.join(".cef-enable-remote-debugging").exists()
+    if steam_path.join(".cef-enable-remote-debugging").exists() {
+        return true;
+    }
+    cef_remote_debug_port() != DEFAULT_CEF_DEBUG_PORT
+}
+
+pub fn cef_remote_debug_port() -> u16 {
+    let default_port = DEFAULT_CEF_DEBUG_PORT;
+
+    #[cfg(target_os = "linux")]
+    {
+        return detect_cef_remote_debug_port_linux(default_port);
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        return detect_cef_remote_debug_port_windows(default_port);
+    }
+
+    #[allow(unreachable_code)]
+    default_port
 }
 
 pub async fn get_cef_tabs(port: u16) -> anyhow::Result<Vec<TabInfo>> {
@@ -59,7 +86,7 @@ pub async fn cef_remote_debug_reachable(port: u16) -> bool {
 }
 
 pub fn enable_cef_remote_debug() -> anyhow::Result<bool> {
-    if debug_enable_file_present() {
+    if cef_debugging_enabled() {
         return Ok(false);
     }
 
@@ -119,4 +146,90 @@ pub fn create_cef_file_elevated(file_path: &Path) -> anyhow::Result<()> {
 
         Ok(())
     }
+}
+
+#[cfg(target_os = "linux")]
+fn detect_cef_remote_debug_port_linux(default_port: u16) -> u16 {
+    const PREFIX: &str = "--remote-debugging-port=";
+
+    let Ok(entries) = std::fs::read_dir("/proc") else {
+        return default_port;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+
+        let Some(pid) = path.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+
+        if !pid.bytes().all(|ch| ch.is_ascii_digit()) {
+            continue;
+        }
+
+        let Ok(comm) = std::fs::read_to_string(path.join("comm")) else {
+            continue;
+        };
+
+        if !comm.trim().eq_ignore_ascii_case("steamwebhelper") {
+            continue;
+        }
+
+        let Ok(cmdline) = std::fs::read(path.join("cmdline")) else {
+            continue;
+        };
+
+        if cmdline.is_empty() {
+            continue;
+        }
+
+        let cmdline = String::from_utf8_lossy(&cmdline).replace('\0', " ");
+        for arg in cmdline.split_whitespace() {
+            if let Some(port) = parse_remote_debug_port_arg(arg, PREFIX) {
+                return port;
+            }
+        }
+    }
+
+    default_port
+}
+
+#[cfg(target_os = "windows")]
+fn detect_cef_remote_debug_port_windows(default_port: u16) -> u16 {
+    const PREFIX: &str = "--remote-debugging-port=";
+
+    use sysinfo::{ProcessesToUpdate, System};
+
+    let mut system = System::new_all();
+    system.refresh_processes(ProcessesToUpdate::All, true);
+
+    for process in system.processes().values() {
+        let name = process.name().to_string_lossy();
+        if !name.eq_ignore_ascii_case("steamwebhelper.exe")
+            && !name.eq_ignore_ascii_case("steamwebhelper")
+        {
+            continue;
+        }
+
+        for arg in process.cmd() {
+            let arg = arg.to_string_lossy();
+            if let Some(port) = parse_remote_debug_port_arg(arg.trim_matches('"'), PREFIX) {
+                return port;
+            }
+        }
+    }
+
+    default_port
+}
+
+fn parse_remote_debug_port_arg(arg: &str, prefix: &str) -> Option<u16> {
+    let port_str = arg.strip_prefix(prefix)?;
+    let port = port_str.parse::<u16>().ok()?;
+    if port == 0 {
+        return None;
+    }
+    Some(port)
 }
