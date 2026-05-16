@@ -31,39 +31,15 @@ pub async fn restart_sisr(State(_state): State<AppState>) -> impl IntoResponse {
                 .into_response();
         }
     };
-    let current_pid = std::process::id();
     let current_args: Vec<OsString> = env::args_os().skip(1).collect();
+
+    AppRunner::run_cleanup_handler();
 
     #[cfg(windows)]
     {
-        let ps_quote = |value: &str| format!("'{}'", value.replace('\'', "''"));
-
-        let exe = ps_quote(&current_exe.as_os_str().to_string_lossy());
-        let arg_list = if current_args.is_empty() {
-            String::from("@()")
-        } else {
-            format!(
-                "@({})",
-                current_args
-                    .iter()
-                    .map(|arg| ps_quote(&arg.to_string_lossy()))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            )
-        };
-        let command = format!(
-            "& {{ while (Get-Process -Id {current_pid} -ErrorAction SilentlyContinue) {{ Start-Sleep -Milliseconds 200 }}; Start-Process -FilePath {exe} -ArgumentList {arg_list} }}"
-        );
-
-        if let Err(e) = Command::new("powershell")
-            .args([
-                "-NoProfile",
-                "-NonInteractive",
-                "-WindowStyle",
-                "Hidden",
-                "-Command",
-                &command,
-            ])
+        if let Err(e) = Command::new("explorer.exe")
+            .arg(&current_exe)
+            .args(&current_args)
             .spawn()
         {
             tracing::error!("Failed to schedule SISR restart: {}", e);
@@ -71,10 +47,16 @@ pub async fn restart_sisr(State(_state): State<AppState>) -> impl IntoResponse {
                 .with_detail(format!("Failed to schedule SISR restart: {}", e))
                 .into_response();
         }
+
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+            std::process::exit(0);
+        });
     }
 
     #[cfg(target_os = "linux")]
     {
+        let current_pid = std::process::id();
         let pid = current_pid.to_string();
 
         if let Err(e) = Command::new("sh")
@@ -91,12 +73,12 @@ pub async fn restart_sisr(State(_state): State<AppState>) -> impl IntoResponse {
                 .with_detail(format!("Failed to schedule SISR restart: {}", e))
                 .into_response();
         }
-    }
 
-    tokio::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_millis(150)).await;
-        AppRunner::shutdown();
-    });
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+            AppRunner::shutdown_without_cleanup();
+        });
+    }
 
     (StatusCode::OK, Json(serde_json::json!({}))).into_response()
 }

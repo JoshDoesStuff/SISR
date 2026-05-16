@@ -1,7 +1,7 @@
 use std::{
     net::ToSocketAddrs,
-    process::{Child, ExitCode},
-    sync::{Arc, Mutex, OnceLock, RwLock, mpsc},
+    process::ExitCode,
+    sync::{Arc, Mutex, OnceLock, mpsc},
     thread,
     time::Duration,
 };
@@ -183,9 +183,7 @@ impl AppRunner {
         exit_code
     }
 
-    pub fn shutdown() {
-        tracing::info!("Shutting down application...");
-
+    pub fn run_cleanup_handler() {
         let (cleanup_done_tx, cleanup_done_rx) = mpsc::channel::<()>();
         get_tokio_handle().spawn(async move {
             for tab in steam::cef_inject::injector::CLEANUP_TABS {
@@ -227,6 +225,10 @@ impl AppRunner {
                 tracing::error!("Failed to reset Steam input binding on shutdown: {}", e);
             });
         }
+    }
+
+    pub fn shutdown_without_cleanup() {
+        tracing::info!("Shutting down application...");
 
         if let Some(mut child) = SPAWNED_VIIPER
             .write()
@@ -256,5 +258,10 @@ impl AppRunner {
             // error!("Failed to push Quit event to winit event loop: {}", e);
         }
         tray::shutdown();
+    }
+
+    pub fn shutdown() {
+        Self::run_cleanup_handler();
+        Self::shutdown_without_cleanup();
     }
 }
