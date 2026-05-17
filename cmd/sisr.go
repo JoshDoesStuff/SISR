@@ -1,4 +1,83 @@
 package main
 
+import (
+	"log/slog"
+	"os"
+	"runtime"
+	"time"
+
+	"github.com/Alia5/SISR/logging"
+	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/sdl/extras"
+	"github.com/Alia5/SISR/windows"
+)
+
 func main() {
+
+	logging.SetupLogger("debug", "")
+
+	err := sdl.Init(sdl.InitFlagVideo)
+	if err != nil {
+		slog.Error("Failed to init SDL", "error", err)
+		os.Exit(1)
+	}
+	defer sdl.Quit()
+
+	window, renderer, err := sdl.CreateWindowAndRenderer(
+		"SISR",
+		1280,
+		720,
+		sdl.WindowFlagVulkan|
+			sdl.WindowFlagTransparent|
+			sdl.WindowFlagBorderless|
+			sdl.WindowFlagAlwaysOnTop,
+	)
+	if err != nil {
+		slog.Error("Failed to create window", "error", err)
+		os.Exit(1)
+	}
+	defer window.Destroy()
+	defer renderer.Destroy()
+
+	if runtime.GOOS == "windows" {
+		err = windows.SetDWMPassiveUpdateMode(window)
+		if err != nil {
+			slog.Error("Failed to enable DWM passive update mode", "error", err)
+		}
+	}
+
+	err = extras.SetCursorHitTest(window, false)
+	if err != nil {
+		slog.Error("Failed to set cursor hit test", "error", err)
+	}
+
+	err = renderer.SetRenderDrawColor(0, 0, 0, 128)
+	if err != nil {
+		slog.Error("Failed to set render draw color", "error", err)
+		os.Exit(1)
+	}
+
+	for {
+		ev, ok := sdl.WaitEventTimeout(16 * time.Millisecond)
+		if ev != nil {
+			extras.HandleCursorHitTestWindowEvent(window, ev)
+			switch ev.(type) {
+			case *sdl.QuitEvent:
+				return
+			}
+		}
+		if !ok {
+			err = renderer.RenderClear()
+			if err != nil {
+				slog.Error("Failed to clear renderer", "error", err)
+				os.Exit(1)
+			}
+			err = renderer.RenderPresent()
+			if err != nil {
+				slog.Error("Failed to present renderer", "error", err)
+				os.Exit(1)
+			}
+		}
+	}
+
 }
