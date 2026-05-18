@@ -60,10 +60,17 @@ func main() {
 	for {
 		ev, ok := sdl.WaitEventTimeout(16 * time.Millisecond)
 		if ev != nil {
-			extras.HandleCursorHitTestWindowEvent(window, ev)
-			switch ev.(type) {
+			err := extras.HandleCursorHitTestWindowEvent(window, ev)
+			if err != nil {
+				slog.Error("Failed to handle cursor hit test window event", "error", err)
+			}
+			switch ev := ev.(type) {
 			case *sdl.QuitEvent:
 				return
+			case *sdl.KeyboardEvent:
+				if ev.Key == sdl.KeyCodeEscape && ev.Down {
+					slog.Info("Escape pressed")
+				}
 			}
 		}
 		if !ok {

@@ -371,7 +371,7 @@ func wrapKeyboard(ev *C.SDL_Event) Event {
 		WindowID:  uint32(k.windowID),
 		Which:     uint32(k.which),
 		Scancode:  uint32(k.scancode),
-		Key:       int32(k.key),
+		Key:       KeyCode(k.key),
 		Mod:       uint16(k.mod),
 		Raw:       uint16(k.raw),
 		Down:      bool(k.down),
@@ -843,7 +843,7 @@ type KeyboardEvent struct {
 	WindowID uint32
 	Which    uint32
 	Scancode uint32
-	Key      int32
+	Key      KeyCode
 	Mod      uint16
 	Raw      uint16
 	Down     bool
