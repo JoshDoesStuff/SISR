@@ -4,7 +4,6 @@ package sdl
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/../deps/SDL/include
-#cgo LDFLAGS: -L${SRCDIR}/../deps/SDL/build/Debug -lSDL3
 
 #include <stdlib.h>
 #include <SDL3/SDL_video.h>

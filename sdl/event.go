@@ -2,7 +2,6 @@ package sdl
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/../deps/SDL/include
-#cgo LDFLAGS: -L${SRCDIR}/../deps/SDL/build/Debug -lSDL3
 
 #include <stdlib.h>
 
@@ -15,7 +14,7 @@ import (
 	"unsafe"
 )
 
-// Fields shared by every event.
+// BaseEvent contains fields shared by every event.
 type BaseEvent struct {
 	Type      EventType
 	Timestamp uint64
@@ -66,7 +65,7 @@ func WaitEventTimeout(timeout time.Duration) (Event, bool) {
 
 // ---
 
-// The types of events that can be delivered.
+// EventType specifies the types of events that can be delivered.
 type EventType uint32
 
 // Event type constants.
