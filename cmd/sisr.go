@@ -9,12 +9,18 @@ import (
 	"github.com/Alia5/SISR/logging"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/SISR/sdl/extras"
+	"github.com/Alia5/SISR/webview"
 	"github.com/Alia5/SISR/windows"
 )
 
 func main() {
 
 	logging.SetupLogger("debug", "")
+
+	if err := webview.Init(); err != nil {
+		slog.Error("Failed to init webview subsystem", "error", err)
+		os.Exit(1)
+	}
 
 	err := sdl.Init(sdl.InitFlagVideo)
 	if err != nil {
@@ -51,11 +57,26 @@ func main() {
 		slog.Error("Failed to set cursor hit test", "error", err)
 	}
 
-	err = renderer.SetRenderDrawColor(0, 0, 0, 128)
+	err = renderer.SetRenderDrawColor(0, 0, 80, 128)
 	if err != nil {
 		slog.Error("Failed to set render draw color", "error", err)
 		os.Exit(1)
 	}
+
+	wv, err := webview.New(window, 1280, 720, true)
+	if err != nil {
+		slog.Error("Failed to create webview", "error", err)
+		os.Exit(1)
+	}
+	defer wv.Destroy()
+	wv.SetHTML(`<!DOCTYPE html>
+<html style="background: transparent;">
+<body style="margin: 0; background: transparent; display: grid; place-items: center; height: 100svh;">
+	<h1 style="color: red;">
+		hello SISR ✂️
+	</h1>
+</body>
+</html>`)
 
 	for {
 		ev, ok := sdl.WaitEventTimeout(16 * time.Millisecond)
@@ -71,6 +92,10 @@ func main() {
 				if ev.Key == sdl.KeyCodeEscape && ev.Down {
 					slog.Info("Escape pressed")
 				}
+			case *sdl.WindowEvent:
+				if ev.Type == sdl.EventTypeWindowResized {
+					wv.Resize(int(ev.Data1), int(ev.Data2))
+				}
 			}
 		}
 		if !ok {
@@ -85,6 +110,7 @@ func main() {
 				os.Exit(1)
 			}
 		}
+		wv.Tick()
 	}
 
 }
