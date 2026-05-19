@@ -20,7 +20,7 @@ import (
 	"unsafe"
 )
 
-// The structure that defines a display mode.
+// DisplayMode defines a display mode.
 type DisplayMode struct {
 	DisplayID              uint32
 	Format                 uint32
@@ -32,7 +32,7 @@ type DisplayMode struct {
 	RefreshRateDenominator int
 }
 
-// SDL_Rect equivalent used by window APIs.
+// Rect is the SDL_Rect equivalent used by window APIs.
 type Rect struct {
 	X int
 	Y int
@@ -40,10 +40,10 @@ type Rect struct {
 	H int
 }
 
-// Possible return values from the SDL_HitTest callback.
+// HitTestResult represents possible return values from the SDL_HitTest callback.
 type HitTestResult int
 
-// Callback used by SetWindowHitTest.
+// WindowHitTestFunc is the callback type used by SetWindowHitTest.
 type WindowHitTestFunc func(window *Window, x, y int) HitTestResult
 
 // Hit-test result values.
@@ -60,7 +60,7 @@ const (
 	HitTestResizeLeft        HitTestResult = C.SDL_HITTEST_RESIZE_LEFT
 )
 
-// The flags on a window.
+// WindowFlags are the flags on a window.
 type WindowFlags uint64
 
 // Window flags.
@@ -93,7 +93,7 @@ const (
 	WindowFlagNotFocusable      WindowFlags = C.SDL_WINDOW_NOT_FOCUSABLE
 )
 
-// The struct used as an opaque handle to a window.
+// Window is the opaque handle to an SDL window.
 type Window struct {
 	cWindow       *C.SDL_Window
 	hitTestHandle cgo.Handle

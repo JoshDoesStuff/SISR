@@ -16,13 +16,12 @@ import (
 	"github.com/Alia5/SISR/sdl"
 )
 
-func Init() error {
+func init() {
 	os.Setenv("GDK_BACKEND", "x11")
 	os.Setenv("SDL_VIDEO_DRIVER", "x11")
 	os.Setenv("GSK_RENDERER", "cairo")
 	os.Setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1")
 	C.gtk_init_once()
-	return nil
 }
 
 type linuxWebView struct {

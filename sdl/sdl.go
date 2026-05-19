@@ -11,7 +11,7 @@ package sdl
 import "C"
 import "runtime"
 
-// Initialization flags for SDL_Init and/or SDL_InitSubSystem.
+// InitFlags for SDL_Init and/or SDL_InitSubSystem.
 //
 // These are the flags which may be passed to SDL_Init(). You should specify
 // the subsystems which you will be using in your application.
@@ -29,13 +29,13 @@ const (
 	InitFlagCamera   InitFlags = C.SDL_INIT_CAMERA
 )
 
-// Initialize the SDL library.
+// Init initializes the SDL library.
 //
-// SDL_Init() simply forwards to calling SDL_InitSubSystem(). Therefore, the
+// Init simply forwards to calling SDL_InitSubSystem(). Therefore, the
 // two may be used interchangeably.
 //
-// Subsystem initialization is ref-counted; call SDL_QuitSubSystem() for each
-// SDL_InitSubSystem(), or call SDL_Quit() to force shutdown.
+// Subsystem initialization is ref-counted; call QuitSubSystem() for each
+// InitSubSystem(), or call Quit() to force shutdown.
 //
 // This function should only be called on the main thread.
 func Init(flags InitFlags) error {
@@ -47,7 +47,7 @@ func Init(flags InitFlags) error {
 	return nil
 }
 
-// Compatibility function to initialize the SDL library.
+// InitSubSystem compatibility function to initialize the SDL library.
 //
 // This function and SDL_Init() are interchangeable.
 //
@@ -61,7 +61,7 @@ func InitSubSystem(flags InitFlags) error {
 	return nil
 }
 
-// Shut down specific SDL subsystems.
+// QuitSubSystem shuts down specific SDL subsystems.
 //
 // You still need to call SDL_Quit() even if you close all open subsystems
 // with SDL_QuitSubSystem().
@@ -69,7 +69,7 @@ func QuitSubSystem(flags InitFlags) {
 	C.SDL_QuitSubSystem(C.Uint32(flags))
 }
 
-// Clean up all initialized subsystems.
+// Quit cleans up all initialized subsystems.
 //
 // This function should only be called on the main thread.
 func Quit() {

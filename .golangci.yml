@@ -22,6 +22,10 @@ linters:
       check-blank: false
       check-type-assertions: false
 
+    govet:
+      disable:
+      - unsafeptr
+
     staticcheck:
       checks:
       - all

@@ -12,10 +12,6 @@ import (
 	"github.com/Alia5/SISR/windows"
 )
 
-func Init() error {
-	return nil
-}
-
 type windowsWebView struct {
 	chromium *edge.Chromium
 	visible  bool
