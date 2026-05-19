@@ -39,6 +39,18 @@ func New(window *sdl.Window, w, h int, debug bool) (WebView, error) {
 	if !chromium.Embed(hwnd) {
 		return nil, errors.New("webview: failed to embed WebView2 into SDL window")
 	}
+	transparent, err := windows.HasWindowExStyleBits(hwnd, windows.WSExTransparent)
+	if err != nil {
+		return nil, err
+	}
+	if transparent {
+		err = windows.UpdateChildWindowsExStyleBits(hwnd, windows.WSExTransparent, windows.WSExLayered)
+	} else {
+		err = windows.UpdateChildWindowsExStyleBits(hwnd, 0, windows.WSExTransparent)
+	}
+	if err != nil {
+		return nil, err
+	}
 	controller2 := chromium.GetController().GetICoreWebView2Controller2()
 	if controller2 != nil {
 		err := controller2.PutDefaultBackgroundColor(edge.COREWEBVIEW2_COLOR{

@@ -63,7 +63,7 @@ func (w *linuxWebView) Eval(js string) {
 	C.webview_eval(w.handle, cs)
 }
 
-func (w *linuxWebView) Bind(name string, fn interface{}) error {
+func (w *linuxWebView) Bind(name string, fn any) error {
 	return errors.New("webview: Bind not yet implemented on Linux")
 }
 

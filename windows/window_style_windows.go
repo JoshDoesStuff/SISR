@@ -3,6 +3,7 @@
 package windows
 
 import (
+	"errors"
 	"fmt"
 	"syscall"
 )
@@ -12,20 +13,24 @@ var (
 	getWindowLongPtrStyleProc = user32StyleDLL.NewProc("GetWindowLongPtrW")
 	setWindowLongPtrStyleProc = user32StyleDLL.NewProc("SetWindowLongPtrW")
 	setWindowPosStyleProc     = user32StyleDLL.NewProc("SetWindowPos")
+	getWindowStyleProc        = user32StyleDLL.NewProc("GetWindow")
 )
 
 const (
-	GWLStyle  int32 = -16
+	GWLStyle   int32 = -16
 	GWLExStyle int32 = -20
 
-	WSClipChildren = 0x02000000
-	WSExLayered = 0x00080000
+	GWChild    = 5
+	GWHwndNext = 2
+
+	WSClipChildren  = 0x02000000
+	WSExLayered     = 0x00080000
 	WSExTransparent = 0x00000020
 
-	SWPNoSize      = 0x0001
-	SWPNoMove      = 0x0002
-	SWPNoZOrder    = 0x0004
-	SWPNoActivate  = 0x0010
+	SWPNoSize       = 0x0001
+	SWPNoMove       = 0x0002
+	SWPNoZOrder     = 0x0004
+	SWPNoActivate   = 0x0010
 	SWPFrameChanged = 0x0020
 )
 
@@ -85,4 +90,48 @@ func UpdateWindowExStyleBits(hwnd uintptr, setBits uintptr, clearBits uintptr) e
 		return err
 	}
 	return ApplyFrameChanged(hwnd)
+}
+
+func HasWindowExStyleBits(hwnd uintptr, bits uintptr) (bool, error) {
+	exStyle, err := getWindowLongPtr(hwnd, GWLExStyle)
+	if err != nil {
+		return false, err
+	}
+	return exStyle&bits == bits, nil
+}
+
+func walkChildWindows(parentHwnd uintptr, visitor func(hwnd uintptr) error) error {
+	child, _, _ := getWindowStyleProc.Call(parentHwnd, uintptr(GWChild))
+	for child != 0 {
+		nextChild, _, _ := getWindowStyleProc.Call(child, uintptr(GWHwndNext))
+		if err := visitor(child); err != nil {
+			return err
+		}
+		if err := walkChildWindows(child, visitor); err != nil {
+			return err
+		}
+		child = nextChild
+	}
+	return nil
+}
+
+func isInvalidWindowHandleError(err error) bool {
+	return errors.Is(err, syscall.Errno(6))
+}
+
+func UpdateChildWindowsExStyleBits(parentHwnd uintptr, setBits uintptr, clearBits uintptr) error {
+	return walkChildWindows(parentHwnd, func(hwnd uintptr) error {
+		err := UpdateWindowExStyleBits(hwnd, setBits, clearBits)
+		if err != nil && isInvalidWindowHandleError(err) {
+			return nil
+		}
+		return err
+	})
+}
+
+func UpdateWindowAndChildrenExStyleBits(hwnd uintptr, setBits uintptr, clearBits uintptr) error {
+	if err := UpdateWindowExStyleBits(hwnd, setBits, clearBits); err != nil {
+		return err
+	}
+	return UpdateChildWindowsExStyleBits(hwnd, setBits, clearBits)
 }

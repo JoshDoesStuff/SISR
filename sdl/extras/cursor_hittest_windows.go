@@ -14,9 +14,19 @@ func SetCursorHitTest(window *sdl.Window, hittest bool) error {
 		return nil
 	}
 	if hittest {
-		return windows.UpdateWindowExStyleBits(hwnd, 0, windows.WSExTransparent)
+		err := windows.UpdateWindowExStyleBits(hwnd, 0, windows.WSExTransparent|windows.WSExLayered)
+		if err != nil {
+			return err
+		}
+		_ = windows.UpdateChildWindowsExStyleBits(hwnd, 0, windows.WSExTransparent)
+		return nil
 	}
-	return windows.UpdateWindowExStyleBits(hwnd, windows.WSExTransparent, windows.WSExLayered)
+	err := windows.UpdateWindowExStyleBits(hwnd, windows.WSExTransparent|windows.WSExLayered, 0)
+	if err != nil {
+		return err
+	}
+	_ = windows.UpdateChildWindowsExStyleBits(hwnd, windows.WSExTransparent, windows.WSExLayered)
+	return nil
 }
 
 // CursorHitTestResizeCallback non linux stub
