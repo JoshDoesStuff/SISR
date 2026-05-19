@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
+	"slices"
 	"time"
 
 	"github.com/Alia5/SISR/logging"
@@ -11,16 +12,23 @@ import (
 	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/webview"
 	"github.com/Alia5/SISR/windows"
+	"github.com/Alia5/SISR/windows/hooks"
 )
 
 func main() {
 
-	logging.SetupLogger("debug", "")
-
-	if err := webview.Init(); err != nil {
-		slog.Error("Failed to init webview subsystem", "error", err)
-		os.Exit(1)
+	if _, _, err := logging.SetupLogger("debug", ""); err != nil {
+		slog.Error("Failed to setup logger", "error", err)
 	}
+
+	// The SDL_GAMECONTROLLER_IGNORE_DEVICES hint doesn't work when Steam is
+	// injected, but the env-var form does.
+	os.Setenv("SteamStreamingVideo", "0")                            //nolint:errcheck
+	os.Setenv("SteamStreaming", "0")                                 //nolint:errcheck
+	os.Setenv("SDL_GAMECONTROLLER_ALLOW_STEAM_VIRTUAL_GAMEPAD", "1") //nolint:errcheck
+	os.Setenv("SDL_JOYSTICK_HIDAPI_STEAMXBOX", "1")                  //nolint:errcheck
+	os.Setenv("SDL_GAMECONTROLLER_IGNORE_DEVICES", "")               //nolint:errcheck
+	os.Setenv("SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT", "")        //nolint:errcheck
 
 	err := sdl.Init(sdl.InitFlagVideo | sdl.InitFlagGamepad)
 	if err != nil {
@@ -123,6 +131,39 @@ func main() {
 </body>
 </html>`)
 
+	if runtime.GOOS == "windows" {
+		hookedFns := hooks.DetectHooks("hid.dll")
+		if len(hookedFns) > 0 {
+			slog.Info("Detected HID hooks")
+			toUnhookFNs := []string{
+				"HidD_FreePreparsedData",
+				"HidD_GetAttributes",
+				"HidD_GetPreparsedData",
+				"HidD_GetProductString",
+				"HidP_GetButtonCaps",
+				"HidP_GetCaps",
+				"HidP_GetData",
+				"HidP_GetUsageValue",
+				"HidP_GetUsages",
+				"HidP_GetValueCaps",
+				"HidP_MaxDataListLength",
+			}
+
+			for _, toUnhook := range toUnhookFNs {
+				if slices.Contains(hookedFns, toUnhook) {
+					unhooked := hooks.Unhook("hid.dll", toUnhook)
+					if unhooked {
+						slog.Info("Successfully unhooked HID export", "export", toUnhook)
+					} else {
+						slog.Warn("Failed to unhook HID export", "export", toUnhook)
+					}
+				} else {
+					slog.Info("HID export not hooked, skipping", "export", toUnhook)
+				}
+			}
+		}
+	}
+
 	for {
 		ev, _ := sdl.WaitEventTimeout(time.Millisecond * 16)
 		if ev != nil {
@@ -145,11 +186,12 @@ func main() {
 					}
 				}
 			case *sdl.GamepadDeviceEvent:
-				if ev.Type == sdl.EventTypeGamepadAdded {
+				switch ev.Type {
+				case sdl.EventTypeGamepadAdded:
 					id := sdl.GamepadID(ev.Which)
 					slog.Info("Gamepad connected", "id", id, "name", sdl.GetGamepadNameForID(id))
 					openGamepad(id)
-				} else if ev.Type == sdl.EventTypeGamepadRemoved {
+				case sdl.EventTypeGamepadRemoved:
 					id := sdl.GamepadID(ev.Which)
 					slog.Info("Gamepad disconnected", "id", id)
 					closeGamepad(id)

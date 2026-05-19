@@ -1,0 +1,33 @@
+package hooks
+
+import "errors"
+
+var (
+	ErrGetModuleFileNameWFailed            = errors.New("GetModuleFileNameW failed")
+	ErrLoadLibraryWFailed                  = errors.New("LoadLibraryW failed")
+	ErrInvalidPEMissingELfanew             = errors.New("invalid PE: missing e_lfanew")
+	ErrInvalidPESignature                  = errors.New("invalid PE signature")
+	ErrInvalidPESectionCount               = errors.New("invalid PE: section count")
+	ErrInvalidPEOptionalHeaderSize         = errors.New("invalid PE: optional header size")
+	ErrInvalidPEOptionalHeaderMagic        = errors.New("invalid PE: optional header magic")
+	ErrUnsupportedOptionalHeaderMagic      = errors.New("unsupported optional header magic")
+	ErrNoExportDirectory                   = errors.New("no export directory")
+	ErrInvalidPESectionVirtualSize         = errors.New("invalid PE: section virtual size")
+	ErrInvalidPESectionVirtualAddress      = errors.New("invalid PE: section virtual address")
+	ErrInvalidPESectionRawSize             = errors.New("invalid PE: section raw size")
+	ErrInvalidPESectionRawPointer          = errors.New("invalid PE: section raw pointer")
+	ErrFailedToMapExportDirectoryRVA       = errors.New("failed to map export directory RVA")
+	ErrInvalidExportDirectoryNumberOfNames = errors.New("invalid export directory: NumberOfNames")
+	ErrInvalidExportDirectoryFunctions     = errors.New("invalid export directory: AddressOfFunctions")
+	ErrInvalidExportDirectoryNames         = errors.New("invalid export directory: AddressOfNames")
+	ErrInvalidExportDirectoryOrdinals      = errors.New("invalid export directory: AddressOfNameOrdinals")
+	ErrFailedToMapNamesRVA                 = errors.New("failed to map names RVA")
+	ErrFailedToMapFunctionsRVA             = errors.New("failed to map functions RVA")
+	ErrFailedToMapOrdinalsRVA              = errors.New("failed to map ordinals RVA")
+	ErrInvalidLoadedExportDirectory        = errors.New("invalid loaded export directory")
+	ErrInvalidLoadedPESignature            = errors.New("invalid loaded PE signature")
+	ErrUnsupportedLoadedOptionalHeader     = errors.New("unsupported loaded optional header magic")
+	ErrLoadedModuleNoExportDirectory       = errors.New("loaded module has no export directory")
+	ErrVirtualProtectFailed                = errors.New("VirtualProtect failed")
+	ErrNotSupported                        = errors.New("not supported on this platform")
+)
