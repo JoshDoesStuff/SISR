@@ -22,12 +22,57 @@ func main() {
 		os.Exit(1)
 	}
 
-	err := sdl.Init(sdl.InitFlagVideo)
+	err := sdl.Init(sdl.InitFlagVideo | sdl.InitFlagGamepad)
 	if err != nil {
 		slog.Error("Failed to init SDL", "error", err)
 		os.Exit(1)
 	}
 	defer sdl.Quit()
+
+	sdl.SetGamepadEventsEnabled(true)
+
+	gamepads := map[sdl.GamepadID]*sdl.Gamepad{}
+	defer func() {
+		for id, gp := range gamepads {
+			if gp != nil {
+				gp.Close()
+			}
+			delete(gamepads, id)
+		}
+	}()
+
+	openGamepad := func(id sdl.GamepadID) {
+		if gp, ok := gamepads[id]; ok && gp != nil {
+			return
+		}
+		gp, openErr := sdl.OpenGamepad(id)
+		if openErr != nil {
+			slog.Warn("Failed to open gamepad", "id", id, "error", openErr)
+			return
+		}
+		gamepads[id] = gp
+		slog.Info("Gamepad opened", "id", id, "name", gp.Name(), "type", gp.Type(), "steamhandle", gp.GetSteamHandle())
+	}
+
+	closeGamepad := func(id sdl.GamepadID) {
+		gp, ok := gamepads[id]
+		if !ok {
+			return
+		}
+		if gp != nil {
+			gp.Close()
+		}
+		delete(gamepads, id)
+		slog.Info("Gamepad closed", "id", id)
+	}
+
+	if ids, listErr := sdl.GetGamepads(); listErr != nil {
+		slog.Warn("Failed to list initial gamepads", "error", listErr)
+	} else {
+		for _, id := range ids {
+			openGamepad(id)
+		}
+	}
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(
 		"SISR",
@@ -79,11 +124,13 @@ func main() {
 </html>`)
 
 	for {
-		ev, ok := sdl.WaitEventTimeout(16 * time.Millisecond)
+		ev, _ := sdl.WaitEventTimeout(time.Millisecond * 16)
 		if ev != nil {
-			err := extras.HandleCursorHitTestWindowEvent(window, ev)
-			if err != nil {
-				slog.Error("Failed to handle cursor hit test window event", "error", err)
+			if runtime.GOOS == "linux" {
+				err := extras.HandleCursorHitTestWindowEvent(window, ev)
+				if err != nil {
+					slog.Error("Failed to handle cursor hit test window event", "error", err)
+				}
 			}
 			switch ev := ev.(type) {
 			case *sdl.QuitEvent:
@@ -97,25 +144,34 @@ func main() {
 						slog.Info("WebView hidden")
 					}
 				}
+			case *sdl.GamepadDeviceEvent:
+				if ev.Type == sdl.EventTypeGamepadAdded {
+					id := sdl.GamepadID(ev.Which)
+					slog.Info("Gamepad connected", "id", id, "name", sdl.GetGamepadNameForID(id))
+					openGamepad(id)
+				} else if ev.Type == sdl.EventTypeGamepadRemoved {
+					id := sdl.GamepadID(ev.Which)
+					slog.Info("Gamepad disconnected", "id", id)
+					closeGamepad(id)
+				}
 			case *sdl.WindowEvent:
 				if ev.Type == sdl.EventTypeWindowResized {
 					wv.Resize(int(ev.Data1), int(ev.Data2))
 				}
 			}
 		}
-		if !ok {
-			err = renderer.RenderClear()
-			if err != nil {
-				slog.Error("Failed to clear renderer", "error", err)
-				os.Exit(1)
-			}
-			err = renderer.RenderPresent()
-			if err != nil {
-				slog.Error("Failed to present renderer", "error", err)
-				os.Exit(1)
-			}
-		}
+
 		wv.Tick()
+		err = renderer.RenderClear()
+		if err != nil {
+			slog.Error("Failed to clear renderer", "error", err)
+			os.Exit(1)
+		}
+		err = renderer.RenderPresent()
+		if err != nil {
+			slog.Error("Failed to present renderer", "error", err)
+			os.Exit(1)
+		}
 	}
 
 }
