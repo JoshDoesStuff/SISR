@@ -1,3 +1,6 @@
 [submodule "deps/SDL"]
 	path = deps/SDL
 	url = https://github.com/libsdl-org/SDL
+[submodule "deps/PolyHook2"]
+	path = deps/PolyHook2
+	url = https://github.com/stevemk14ebr/polyhook_2_0
