@@ -1,8 +1,4 @@
-/target
-
-# Rust
-**/*.rs.bk
-
+@@ -0,0 +1,39 @@
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -10,7 +6,6 @@
 *.so
 *.so.*
 *.dylib
-*.pdb
 
 # Test binary, built with `go test -c`
 *.test
@@ -31,21 +26,15 @@ go.work
 .DS_Store
 Thumbs.db
 
+# build
 dist/
+
+# Windows version info resources
+resource.syso
+versioninfo.tmp.json
 
 # Logs
 logs/
 log/
 !*/internal/log
 *.log
-
-*.profraw
-*.profdata
-coverage/
-
-.env
-.env.*
-!.env.example
-
-*.AppImage
-AppDir/
