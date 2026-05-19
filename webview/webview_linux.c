@@ -73,6 +73,14 @@ void webview_eval(WebViewLinux *wv, const char *js) {
     webkit_web_view_evaluate_javascript(wv->webview, js, -1, NULL, NULL, NULL, NULL, NULL);
 }
 
+void webview_set_visible(WebViewLinux *wv, int visible) {
+    if (visible) {
+        gtk_widget_set_visible(wv->window, TRUE);
+    } else {
+        gtk_widget_set_visible(wv->window, FALSE);
+    }
+}
+
 void webview_resize(WebViewLinux *wv, int width, int height) {
     gtk_window_set_default_size(GTK_WINDOW(wv->window), width, height);
     Display *x11_disp = gdk_x11_display_get_xdisplay(GDK_X11_DISPLAY(gdk_display_get_default()));

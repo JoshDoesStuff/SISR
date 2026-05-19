@@ -26,7 +26,10 @@ func Init() error {
 }
 
 type linuxWebView struct {
-	handle *C.WebViewLinux
+	handle  *C.WebViewLinux
+	visible bool
+	width   int
+	height  int
 }
 
 func New(window *sdl.Window, w, h int, _ bool) (WebView, error) {
@@ -39,7 +42,7 @@ func New(window *sdl.Window, w, h int, _ bool) (WebView, error) {
 	if handle == nil {
 		return nil, errors.New("webview: webview_create returned NULL")
 	}
-	return &linuxWebView{handle: handle}, nil
+	return &linuxWebView{handle: handle, visible: true, width: w, height: h}, nil
 }
 
 func (w *linuxWebView) Navigate(url string) {
@@ -64,8 +67,26 @@ func (w *linuxWebView) Bind(name string, fn interface{}) error {
 	return errors.New("webview: Bind not yet implemented on Linux")
 }
 
+func (w *linuxWebView) SetVisible(visible bool) {
+	if visible {
+		C.webview_set_visible(w.handle, C.int(1))
+		C.webview_resize(w.handle, C.int(w.width), C.int(w.height))
+	} else {
+		C.webview_set_visible(w.handle, C.int(0))
+	}
+	w.visible = visible
+}
+
+func (w *linuxWebView) Visible() bool {
+	return w.visible
+}
+
 func (w *linuxWebView) Resize(width, height int) {
-	C.webview_resize(w.handle, C.int(width), C.int(height))
+	w.width = width
+	w.height = height
+	if w.visible {
+		C.webview_resize(w.handle, C.int(width), C.int(height))
+	}
 }
 
 func (w *linuxWebView) Tick() {

@@ -90,7 +90,12 @@ func main() {
 				return
 			case *sdl.KeyboardEvent:
 				if ev.Key == sdl.KeyCodeEscape && ev.Down {
-					slog.Info("Escape pressed")
+					wv.SetVisible(!wv.Visible())
+					if wv.Visible() {
+						slog.Info("WebView shown")
+					} else {
+						slog.Info("WebView hidden")
+					}
 				}
 			case *sdl.WindowEvent:
 				if ev.Type == sdl.EventTypeWindowResized {

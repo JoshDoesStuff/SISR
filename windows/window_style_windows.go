@@ -1,0 +1,88 @@
+//go:build windows
+
+package windows
+
+import (
+	"fmt"
+	"syscall"
+)
+
+var (
+	user32StyleDLL            = syscall.NewLazyDLL("user32.dll")
+	getWindowLongPtrStyleProc = user32StyleDLL.NewProc("GetWindowLongPtrW")
+	setWindowLongPtrStyleProc = user32StyleDLL.NewProc("SetWindowLongPtrW")
+	setWindowPosStyleProc     = user32StyleDLL.NewProc("SetWindowPos")
+)
+
+const (
+	GWLStyle  int32 = -16
+	GWLExStyle int32 = -20
+
+	WSClipChildren = 0x02000000
+	WSExLayered = 0x00080000
+	WSExTransparent = 0x00000020
+
+	SWPNoSize      = 0x0001
+	SWPNoMove      = 0x0002
+	SWPNoZOrder    = 0x0004
+	SWPNoActivate  = 0x0010
+	SWPFrameChanged = 0x0020
+)
+
+func getWindowLongPtr(hwnd uintptr, index int32) (uintptr, error) {
+	value, _, callErr := getWindowLongPtrStyleProc.Call(hwnd, uintptr(index))
+	if value == 0 && callErr != syscall.Errno(0) {
+		return 0, fmt.Errorf("GetWindowLongPtrW failed: %w", callErr)
+	}
+	return value, nil
+}
+
+func setWindowLongPtr(hwnd uintptr, index int32, value uintptr) error {
+	result, _, callErr := setWindowLongPtrStyleProc.Call(hwnd, uintptr(index), value)
+	if result == 0 && callErr != syscall.Errno(0) {
+		return fmt.Errorf("SetWindowLongPtrW failed: %w", callErr)
+	}
+	return nil
+}
+
+func ApplyFrameChanged(hwnd uintptr) error {
+	flags := SWPNoSize | SWPNoMove | SWPNoZOrder | SWPNoActivate | SWPFrameChanged
+	result, _, callErr := setWindowPosStyleProc.Call(hwnd, 0, 0, 0, 0, 0, uintptr(flags))
+	if result == 0 {
+		if callErr != syscall.Errno(0) {
+			return fmt.Errorf("SetWindowPos failed: %w", callErr)
+		}
+		return fmt.Errorf("SetWindowPos failed")
+	}
+	return nil
+}
+
+func ClearWindowStyleBits(hwnd uintptr, bits uintptr) error {
+	style, err := getWindowLongPtr(hwnd, GWLStyle)
+	if err != nil {
+		return err
+	}
+	newStyle := style &^ bits
+	if newStyle == style {
+		return nil
+	}
+	if err := setWindowLongPtr(hwnd, GWLStyle, newStyle); err != nil {
+		return err
+	}
+	return ApplyFrameChanged(hwnd)
+}
+
+func UpdateWindowExStyleBits(hwnd uintptr, setBits uintptr, clearBits uintptr) error {
+	exStyle, err := getWindowLongPtr(hwnd, GWLExStyle)
+	if err != nil {
+		return err
+	}
+	newExStyle := (exStyle | setBits) &^ clearBits
+	if newExStyle == exStyle {
+		return nil
+	}
+	if err := setWindowLongPtr(hwnd, GWLExStyle, newExStyle); err != nil {
+		return err
+	}
+	return ApplyFrameChanged(hwnd)
+}
