@@ -4,13 +4,10 @@ package util
 
 func IsRunFromGUI() bool {
 	// On non-Windows, always return false.
-	// We only use this to spawn the viiper server without going through hoops...
-	// On Linux you can use nohup, systemd, and bazillion other ways...
-	// I'd like to also assume Linux users are familiar with a CLI
-	// if not... they should learn!
+	// We only use this to get the bost of both worlds, using the cli, and "pretending" to be linked as native GUI APP
 	return false
 }
 
 func HideConsoleWindow() {
-	// No-op on non-Windows platforms
+	// No-op on non-Windows
 }

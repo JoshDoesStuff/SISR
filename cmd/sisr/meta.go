@@ -14,7 +14,7 @@ var (
 )
 
 var descriptionTemplate = `
-Steam Input System Redirector
+SISR - Steam Input System Redirector
   Version: %s (%s)
            %s
   Source:  https://github.com/Alia5/SISR
