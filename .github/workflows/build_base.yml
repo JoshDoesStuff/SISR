@@ -27,261 +27,197 @@ jobs:
               uses: actions/checkout@v6.0.2
               with:
                   fetch-depth: 0
+                  submodules: recursive
 
-            - name: Set up Rust
-              uses: dtolnay/rust-toolchain@stable
+            - name: Setup Go
+              uses: actions/setup-go@v6.4.0
+              with:
+                  go-version: stable
+                  cache: true
+                  cache-dependency-path: go.sum
 
             - name: Set up Node.js
               uses: actions/setup-node@v6.4.0
               with:
                   node-version: "25"
-                  cache: "npm"
+                  cache: npm
                   cache-dependency-path: |
                       CEF_Payloads/package-lock.json
                       UI/package-lock.json
 
-            - name: Install CEF_Payloads dependencies
+            - name: CEF deps
               working-directory: CEF_Payloads
               run: npm ci
 
-            - name: Build CEF_Payloads
+            - name: CEF build
               working-directory: CEF_Payloads
               run: npm run build
 
-            - name: Install UI dependencies
+            - name: UI deps
               working-directory: UI
               run: npm ci
 
-            - name: Build UI
+            - name: UI build
               working-directory: UI
               env:
                   PUBLIC_DEV: "0"
-                  PUBLIC_LOG_LEVEL: "info"
+                  PUBLIC_LOG_LEVEL: info
               run: npm run build
 
-            - name: Cache Rust dependencies
-              uses: Swatinem/rust-cache@v2.9.1
-
-            - name: Install build dependencies (Ubuntu)
+            - name: Install build tools
               if: matrix.os == 'ubuntu-latest'
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y ninja-build cmake pkg-config libgtk-3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev libwebkit2gtk-4.1-dev librsvg2-dev libxdo-dev libxss-dev
+                  sudo apt-get install -y \
+                      build-essential ninja-build cmake pkg-config just \
+                      libwebkitgtk-6.0-dev libgtk-4-dev libx11-dev
 
-            - name: Install build tools (Windows)
+            - name: Install build tools
               if: matrix.os == 'windows-latest'
               shell: pwsh
               run: |
-                  choco install ninja cmake -y
-                  ninja --version
-                  cmake --version
+                  winget install -e --id Casey.Just --accept-package-agreements --accept-source-agreements
+
+            - name: Normalize line endings
+              if: matrix.os == 'windows-latest'
+              shell: pwsh
+              run: |
+                  git config --global core.autocrlf false
+                  git config --global core.eol lf
+                  git reset --hard HEAD
+
+            - name: Lint
+              uses: golangci/golangci-lint-action@v9.2.0
+              with:
+                  version: latest
+                  install-mode: goinstall
 
             - name: Run tests
-              run: cargo test --all-features
+              run: just test
 
     build:
         name: Build binaries (${{ matrix.target.name }})
         runs-on: ${{ matrix.target.os }}
+        needs: test
         strategy:
             fail-fast: false
             matrix:
                 target:
                     - {
-                          name: "x86_64-windows-msvc",
+                          name: "windows_x64",
                           os: "windows-latest",
+                          goos: "windows",
+                          goarch: "amd64",
                           ext: ".exe",
-                          rust_target: "x86_64-pc-windows-msvc",
-                          cross: false,
                       }
                     - {
-                          name: "aarch64-windows-msvc",
-                          os: "windows-latest",
-                          ext: ".exe",
-                          rust_target: "aarch64-pc-windows-msvc",
-                          cross: true,
-                      }
-                    - {
-                          name: "x86_64-linux",
+                          name: "linux_x64",
                           os: "ubuntu-latest",
+                          goos: "linux",
+                          goarch: "amd64",
                           ext: "",
-                          rust_target: "x86_64-unknown-linux-gnu",
-                          cross: false,
                       }
                     - {
-                          name: "aarch64-linux",
+                          name: "linux_arm64",
                           os: "ubuntu-24.04-arm",
+                          goos: "linux",
+                          goarch: "arm64",
                           ext: "",
-                          rust_target: "aarch64-unknown-linux-gnu",
-                          cross: false,
                       }
+
         steps:
-            - name: Checkout code
+            - name: Checkout
               uses: actions/checkout@v6.0.2
               with:
                   fetch-depth: 0
+                  submodules: recursive
 
-            - name: Set up Rust
-              uses: dtolnay/rust-toolchain@stable
+            - name: Setup Go
+              uses: actions/setup-go@v6.4.0
               with:
-                  targets: ${{ matrix.target.rust_target }}
+                  go-version: stable
+                  cache: true
+                  cache-dependency-path: go.sum
 
-            - name: Set up Node.js
+            - name: Setup Node
               uses: actions/setup-node@v6.4.0
               with:
                   node-version: "25"
-                  cache: "npm"
+                  cache: npm
                   cache-dependency-path: |
                       CEF_Payloads/package-lock.json
                       UI/package-lock.json
 
-            - name: Install CEF_Payloads dependencies
+            - name: CEF deps
               working-directory: CEF_Payloads
               run: npm ci
 
-            - name: Build CEF_Payloads
+            - name: CEF build
               working-directory: CEF_Payloads
               run: npm run build
 
-            - name: Install UI dependencies
+            - name: UI deps
               working-directory: UI
               run: npm ci
 
-            - name: Build UI
+            - name: UI build
               working-directory: UI
               env:
                   PUBLIC_DEV: "0"
                   PUBLIC_LOG_LEVEL: "info"
               run: npm run build
 
-            - name: Cache Rust dependencies
-              uses: Swatinem/rust-cache@v2.9.1
-              with:
-                  key: ${{ matrix.target.rust_target }}
-
-            - name: Install build dependencies (Ubuntu)
+            - name: Install build tools
               if: matrix.target.os == 'ubuntu-latest' || matrix.target.os == 'ubuntu-24.04-arm'
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y ninja-build cmake pkg-config libgtk-3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev libwebkit2gtk-4.1-dev librsvg2-dev libxdo-dev libxss-dev
+                  sudo apt-get install -y \
+                      build-essential ninja-build cmake pkg-config just \
+                      libwebkitgtk-6.0-dev libgtk-4-dev libx11-dev
 
-            - name: Install build tools (Windows)
+            - name: Install build tools
               if: matrix.target.os == 'windows-latest'
               shell: pwsh
               run: |
-                  choco install ninja cmake -y
-                  ninja --version
-                  cmake --version
+                  winget install -e --id Casey.Just --accept-package-agreements --accept-source-agreements
+                  winget install -e --id MartinStorsjo.LLVM-MinGW.UCRT --accept-package-agreements --accept-source-agreements
+                  winget install -e --id Kitware.CMake --accept-package-agreements --accept-source-agreements
 
-            - name: Calculate version
+            - name: Version
               id: version
               shell: bash
               run: |
-                  VERSION=$(git describe --tags --match "v[0-9]*.[0-9]*.[0-9]*" --always || echo "v0.0.0-dev")
-                  git fetch --tags --force || true
-                  if ! echo "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+'; then
-                    COMMIT_COUNT=$(git rev-list --count HEAD)
-                    VERSION="v0.0.0-${COMMIT_COUNT}-${GITHUB_SHA:0:7}"
-                  fi
+                  VERSION=$(git describe --tags --always)
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
-                  echo "Version: $VERSION"
 
             - name: Build
               shell: bash
               env:
-                  SISR_VERSION: ${{ steps.version.outputs.version }}
+                  GOOS: ${{ matrix.target.goos }}
+                  GOARCH: ${{ matrix.target.goarch }}
+                  CGO_ENABLED: "1"
+                  VERSION: ${{ steps.version.outputs.version }}
               run: |
-                  mkdir -p dist/package
-                  cargo build --release --target ${{ matrix.target.rust_target }}
-
-                  cp target/${{ matrix.target.rust_target }}/release/SISR${{ matrix.target.ext }} dist/package/SISR${{ matrix.target.ext }}
-
-                  if [ "${{ matrix.target.os }}" = "windows-latest" ]; then
-                    SDL3_DLL=$(find target/${{ matrix.target.rust_target }}/release/build/sdl3-sys-*/out/build -name "SDL3.dll" | head -1)
-                    if [ -f "$SDL3_DLL" ]; then
-                      cp "$SDL3_DLL" dist/package/
-                      echo "Copied SDL3.dll"
-                    else
-                      echo "Warning: SDL3.dll not found"
-                    fi
-                  else
-                    SDL3_SO=$(find target/${{ matrix.target.rust_target }}/release/build/sdl3-sys-*/out/build -name "libSDL3.so*" | head -1)
-                    if [ -f "$SDL3_SO" ]; then
-                      cp -P "$SDL3_SO"* dist/package/ 2>/dev/null || cp "$SDL3_SO" dist/package/
-                      rm -f target/${{ matrix.target.rust_target }}/release/libSDL3.so.0
-                      cp "$SDL3_SO" target/${{ matrix.target.rust_target }}/release/libSDL3.so.0
-                      echo "Copied SDL3 library"
-                    else
-                      echo "Warning: SDL3 library not found"
-                    fi
-                  fi
-
-                  # Include VIIPER server binary
-                  if [ "${{ matrix.target.os }}" = "windows-latest" ]; then
-                    CANDIDATE1="target/${{ matrix.target.rust_target }}/release/viiper${{ matrix.target.ext }}"
-                    CANDIDATE2="target/release/viiper${{ matrix.target.ext }}"
-                  else
-                    CANDIDATE1="target/${{ matrix.target.rust_target }}/release/viiper"
-                    CANDIDATE2="target/release/viiper"
-                  fi
-
-                  if [ -f "$CANDIDATE1" ]; then
-                    cp "$CANDIDATE1" dist/package/
-                    echo "Included VIIPER binary from $CANDIDATE1"
-                  elif [ -f "$CANDIDATE2" ]; then
-                    cp "$CANDIDATE2" dist/package/
-                    echo "Included VIIPER binary from $CANDIDATE2"
-                  fi
-
-                  ls -la dist/package
+                  just build Release
 
             - name: Build AppImage
-              if: startsWith(matrix.target.name, 'aarch64-linux') || startsWith(matrix.target.name, 'x86_64-linux')
+              if: matrix.target.os == 'ubuntu-latest' || matrix.target.os == 'ubuntu-24.04-arm'
               shell: bash
               run: |
                   ARCH=$(uname -m)
                   curl -fsSL "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${ARCH}.AppImage" -o linuxdeploy
                   chmod +x linuxdeploy
-                  rm -rf AppDir
-                  mkdir -p AppDir/usr/lib64
-                  export LD_LIBRARY_PATH="target/${{ matrix.target.rust_target }}/release:$LD_LIBRARY_PATH"
-                  export LINUXDEPLOY_EXCLUDED_LIBRARIES="\
-                    libxkbcommon.so*;libxkbcommon-x11.so*;\
-                    libwayland-client.so*;libwayland-cursor.so*;libwayland-egl.so*;\
-                    libglib-2.0.so*;libgobject-2.0.so*;libgio-2.0.so*;libgmodule-2.0.so*;libgthread-2.0.so*;\
-                    libglib-*.so*;libgobject-*.so*;\
-                    libgtk-3.so*;libgdk-3.so*;\
-                    libwebkit2gtk*.so*;libjavascriptcoregtk*.so*;\
-                    libicudata.so*;libicui18n.so*;libicuuc.so*;\
-                    libcairo.so*;libcairo-gobject.so*;\
-                    libpango-1.0.so*;libpangocairo-1.0.so*;libpangoft2-1.0.so*;\
-                    libatk-1.0.so*;libatk-bridge-2.0.so*;libatspi.so*;\
-                    libepoxy.so*;\
-                    libharfbuzz.so*;libfontconfig.so*;libfreetype.so*;\
-                    libpixman-1.so*;\
-                    libdbus-1.so*;\
-                    libsecret-1.so*;\
-                    libgcrypt.so*;libgpg-error.so*;\
-                    libffi.so*;\
-                    libpcre2-8.so*;libpcre2-16.so*;libpcre2-32.so*"
-                  export LINUXDEPLOY_EXCLUDED_LIBRARIES="${LINUXDEPLOY_EXCLUDED_LIBRARIES//[$'\n ']/}"
-
-                  mkdir -p AppDir/apprun-hooks
-                  cp scripts/apprun-hooks/gdk-x11.sh AppDir/apprun-hooks/gdk-x11.sh
-                  chmod +x AppDir/apprun-hooks/gdk-x11.sh
-
-                  NO_STRIP=1 APPIMAGE_EXTRACT_AND_RUN=1 ./linuxdeploy --appimage-extract-and-run --appdir AppDir -l target/${{ matrix.target.rust_target }}/release/libSDL3.so.0 -e target/${{ matrix.target.rust_target }}/release/SISR -d sisr.desktop -i docs/SISR.svg --output appimage
-
-                  mkdir -p dist/appimage
-                  mv SISR-${ARCH}.AppImage dist/appimage/
+                  export PATH="$PWD:$PATH"
+                  ./build_appimage.sh
 
             - name: Create archive
               shell: bash
               run: |
                   cd dist
                   if [ "${{ matrix.target.os }}" = "windows-latest" ]; then
-                    7z a -tzip "SISR-${{ matrix.target.name }}${{ inputs.artifact_suffix }}.zip" ./package/*
+                    7z a -tzip "SISR-${{ matrix.target.name }}${{ inputs.artifact_suffix }}.zip" *
                   else
-                    tar -czf "SISR-${{ matrix.target.name }}${{ inputs.artifact_suffix }}.tar.gz" -C package .
+                    tar --exclude='./appimage' -czf "SISR-${{ matrix.target.name }}${{ inputs.artifact_suffix }}.tar.gz" .
                   fi
                   cd ..
 
@@ -296,7 +232,7 @@ jobs:
                   if-no-files-found: warn
 
             - name: Upload AppImage artifact
-              if: ${{ inputs.upload_artifacts && (startsWith(matrix.target.name, 'aarch64-linux') || startsWith(matrix.target.name, 'x86_64-linux')) }}
+              if: ${{ inputs.upload_artifacts && (matrix.target.os == 'ubuntu-latest' || matrix.target.os == 'ubuntu-24.04-arm') }}
               uses: actions/upload-artifact@v7.0.1
               with:
                   name: SISR-${{ matrix.target.name }}-AppImage${{ inputs.artifact_suffix }}
