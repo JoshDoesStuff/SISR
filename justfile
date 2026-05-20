@@ -8,19 +8,15 @@ exe_ext := if target_goos == "windows" { ".exe" } else { "" }
 mkdir_p := if os_family() == "windows" { "New-Item -ItemType Directory -Force" } else { "mkdir -p" }
 rm_rf := if os_family() == "windows" { "Remove-Item -Recurse -Force -ErrorAction 0" } else { "rm -rf" }
 
-version := env_var_or_default("VERSION", "dev")
+version := env_var_or_default("VERSION", `git describe --tags --always`)
 buildType := env_var_or_default("BUILD_TYPE", "Debug")
-commit := if os_family() == "windows" {
-    shell("if ($g = git rev-parse --short HEAD) { $g } else { 'unknown' } #")
-} else {
-	shell("git rev-parse --short HEAD || echo unknown")
-}
+commit := `git rev-parse --short HEAD`
 build_time := if os_family() == "windows" {
-    shell("if ($t = Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ') { $t } else { 'unknown' } #")
+	`Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ'`
 } else {
-    shell("date -u '+%Y-%m-%dT%H:%M:%SZ'")
+	`date -u '+%Y-%m-%dT%H:%M:%SZ'`
 }
-ldflags := "-s -w -X github.com/Alia5/sisr/version.Version=" + version + " -X github.com/Alia5/sisr/version.Commit=" + commit + " -X github.com/Alia5/sisr/version.BuildTime=" + build_time
+ldflags := "-s -w -X github.com/Alia5/SISR/meta.Version=" + version + " -X github.com/Alia5/SISR/meta.Commit=" + commit + " -X github.com/Alia5/SISR/meta.Date=" + build_time
 build_path := join(dist_dir, binary_name + exe_ext)
 
 default:
