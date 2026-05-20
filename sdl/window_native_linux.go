@@ -16,13 +16,13 @@ func (w *Window) GetNativeHandle() (unsafe.Pointer, error) {
 	if x11Display != 0 {
 		x11Window := w.GetX11WindowNumber()
 		if x11Window != 0 {
-			return unsafe.Pointer(uintptr(x11Window)), nil
+			return unsafe.Pointer(x11Window), nil
 		}
 	}
 
 	waylandSurface := w.GetPointerProperty(WindowPointerPropertyWaylandSurface)
 	if waylandSurface != 0 {
-		return unsafe.Pointer(uintptr(waylandSurface)), nil
+		return unsafe.Pointer(waylandSurface), nil
 	}
 
 	return nil, errors.New("native window handle is unavailable")

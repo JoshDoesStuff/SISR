@@ -42,6 +42,9 @@ linters:
   exclusions:
     presets: []
     rules:
+    - path: node_modules
+      linters:
+      - govet
     - path: _test\.go
       linters:
       - errcheck
