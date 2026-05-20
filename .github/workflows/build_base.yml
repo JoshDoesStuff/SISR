@@ -15,90 +15,9 @@ on:
                 description: "Whether to upload build artifacts"
 
 jobs:
-    test:
-        name: Test
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-                os: [ubuntu-latest, windows-latest]
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v6.0.2
-              with:
-                  fetch-depth: 0
-                  submodules: recursive
-
-            - name: Setup Go
-              uses: actions/setup-go@v6.4.0
-              with:
-                  go-version: stable
-                  cache: true
-                  cache-dependency-path: go.sum
-
-            - name: Set up Node.js
-              uses: actions/setup-node@v6.4.0
-              with:
-                  node-version: "25"
-                  cache: npm
-                  cache-dependency-path: |
-                      CEF_Payloads/package-lock.json
-                      UI/package-lock.json
-
-            - name: CEF deps
-              working-directory: CEF_Payloads
-              run: npm ci
-
-            - name: CEF build
-              working-directory: CEF_Payloads
-              run: npm run build
-
-            - name: UI deps
-              working-directory: UI
-              run: npm ci
-
-            - name: UI build
-              working-directory: UI
-              env:
-                  PUBLIC_DEV: "0"
-                  PUBLIC_LOG_LEVEL: info
-              run: npm run build
-
-            - name: Install build tools
-              if: matrix.os == 'ubuntu-latest'
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y \
-                      build-essential ninja-build cmake pkg-config just \
-                      libwebkitgtk-6.0-dev libgtk-4-dev libx11-dev
-
-            - name: Install build tools
-              if: matrix.os == 'windows-latest'
-              shell: pwsh
-              run: |
-                  winget install -e --id Casey.Just --accept-package-agreements --accept-source-agreements
-
-            - name: Normalize line endings
-              if: matrix.os == 'windows-latest'
-              shell: pwsh
-              run: |
-                  git config --global core.autocrlf false
-                  git config --global core.eol lf
-                  git reset --hard HEAD
-
-            - name: Lint
-              uses: golangci/golangci-lint-action@v9.2.0
-              with:
-                  version: latest
-                  install-mode: goinstall
-
-            - name: Run tests
-              run: just test
-
     build:
         name: Build binaries (${{ matrix.target.name }})
         runs-on: ${{ matrix.target.os }}
-        needs: test
         strategy:
             fail-fast: false
             matrix:
@@ -126,6 +45,11 @@ jobs:
                       }
 
         steps:
+            - name: Disable git autocrlf
+              run: |
+                  git config --global core.autocrlf false
+                  git config --global core.eol lf
+
             - name: Checkout
               uses: actions/checkout@v6.0.2
               with:
@@ -172,16 +96,20 @@ jobs:
               run: |
                   sudo apt-get update
                   sudo apt-get install -y \
-                      build-essential ninja-build cmake pkg-config just \
-                      libwebkitgtk-6.0-dev libgtk-4-dev libx11-dev
+                      build-essential ninja-build cmake pkg-config \
+                      libwebkitgtk-6.0-dev libgtk-4-dev libx11-dev \
+                      libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev \
+                      libxss-dev libxtst-dev libxkbcommon-dev
 
             - name: Install build tools
               if: matrix.target.os == 'windows-latest'
               shell: pwsh
               run: |
-                  winget install -e --id Casey.Just --accept-package-agreements --accept-source-agreements
                   winget install -e --id MartinStorsjo.LLVM-MinGW.UCRT --accept-package-agreements --accept-source-agreements
                   winget install -e --id Kitware.CMake --accept-package-agreements --accept-source-agreements
+
+            - name: Setup just
+              uses: extractions/setup-just@v3
 
             - name: Version
               id: version
@@ -189,6 +117,12 @@ jobs:
               run: |
                   VERSION=$(git describe --tags --always)
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Lint
+              uses: golangci/golangci-lint-action@v9.2.0
+              with:
+                  version: latest
+                  install-mode: goinstall
 
             - name: Build
               shell: bash
@@ -238,3 +172,6 @@ jobs:
                   name: SISR-${{ matrix.target.name }}-AppImage${{ inputs.artifact_suffix }}
                   path: dist/appimage/*.AppImage
                   if-no-files-found: warn
+
+            - name: Run tests
+              run: just test
