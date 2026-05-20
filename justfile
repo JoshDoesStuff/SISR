@@ -27,8 +27,8 @@ default:
 	just --list
 
 [working-directory: 'dist']
-run:
-	go run ../{{ main_pkg }}
+run *args:
+	go run ../{{ main_pkg }} {{ args }}
 
 [working-directory: 'dist']
 run-built:
