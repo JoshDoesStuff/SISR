@@ -17,5 +17,5 @@ func (w *Window) GetNativeHandle() (unsafe.Pointer, error) {
 		return nil, errors.New("native window handle is unavailable")
 	}
 
-	return unsafe.Pointer(hwnd), nil //nolint:govet
+	return unsafe.Pointer(hwnd), nil
 }

@@ -7,7 +7,7 @@ package polyhook
 #cgo CXXFLAGS: -I${SRCDIR}/../deps/PolyHook2/asmtk/src
 #cgo CXXFLAGS: -I${SRCDIR}/../deps/PolyHook2/zydis/include
 #cgo CXXFLAGS: -I${SRCDIR}/../deps/PolyHook2/zydis/dependencies/zycore/include
-#cgo LDFLAGS: -L${SRCDIR}/../deps/PolyHook2/build/Debug -lPolyHook_2
+#cgo LDFLAGS: -L${SRCDIR}/../deps/PolyHook2/build/lib -lPolyHook_2
 #cgo LDFLAGS: -L${SRCDIR}/../deps/PolyHook2/build/zydis/Debug -lZydis
 #cgo LDFLAGS: -L${SRCDIR}/../deps/PolyHook2/build/zydis/dependencies/zycore/Debug -lZycore
 #cgo LDFLAGS: -L${SRCDIR}/../deps/PolyHook2/build/asmtk/Debug -lasmjit -lasmtk
