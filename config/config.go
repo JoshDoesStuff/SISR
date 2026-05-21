@@ -9,8 +9,8 @@ const (
 )
 
 type Log struct {
-	Level string `help:"Log level: trace, debug, info, warn, error" default:"info" env:"SISR_LOG_LEVEL"`
-	File  string `help:"Log file path (default: none; logs only to console)" env:"SISR_LOG_FILE"`
+	Level string `help:"Log level: trace, debug, info, warn, error" aliases:"l" default:"info" env:"SISR_LOG_LEVEL"`
+	File  string `help:"Log file path" env:"SISR_LOG_FILE"`
 }
 
 type Global struct {
