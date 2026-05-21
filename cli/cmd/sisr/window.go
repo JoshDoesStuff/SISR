@@ -12,16 +12,16 @@ import (
 
 func (s *SISR) createWindow(
 	cfg *config.Global, //nolint:unparam
-	frontendAddr string, //nolint:unparam
 ) (*sdl.Window, sdl.Renderer, webview.WebView, error) {
-	setSDLHintEnv()
-	err := sdl.Init(sdl.InitFlagVideo | sdl.InitFlagGamepad)
+
+	err := sdl.Init(sdl.InitFlagVideo)
 	if err != nil {
 		slog.Error("Failed to init SDL", "error", err)
 		return nil, nil, nil, err
 	}
 
-	flags := sdl.WindowFlagVulkan | sdl.WindowFlagTransparent | sdl.WindowFlagBorderless | sdl.WindowFlagAlwaysOnTop
+	flags := sdl.WindowFlagVulkan | sdl.WindowFlagTransparent
+	// sdl.WindowFlagBorderless | sdl.WindowFlagAlwaysOnTop // TODO:
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(
 		"SISR",
@@ -57,18 +57,8 @@ func (s *SISR) createWindow(
 		window.Destroy()
 		return nil, nil, nil, err
 	}
-	wv.SetHTML(`<!DOCTYPE html>
-	<html style="background: transparent;">
-	<body style="margin: 0; background: transparent; display: grid; place-items: center; height: 100svh;">
-		<h1 style="color: red;">
-			hello SISR ✂️
-		</h1>
-	</body>
-	</html>`)
-	// TODO: replace setHTML with navigate
-	// wv.Navigate(frontendAddr)
 
-	window.HideWindow()
+	// window.HideWindow() // TODO:
 
 	return window, renderer, wv, nil
 }

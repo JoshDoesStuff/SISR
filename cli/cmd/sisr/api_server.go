@@ -1,6 +1,7 @@
 package sisr
 
 import (
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
@@ -9,15 +10,24 @@ import (
 	"strings"
 
 	"github.com/Alia5/SISR/api"
+	"github.com/Alia5/SISR/api/handler"
+	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/logging"
 	"github.com/Alia5/SISR/meta"
 	"github.com/Alia5/SISR/middleware"
+	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/webview"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
 	"github.com/rs/cors"
 )
 
-func (s *SISR) runAPIServer() (*http.Server, huma.API, string) {
+func (s *SISR) runAPIServer(
+	window *sdl.Window,
+	wv webview.WebView,
+	dh input.DeviceHandler,
+	stopFn context.CancelFunc,
+) (*http.Server, string) {
 	l, err := net.Listen("tcp", s.ListenAddress)
 	if err != nil {
 		slog.Error("Failed to listen", "addr", s.ListenAddress, "err", err)
@@ -98,7 +108,12 @@ func (s *SISR) runAPIServer() (*http.Server, huma.API, string) {
 		))
 	})
 
-	// api.RegisterAPI(hAPI)
+	api.RegisterAPI(hAPI, &handler.RegisterParams{
+		Window:        window,
+		WebView:       wv,
+		DeviceHandler: dh,
+		QuitFn:        stopFn,
+	})
 
 	allowedOrigins := slices.Concat(
 		[]string{serverURL},
@@ -146,6 +161,6 @@ func (s *SISR) runAPIServer() (*http.Server, huma.API, string) {
 	slog.Info("Started Server", "addr", apiSrv.Addr, "url", serverURL)
 	slog.Info("Docs on", "addr", apiSrv.Addr, "url", serverURL+"/docs")
 
-	return &apiSrv, hAPI, serverURL
+	return &apiSrv, serverURL
 
 }

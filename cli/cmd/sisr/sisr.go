@@ -5,20 +5,24 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
 
 	"github.com/Alia5/SISR/config"
+	"github.com/Alia5/SISR/event"
 	"github.com/Alia5/SISR/helper"
+	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/sdl"
-	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/webview"
 )
 
 type SISR struct {
 	config.API `embed:"" prefix:""`
 	Steam      config.Steam `embed:"" prefix:"steam."`
+	MaxFPS     uint32       `default:"60" help:"Maximim FPS for SteamOverlay/UI (Does not affect inputs)" env:"SISR_MAX_FPS"`
+	//
+	lastRenderTime      time.Time
+	targetFrameDuration time.Duration
 }
 
 func (s *SISR) Run(cfg config.Global) error {
@@ -27,22 +31,12 @@ func (s *SISR) Run(cfg config.Global) error {
 		os.Interrupt, syscall.SIGTERM,
 	)
 	defer stop()
+	defer cleanup()
 
-	defer func() {
-		slog.Info("Shutting down")
-		err := helper.OpenURL("steam://forceinputappid/0")
-		if err != nil {
-			slog.Error("Failed to reset steam controller config", "error", err)
-		}
-	}()
+	setSDLHintEnv()
+	setSDLHints()
 
-	_, _, apiAddr := s.runAPIServer()
-	frontendAddr := s.FrontendAddress
-	if frontendAddr == "" {
-		frontendAddr = apiAddr
-	}
-
-	window, renderer, wv, err := s.createWindow(&cfg, frontendAddr)
+	window, renderer, wv, err := s.createWindow(&cfg)
 	if err != nil {
 		return err
 	}
@@ -52,66 +46,105 @@ func (s *SISR) Run(cfg config.Global) error {
 		window.Destroy()
 	}()
 
-	sdl.SetGamepadEventsEnabled(true)
+	dh, dhCleanup, err := input.NewDeviceHandler(window, wv)
+	if err != nil {
+		slog.Error("Failed to initialite DeviceHanlder", "error", err)
+	}
+	defer dhCleanup()
 
-	return s.run(ctx, window, renderer, wv)
+	_, apiAddr := s.runAPIServer(window, wv, dh, stop)
+	frontendAddr := s.FrontendAddress
+	if frontendAddr == "" {
+		frontendAddr = apiAddr
+	}
+	router := event.NewRouter(window, renderer, wv, stop)
+	wv.Navigate(frontendAddr)
+
+	if s.MaxFPS == 0 {
+		s.targetFrameDuration = 0
+	} else {
+		s.targetFrameDuration = time.Second / 60
+	}
+
+	return s.run(ctx, renderer, wv, router, stop)
 }
 
-func (s *SISR) run(ctx context.Context, window *sdl.Window, renderer sdl.Renderer, wv webview.WebView) error {
+func (s *SISR) run(
+	ctx context.Context,
+	renderer sdl.Renderer,
+	wv webview.WebView,
+	router event.Router,
+	stop context.CancelFunc,
+) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		default:
 		}
-		ev, _ := sdl.WaitEventTimeout(time.Millisecond * 16)
+		ev, _ := sdl.WaitEventTimeout(s.targetFrameDuration)
 		if ev != nil {
-			if runtime.GOOS == "linux" {
-				err := extras.HandleCursorHitTestWindowEvent(window, ev)
-				if err != nil {
-					slog.Error("Failed to handle cursor hit test window event", "error", err)
-				}
-			}
-			switch ev := ev.(type) {
-			case *sdl.QuitEvent:
-				return nil
-			case *sdl.KeyboardEvent:
-				if ev.Key == sdl.KeyCodeEscape && ev.Down {
-					wv.SetVisible(!wv.Visible())
-					if wv.Visible() {
-						slog.Info("WebView shown")
-					} else {
-						slog.Info("WebView hidden")
-					}
-				}
+			router.RouteEvent(ctx, ev)
+			// switch ev := ev.(type) {
+			// case *sdl.QuitEvent:
+			// 	return nil
+			// case *sdl.KeyboardEvent:
+			// 	if ev.Key == sdl.KeyCodeEscape && ev.Down {
+			// 		wv.SetVisible(!wv.Visible())
+			// 		if wv.Visible() {
+			// 			slog.Info("WebView shown")
+			// 		} else {
+			// 			slog.Info("WebView hidden")
+			// 		}
+			// 	}
 			// case *sdl.GamepadDeviceEvent:
 			// 	switch ev.Type {
 			// 	case sdl.EventTypeGamepadAdded:
 			// 		id := sdl.GamepadID(ev.Which)
 			// 		slog.Info("Gamepad connected", "id", id, "name", sdl.GetGamepadNameForID(id))
-			// 		openGamepad(id)
+			// 		gp, err := sdl.OpenGamepad(id)
+			// 		if err != nil {
+			// 			slog.Error("Failed to open gamepad", "id", id, "error", err)
+			// 		} else {
+			// 			gps[id] = gp
+			// 		}
 			// 	case sdl.EventTypeGamepadRemoved:
 			// 		id := sdl.GamepadID(ev.Which)
 			// 		slog.Info("Gamepad disconnected", "id", id)
-			// 		closeGamepad(id)
+			// 		if gp, ok := gps[id]; ok {
+			// 			gp.Close()
+			// 			delete(gps, id)
+			// 		}
 			// 	}
-			case *sdl.WindowEvent:
-				if ev.Type == sdl.EventTypeWindowResized {
-					wv.Resize(int(ev.Data1), int(ev.Data2))
-				}
+			// case *sdl.WindowEvent:
+			// 	if ev.Type == sdl.EventTypeWindowResized {
+			// 		wv.Resize(int(ev.Data1), int(ev.Data2))
+			// 	}
+			// }
+		}
+
+		if time.Since(s.lastRenderTime) >= s.targetFrameDuration || ev == nil {
+			s.lastRenderTime = time.Now()
+			wv.Tick()
+			err := renderer.RenderClear()
+			if err != nil {
+				slog.Error("Failed to clear renderer", "error", err)
+				return err
+			}
+			err = renderer.RenderPresent()
+			if err != nil {
+				slog.Error("Failed to present renderer", "error", err)
+				return err
 			}
 		}
 
-		wv.Tick()
-		err := renderer.RenderClear()
-		if err != nil {
-			slog.Error("Failed to clear renderer", "error", err)
-			return err
-		}
-		err = renderer.RenderPresent()
-		if err != nil {
-			slog.Error("Failed to present renderer", "error", err)
-			return err
-		}
+	}
+}
+
+func cleanup() {
+	slog.Info("Shutting down")
+	err := helper.OpenURL("steam://forceinputappid/0")
+	if err != nil {
+		slog.Error("Failed to reset steam controller config", "error", err)
 	}
 }
