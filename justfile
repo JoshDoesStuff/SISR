@@ -39,7 +39,7 @@ build-sdl type="Debug":
 		if os_family() == "windows" {
 			"if (!(Test-Path deps/SDL/build)) { cmake -S deps/SDL -B deps/SDL/build }"
 		} else {
-			"[ -d deps/SDL/build ] || cmake -S deps/SDL -B deps/SDL/build"
+			"[ -d deps/SDL/build ] || cmake -S deps/SDL -B deps/SDL/build -DCMAKE_BUILD_TYPE=" + type
 		}
 	}}
 	cmake --build deps/SDL/build --config {{ type }}
@@ -48,7 +48,7 @@ build-sdl type="Debug":
 		if os_family() == "windows" {
 			"Copy-Item -Path deps/SDL/build/" + type + "/* -Destination deps/SDL/build/lib -Recurse -Force"
 		} else {
-			"cp -a deps/SDL/build/" + type + "/. deps/SDL/build/lib/"
+			"find deps/SDL/build -maxdepth 1 \\( -name '*.so*' -o -name '*.a' \\) -exec cp -a {} deps/SDL/build/lib/ \\;"
 		} 
 	}}
 	{{ mkdir_p }} {{ dist_dir }}
@@ -56,7 +56,7 @@ build-sdl type="Debug":
 		if target_goos == "windows" {
 			"Copy-Item -Path deps/SDL/build/" + type + "/*.dll -Destination " + dist_dir + " -Force"
 		} else {
-			"cp -a deps/SDL/build/" + type + "/*.so* " + dist_dir
+			"find deps/SDL/build -maxdepth 1 -name '*.so*' -exec cp -a {} " + dist_dir + " \\;"
 		} 
 	}}
 
@@ -66,7 +66,7 @@ build-polyhook2 type="Debug":
 		if os_family() == "windows" {
 			"if (!(Test-Path deps/PolyHook2/build)) { cmake -S deps/PolyHook2 -B deps/PolyHook2/build }"
 		} else {
-			"[ -d deps/PolyHook2/build ] || cmake -S deps/PolyHook2 -B deps/PolyHook2/build"
+			"[ -d deps/PolyHook2/build ] || cmake -S deps/PolyHook2 -B deps/PolyHook2/build -DCMAKE_BUILD_TYPE=" + type
 		}
 	}}
 	cmake --build deps/PolyHook2/build --config {{ type }}
@@ -75,7 +75,7 @@ build-polyhook2 type="Debug":
 		if os_family() == "windows" {
 			"Copy-Item -Path deps/PolyHook2/build/" + type + "/* -Destination deps/PolyHook2/build/lib -Recurse -Force"
 		} else {
-			"cp -a deps/PolyHook2/build/" + type + "/. deps/PolyHook2/build/lib/"
+			"find deps/PolyHook2/build -maxdepth 1 \\( -name '*.so*' -o -name '*.a' \\) -exec cp -a {} deps/PolyHook2/build/lib/ \\;"
 		} 
 	}}
 
