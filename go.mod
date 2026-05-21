@@ -15,9 +15,11 @@ require (
 )
 
 require (
+	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/jchv/go-winloader v0.0.0-20250406163304-c1995be93bd1 // indirect
+	github.com/josephspurrier/goversioninfo v1.7.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
@@ -27,3 +29,5 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+tool github.com/josephspurrier/goversioninfo/cmd/goversioninfo

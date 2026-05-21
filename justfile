@@ -31,7 +31,7 @@ run-built:
 	{{ if os_family() == "windows" { "& './" + binary_name + exe_ext + "'" } else { "'./" + binary_name + exe_ext + "'" } }}
 
 win-resource:
-	go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest -64 -o cmd/sisr/resource.syso versioninfo.json
+	goversioninfo -64 -o cmd/sisr/resource.syso versioninfo.json
 
 [arg("type", long="type", help="Build type (Debug/Release)")]
 build-sdl type="Debug":
