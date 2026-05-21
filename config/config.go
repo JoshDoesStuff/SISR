@@ -20,8 +20,9 @@ type Global struct {
 }
 
 type API struct {
-	ListenAddress string `help:"API listen address" default:"localhost:0" env:"SISR_API_LISTEN_ADDRESS"`
-	CORSOrigins   string `help:"CORS allowed origins" default:"https://steamloopback.host,http://steamloopback.host" env:"SISR_API_CORS_ORIGINS"`
+	ListenAddress   string `help:"API listen address" default:"localhost:0" env:"SISR_API_LISTEN_ADDRESS"`
+	CORSOrigins     string `help:"CORS allowed origins" default:"https://steamloopback.host,http://steamloopback.host" env:"SISR_API_CORS_ORIGINS"`
+	FrontendAddress string `help:"Frontend address (optional)" env:"SISR_API_FRONTEND_ADDRESS"`
 }
 
 type Steam struct {

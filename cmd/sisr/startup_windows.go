@@ -2,12 +2,10 @@
 
 package main
 
-import (
-	"github.com/Alia5/SISR/util"
-)
+import "github.com/Alia5/SISR/windows"
 
 func init() {
-	if util.IsRunFromGUI() {
-		util.HideConsoleWindow()
+	if windows.IsRunFromGUI() {
+		windows.HideConsoleWindow()
 	}
 }

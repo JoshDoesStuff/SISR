@@ -1,18 +1,14 @@
-package cmd
+package sisr
 
 import (
-	"context"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
-	"os/signal"
 	"slices"
 	"strings"
-	"syscall"
 
 	"github.com/Alia5/SISR/api"
-	"github.com/Alia5/SISR/config"
 	"github.com/Alia5/SISR/logging"
 	"github.com/Alia5/SISR/meta"
 	"github.com/Alia5/SISR/middleware"
@@ -21,25 +17,10 @@ import (
 	"github.com/rs/cors"
 )
 
-type SISR struct {
-	config.API `embed:"" prefix:""`
-	Steam      config.Steam `embed:"" prefix:"steam."`
-}
-
-func (s *SISR) Run(cfg config.Global) error {
-	_, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	apiSrv, _, serverURL := runAPIServer(s)
-	slog.Info("Started Server", "addr", apiSrv.Addr, "url", serverURL)
-	slog.Info("Docs on", "addr", apiSrv.Addr, "url", serverURL+"/docs")
-	return nil
-}
-
-func runAPIServer(sisrCfg *SISR) (*http.Server, huma.API, string) {
-	l, err := net.Listen("tcp", sisrCfg.ListenAddress)
+func (s *SISR) runAPIServer() (*http.Server, huma.API, string) {
+	l, err := net.Listen("tcp", s.ListenAddress)
 	if err != nil {
-		slog.Error("Failed to listen", "addr", sisrCfg.ListenAddress, "err", err)
+		slog.Error("Failed to listen", "addr", s.ListenAddress, "err", err)
 		os.Exit(1)
 	}
 
@@ -51,14 +32,6 @@ func runAPIServer(sisrCfg *SISR) (*http.Server, huma.API, string) {
 	}
 
 	schemaPrefix := "#/components/schemas/"
-	schemasPath := "/schemas"
-
-	registry := huma.NewMapRegistry(schemaPrefix, huma.DefaultSchemaNamer)
-
-	docAPISrvs := []*huma.Server{{
-		URL:         serverURL,
-		Description: "SISR API",
-	}}
 
 	apiMux := http.NewServeMux()
 	hAPI := humago.New(apiMux, huma.Config{
@@ -69,12 +42,15 @@ func runAPIServer(sisrCfg *SISR) (*http.Server, huma.API, string) {
 				Version: meta.Version,
 			},
 			Components: &huma.Components{
-				Schemas: registry,
+				Schemas: huma.NewMapRegistry(schemaPrefix, huma.DefaultSchemaNamer),
 			},
-			Servers: docAPISrvs,
+			Servers: []*huma.Server{{
+				URL:         serverURL,
+				Description: "SISR API",
+			}},
 		},
 		OpenAPIPath:   "/openapi",
-		SchemasPath:   schemasPath,
+		SchemasPath:   "/schemas",
 		Formats:       huma.DefaultFormats,
 		DefaultFormat: "application/json",
 		CreateHooks: []func(huma.Config) huma.Config{
@@ -124,17 +100,22 @@ func runAPIServer(sisrCfg *SISR) (*http.Server, huma.API, string) {
 
 	// api.RegisterAPI(hAPI)
 
+	allowedOrigins := slices.Concat(
+		[]string{serverURL},
+		strings.Split(s.CORSOrigins, ","),
+	)
+	if s.FrontendAddress != "" {
+		allowedOrigins = append(allowedOrigins, s.FrontendAddress)
+	}
+
 	apiSrv := http.Server{
 		Addr: resolvedAddr,
 		Handler: middleware.With(
 			apiMux,
 			logging.Middleware,
 			cors.New(cors.Options{
-				AllowedOrigins: slices.Concat(
-					[]string{serverURL},
-					strings.Split(sisrCfg.API.CORSOrigins, ","),
-				),
-				AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+				AllowedOrigins:   allowedOrigins,
+				AllowedMethods:   []string{"HEAD", "GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
 				AllowedHeaders:   []string{"*"},
 				AllowCredentials: true,
 			}).Handler,
@@ -161,6 +142,9 @@ func runAPIServer(sisrCfg *SISR) (*http.Server, huma.API, string) {
 			os.Exit(1)
 		}
 	}()
+
+	slog.Info("Started Server", "addr", apiSrv.Addr, "url", serverURL)
+	slog.Info("Docs on", "addr", apiSrv.Addr, "url", serverURL+"/docs")
 
 	return &apiSrv, hAPI, serverURL
 
