@@ -10,7 +10,7 @@ package sdl
 
 extern SDL_HitTestResult sisrWindowHitTestGoBridge(SDL_Window *win, SDL_Point *area, void *userdata);
 
-static SDL_HitTestResult SDLCALL sisrWindowHitTestBridge(SDL_Window *win, const SDL_Point *area, void *userdata) {
+SDL_HitTestResult SDLCALL sisrWindowHitTestBridge(SDL_Window *win, const SDL_Point *area, void *userdata) {
 	return sisrWindowHitTestGoBridge(win, (SDL_Point *)area, userdata);
 }
 */
