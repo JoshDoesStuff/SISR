@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Alia5/SISR/config"
+	"github.com/Alia5/SISR/helper"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/webview"
@@ -29,7 +30,10 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	defer func() {
 		slog.Info("Shutting down")
-
+		err := helper.OpenURL("steam://forceinputappid/0")
+		if err != nil {
+			slog.Error("Failed to reset steam controller config", "error", err)
+		}
 	}()
 
 	_, _, apiAddr := s.runAPIServer()
