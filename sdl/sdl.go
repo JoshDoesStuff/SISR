@@ -12,6 +12,10 @@ package sdl
 import "C"
 import "runtime"
 
+func init() {
+	runtime.LockOSThread()
+}
+
 // InitFlags for SDL_Init and/or SDL_InitSubSystem.
 //
 // These are the flags which may be passed to SDL_Init(). You should specify
@@ -40,7 +44,6 @@ const (
 //
 // This function should only be called on the main thread.
 func Init(flags InitFlags) error {
-	runtime.LockOSThread()
 	res := C.SDL_Init(C.Uint32(flags))
 	if !res {
 		return GetError()
@@ -54,7 +57,6 @@ func Init(flags InitFlags) error {
 //
 // This function should only be called on the main thread.
 func InitSubSystem(flags InitFlags) error {
-	runtime.LockOSThread()
 	res := C.SDL_InitSubSystem(C.Uint32(flags))
 	if !res {
 		return GetError()
@@ -75,5 +77,4 @@ func QuitSubSystem(flags InitFlags) {
 // This function should only be called on the main thread.
 func Quit() {
 	C.SDL_Quit()
-	runtime.UnlockOSThread()
 }
