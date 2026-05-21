@@ -17,6 +17,7 @@ type Global struct {
 	ConfigPath   string       `help:"Path to configuration file (json|yaml|toml)" name:"config" env:"SISR_CONFIG"`
 	UpdateNotify UpdateNotify `help:"Update notification level: none, stable, prerelease" default:"stable" env:"SISR_UPDATE_NOTIFY"`
 	Log          `embed:"" prefix:"log."`
+	PlatformOpts `embed:""`
 }
 
 type API struct {

@@ -29,6 +29,8 @@ func main() {
 		kong.Configuration(kongtoml.Loader, tomlPaths...),
 	)
 
+	applyPlatformStartup(cli.Config)
+
 	_, closeFiles, err := logging.SetupLogger(cli.Config.Log.Level, cli.Config.Log.File) // nolint
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to setup logger:", err)
