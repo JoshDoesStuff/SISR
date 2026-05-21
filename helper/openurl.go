@@ -20,7 +20,7 @@ func OpenURL(url string) error {
 		args = []string{url}
 	}
 
-	slog.Debug("Opening URL", "url", url, "cmd", cmd, "args", args)
+	slog.Debug("Opening URL", "url", url)
 	e := exec.Command(cmd, args...)
 	err := e.Start()
 	if err != nil {
