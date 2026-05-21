@@ -11,8 +11,8 @@ import (
 )
 
 func (s *SISR) createWindow(
-	cfg config.Global,
-	frontendAddr string,
+	cfg *config.Global, //nolint:unparam
+	frontendAddr string, //nolint:unparam
 ) (*sdl.Window, sdl.Renderer, webview.WebView, error) {
 	setSDLHintEnv()
 	err := sdl.Init(sdl.InitFlagVideo | sdl.InitFlagGamepad)

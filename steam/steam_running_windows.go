@@ -14,7 +14,7 @@ func steamRunning() bool {
 	if err != nil {
 		return false
 	}
-	defer windows.CloseHandle(snapshot)
+	defer windows.CloseHandle(snapshot) // nolint:errcheck
 
 	var proc windows.ProcessEntry32
 	proc.Size = uint32(unsafe.Sizeof(proc))

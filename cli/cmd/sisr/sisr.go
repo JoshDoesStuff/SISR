@@ -38,7 +38,7 @@ func (s *SISR) Run(cfg config.Global) error {
 		frontendAddr = apiAddr
 	}
 
-	window, renderer, wv, err := s.createWindow(cfg, frontendAddr)
+	window, renderer, wv, err := s.createWindow(&cfg, frontendAddr)
 	if err != nil {
 		return err
 	}

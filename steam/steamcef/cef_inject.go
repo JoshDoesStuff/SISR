@@ -96,7 +96,7 @@ func executeJs(ctx context.Context, cfg *config.Steam, tab string, js string) (*
 		slog.Debug("executeJs: websocket dial failed", "err", err)
 		return nil, fmt.Errorf("%w: %w", ErrCEFRemoteDebugUnreachable, err)
 	}
-	defer ws.CloseNow()
+	defer ws.CloseNow() //nolint:errcheck
 	slog.Debug("executeJs: websocket connected")
 
 	go func() {

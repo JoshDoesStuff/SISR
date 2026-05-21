@@ -11,7 +11,7 @@ func steamPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open Steam registry key: %w", err)
 	}
-	defer k.Close()
+	defer k.Close() // nolint:errcheck
 
 	p, _, err := k.GetStringValue("SteamPath")
 	if err != nil {

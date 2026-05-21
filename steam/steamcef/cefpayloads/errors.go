@@ -1,4 +1,4 @@
-package steam_js
+package steamjs
 
 import "errors"
 

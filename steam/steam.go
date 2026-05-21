@@ -33,10 +33,10 @@ func GetCEFTabs(ctx context.Context, cfg *config.Steam) ([]TabInfo, error) {
 	}
 
 	if cfg.CEFRemoteDebugPort == 8080 {
-		// find if user is running millenium and detect cef debug port
+		// find if user is running millennium and detect cef debug port
 		port := GetCefDebugPort(ctx)
 		if port != 8080 {
-			slog.Info("Likely running millenium...", "CEF Remote port", port)
+			slog.Info("Likely running millennium...", "CEF Remote port", port)
 			cfg.CEFRemoteDebugPort = port
 		}
 	}
@@ -52,7 +52,7 @@ func GetCEFTabs(ctx context.Context, cfg *config.Steam) ([]TabInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code from CEF remote debug endpoint: %d", resp.StatusCode)
