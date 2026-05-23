@@ -16,7 +16,8 @@ build_time := if os_family() == "windows" {
 } else {
 	`date -u '+%Y-%m-%dT%H:%M:%SZ'`
 }
-ldflags := "-s -w -X github.com/Alia5/SISR/meta.Version=" + version + " -X github.com/Alia5/SISR/meta.Commit=" + commit + " -X github.com/Alia5/SISR/meta.Date=" + build_time
+ldflags_common := "-X github.com/Alia5/SISR/meta.Version=" + version + " -X github.com/Alia5/SISR/meta.Commit=" + commit + " -X github.com/Alia5/SISR/meta.Date=" + build_time
+ldflags_release := "-s -w " + ldflags_common
 build_path := join(dist_dir, binary_name + exe_ext)
 
 default:
@@ -37,9 +38,9 @@ win-resource:
 build-sdl type="Debug":
 	{{
 		if os_family() == "windows" {
-			"if (!(Test-Path deps/SDL/build)) { cmake -S deps/SDL -B deps/SDL/build }"
+			"if (!(Test-Path deps/SDL/build)) { cmake -S deps/SDL -B deps/SDL/build -DSDL_TEST_LIBRARY=OFF -DSDL_TESTS=OFF -DSDL_INSTALL_TESTS=OFF }"
 		} else {
-			"[ -d deps/SDL/build ] || cmake -S deps/SDL -B deps/SDL/build -DCMAKE_BUILD_TYPE=" + type
+			"[ -d deps/SDL/build ] || cmake -S deps/SDL -B deps/SDL/build -DCMAKE_BUILD_TYPE=" + type + " -DSDL_TEST_LIBRARY=OFF -DSDL_TESTS=OFF -DSDL_INSTALL_TESTS=OFF"
 		}
 	}}
 	cmake --build deps/SDL/build --config {{ type }}
@@ -91,7 +92,7 @@ build-sisr type="Debug": (build-deps type)
         } 
     }}
     {{ mkdir_p }} {{ dist_dir }}
-    go build -ldflags "{{ ldflags }}" -o {{ build_path }} {{ main_pkg }}
+    go build -ldflags "{{ if type == "Release" { ldflags_release } else { ldflags_common } }}" -o {{ build_path }} {{ main_pkg }}
 
 [arg("type", pattern="Debug|Release")]
 build type="Debug": (build-sisr type)
