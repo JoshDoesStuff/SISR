@@ -4,72 +4,38 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "Subug SISR w/ window",
-            "type": "lldb",
+         {
+            "name": "Launch SISR",
+            "type": "go",
             "request": "launch",
-            "cargo": {
-                "args": [
-                    "run",
-                    "--bin=SISR"
-                ],
-                "env": {
-                    "RUSTFLAGS": "-C link-args=/SUBSYSTEM:CONSOLE",
-                    "CMAKE_GENERATOR": "Ninja"
-                },
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/sisr",
+            "output": "${workspaceFolder}/dist/__debug_bin",
+            "cwd": "${workspaceFolder}/dist",
+            "env": {
+                "NIX_HARDENING_ENABLE": "",
+                "CGO_ENABLED": "1",
             },
             "args": [
-                "-l=trace",
-                "-w=true",
-                "-f=false",
-                "--default-controller-type=dualshock4"
+                "--l=debug"
             ],
-            "env": {},
-            "internalConsoleOptions": "openOnFirstSessionStart",
+            "showGlobalVariables": true,
+            "showRegisters": true,
+            "showLog": false,
+            "hideSystemGoroutines": false,
             "console": "integratedTerminal"
         },
         {
-            "name": "Debug SISR cli",
-            "type": "lldb",
-            "request": "launch",
-            "cargo": {
-                "args": [
-                    "run",
-                    "--bin=SISR"
-                ],
-                "env": {
-                    "RUSTFLAGS": "-C link-args=/SUBSYSTEM:CONSOLE",
-                    "CMAKE_GENERATOR": "Ninja"
-                },
-            },
-            "args": [
-                "-l=trace",
-                // "--log-file=sisr.log",
-            ],
-            "env": {
-                "RUSTFLAGS": "-C link-args=/SUBSYSTEM:CONSOLE"
-            }
-        },
-        {
-            "name": "Debug unit tests in executable 'SISR'",
-            "type": "lldb",
-            "request": "launch",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--bin=SISR"
-                ],
-                "env": {
-                    "RUSTFLAGS": "-C link-args=/SUBSYSTEM:CONSOLE",
-                    "CMAKE_GENERATOR": "Ninja"
-                },
-            }
-        },
-        {
             "name": "Attach to SISR",
-            "type": "lldb",
+            "type": "go",
             "request": "attach",
-            "pid": "${command:pickProcess}"
+            "mode": "local",
+            "processId": "${command:pickProcess}",
+            "showGlobalVariables": true,
+            "showRegisters": true,
+            "showLog": false,
+            "hideSystemGoroutines": false,
+            "console": "integratedTerminal"
         }
     ]
 }
