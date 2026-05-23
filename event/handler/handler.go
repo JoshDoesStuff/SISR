@@ -3,18 +3,8 @@ package handler
 import (
 	"context"
 
-	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/sdl"
-	"github.com/Alia5/SISR/webview"
 )
-
-type Env struct {
-	Window       *sdl.Window
-	WebView      webview.WebView
-	DeviceStore  input.DeviceStore
-	ViiperBridge input.ViiperBridge
-	QuitFn       context.CancelFunc
-}
 
 type Handler[T sdl.Event] interface {
 	Handle(context.Context, T) error

@@ -12,6 +12,7 @@ import (
 	"github.com/Alia5/SISR/api"
 	"github.com/Alia5/SISR/api/handler"
 	"github.com/Alia5/SISR/input"
+	"github.com/Alia5/SISR/input/steaminputbindings"
 	"github.com/Alia5/SISR/logging"
 	"github.com/Alia5/SISR/meta"
 	"github.com/Alia5/SISR/middleware"
@@ -26,6 +27,7 @@ func (s *SISR) runAPIServer(
 	window *sdl.Window,
 	wv webview.WebView,
 	deviceStore input.DeviceStore,
+	bindingEnforcer steaminputbindings.Enforcer,
 	stopFn context.CancelFunc,
 ) (*http.Server, string) {
 	l, err := net.Listen("tcp", s.ListenAddress)
@@ -112,6 +114,7 @@ func (s *SISR) runAPIServer(
 		Window:      window,
 		WebView:     wv,
 		DeviceStore: deviceStore,
+		BindingEnforcer: bindingEnforcer,
 		QuitFn:      stopFn,
 	})
 

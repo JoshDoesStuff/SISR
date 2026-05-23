@@ -13,6 +13,7 @@ import (
 	"github.com/Alia5/SISR/event/handler"
 	"github.com/Alia5/SISR/helper"
 	"github.com/Alia5/SISR/input"
+	"github.com/Alia5/SISR/input/steaminputbindings"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/SISR/webview"
 )
@@ -61,7 +62,8 @@ func (s *SISR) Run(cfg config.Global) error {
 		return err
 	}
 
-	router := event.NewRouter()
+	bindingEnforcer := steaminputbindings.NewEnforcer()
+	eventRouter := event.NewRouter()
 	deviceStore, deviceStoreClose, err := input.NewDeviceStore()
 	if err != nil {
 		slog.Error("Failed to initialite DeviceStore", "error", err)
@@ -70,15 +72,16 @@ func (s *SISR) Run(cfg config.Global) error {
 	viiperBridge := input.NewViiperBridge(ctx, deviceStore)
 
 	handlerEnv := &handler.Env{
-		Window:       window,
-		WebView:      wv,
-		DeviceStore:  deviceStore,
-		ViiperBridge: viiperBridge,
-		QuitFn:       stop,
+		Window:          window,
+		WebView:         wv,
+		DeviceStore:     deviceStore,
+		ViiperBridge:    viiperBridge,
+		BindingEnforcer: bindingEnforcer,
+		QuitFn:          stop,
 	}
-	registerEventHandlers(router, handlerEnv)
+	registerEventHandlers(eventRouter, handlerEnv)
 
-	_, apiAddr := s.runAPIServer(window, wv, deviceStore, stop)
+	_, apiAddr := s.runAPIServer(window, wv, deviceStore, bindingEnforcer, stop)
 	frontendAddr := s.FrontendAddress
 	if frontendAddr == "" {
 		frontendAddr = apiAddr
@@ -86,7 +89,7 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	wv.Navigate(frontendAddr)
 
-	return s.run(ctx, renderer, wv, router)
+	return s.run(ctx, renderer, wv, eventRouter)
 }
 
 func (s *SISR) run(

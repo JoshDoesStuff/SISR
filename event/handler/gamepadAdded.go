@@ -34,7 +34,7 @@ func GamepadAdded(e *Env) Operation[*sdl.GamepadDeviceEvent] {
 			defer dev.Unlock()
 
 			if dev.SteamVirtualGamepad != nil {
-				createViiperDevice(ctx, e.ViiperBridge, gpID, dev)
+				createViiperDevice(ctx, e, gpID, dev)
 			}
 
 			return nil

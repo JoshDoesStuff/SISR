@@ -40,8 +40,8 @@ func NewViiperDevice(
 	return d
 }
 
-func (d *ViiperDevice) Info() *apitypes.Device {
-	return d.deviceInfo
+func (d *ViiperDevice) Info() apitypes.Device {
+	return *d.deviceInfo
 }
 
 func (d *ViiperDevice) Update(gp *sdl.Gamepad) {
