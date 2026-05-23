@@ -29,14 +29,6 @@ func SetCursorHitTest(window *sdl.Window, hittest bool) error {
 	return nil
 }
 
-// CursorHitTestResizeCallback non linux stub
-type CursorHitTestResizeCallback func(window *sdl.Window, event *sdl.WindowEvent)
-
-// SetCursorHitTestResizeCallback non linux stub
-func SetCursorHitTestResizeCallback(callback CursorHitTestResizeCallback) {
-	_ = callback
-}
-
 // HandleCursorHitTestWindowEvent non linux stub
 func HandleCursorHitTestWindowEvent(window *sdl.Window, event sdl.Event) error {
 	_ = window

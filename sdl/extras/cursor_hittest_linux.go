@@ -20,20 +20,7 @@ import (
 var (
 	cursorHitTestStateMu sync.Mutex
 	cursorHitTestState   = map[*sdl.Window]bool{}
-
-	cursorHitTestResizeCallbackMu sync.Mutex
-	cursorHitTestResizeCallback   CursorHitTestResizeCallback
 )
-
-// CursorHitTestResizeCallback runs after resize-triggered hit-test reapply.
-type CursorHitTestResizeCallback func(window *sdl.Window, event *sdl.WindowEvent)
-
-// SetCursorHitTestResizeCallback sets the optional resize reapply callback.
-func SetCursorHitTestResizeCallback(callback CursorHitTestResizeCallback) {
-	cursorHitTestResizeCallbackMu.Lock()
-	defer cursorHitTestResizeCallbackMu.Unlock()
-	cursorHitTestResizeCallback = callback
-}
 
 // HandleCursorHitTestWindowEvent reapplies stored hit-test state on resize events.
 func HandleCursorHitTestWindowEvent(window *sdl.Window, event sdl.Event) error {
@@ -55,13 +42,6 @@ func HandleCursorHitTestWindowEvent(window *sdl.Window, event sdl.Event) error {
 
 	if err := SetCursorHitTest(window, hittest); err != nil {
 		return err
-	}
-
-	cursorHitTestResizeCallbackMu.Lock()
-	callback := cursorHitTestResizeCallback
-	cursorHitTestResizeCallbackMu.Unlock()
-	if callback != nil {
-		callback(window, we)
 	}
 
 	return nil
