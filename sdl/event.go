@@ -10,6 +10,7 @@ package sdl
 import "C"
 
 import (
+	"fmt"
 	"time"
 	"unsafe"
 )
@@ -67,6 +68,14 @@ func WaitEventTimeout(timeout time.Duration) (Event, bool) {
 
 // EventType specifies the types of events that can be delivered.
 type EventType uint32
+
+func (t EventType) String() string {
+	if name, ok := eventTypeNames[t]; ok {
+		return name
+	}
+
+	return fmt.Sprintf("EventType(%d)", uint32(t))
+}
 
 // Event type constants.
 const (
@@ -192,6 +201,130 @@ const (
 	EventTypeLast                       EventType = C.SDL_EVENT_LAST
 	EventTypeEnumPadding                EventType = C.SDL_EVENT_ENUM_PADDING
 )
+
+var eventTypeNames = map[EventType]string{
+	EventTypeFirst:                      "First",
+	EventTypeQuit:                       "Quit",
+	EventTypeTerminating:                "Terminating",
+	EventTypeLowMemory:                  "LowMemory",
+	EventTypeWillEnterBackground:        "WillEnterBackground",
+	EventTypeDidEnterBackground:         "DidEnterBackground",
+	EventTypeWillEnterForeground:        "WillEnterForeground",
+	EventTypeDidEnterForeground:         "DidEnterForeground",
+	EventTypeLocaleChanged:              "LocaleChanged",
+	EventTypeSystemThemeChanged:         "SystemThemeChanged",
+	EventTypeDisplayOrientation:         "DisplayOrientation",
+	EventTypeDisplayAdded:               "DisplayAdded",
+	EventTypeDisplayRemoved:             "DisplayRemoved",
+	EventTypeDisplayMoved:               "DisplayMoved",
+	EventTypeDisplayDesktopModeChanged:  "DisplayDesktopModeChanged",
+	EventTypeDisplayCurrentModeChanged:  "DisplayCurrentModeChanged",
+	EventTypeDisplayContentScaleChanged: "DisplayContentScaleChanged",
+	EventTypeDisplayUsableBoundsChanged: "DisplayUsableBoundsChanged",
+	EventTypeWindowShown:                "WindowShown",
+	EventTypeWindowHidden:               "WindowHidden",
+	EventTypeWindowExposed:              "WindowExposed",
+	EventTypeWindowMoved:                "WindowMoved",
+	EventTypeWindowResized:              "WindowResized",
+	EventTypeWindowPixelSizeChanged:     "WindowPixelSizeChanged",
+	EventTypeWindowMetalViewResized:     "WindowMetalViewResized",
+	EventTypeWindowMinimized:            "WindowMinimized",
+	EventTypeWindowMaximized:            "WindowMaximized",
+	EventTypeWindowRestored:             "WindowRestored",
+	EventTypeWindowMouseEnter:           "WindowMouseEnter",
+	EventTypeWindowMouseLeave:           "WindowMouseLeave",
+	EventTypeWindowFocusGained:          "WindowFocusGained",
+	EventTypeWindowFocusLost:            "WindowFocusLost",
+	EventTypeWindowCloseRequested:       "WindowCloseRequested",
+	EventTypeWindowHitTest:              "WindowHitTest",
+	EventTypeWindowICCProfChanged:       "WindowICCProfChanged",
+	EventTypeWindowDisplayChanged:       "WindowDisplayChanged",
+	EventTypeWindowDisplayScaleChanged:  "WindowDisplayScaleChanged",
+	EventTypeWindowSafeAreaChanged:      "WindowSafeAreaChanged",
+	EventTypeWindowOccluded:             "WindowOccluded",
+	EventTypeWindowEnterFullscreen:      "WindowEnterFullscreen",
+	EventTypeWindowLeaveFullscreen:      "WindowLeaveFullscreen",
+	EventTypeWindowDestroyed:            "WindowDestroyed",
+	EventTypeWindowHDRStateChanged:      "WindowHDRStateChanged",
+	EventTypeWindowCurvatureChanged:     "WindowCurvatureChanged",
+	EventTypeKeyDown:                    "KeyDown",
+	EventTypeKeyUp:                      "KeyUp",
+	EventTypeTextEditing:                "TextEditing",
+	EventTypeTextInput:                  "TextInput",
+	EventTypeKeymapChanged:              "KeymapChanged",
+	EventTypeKeyboardAdded:              "KeyboardAdded",
+	EventTypeKeyboardRemoved:            "KeyboardRemoved",
+	EventTypeTextEditingCandidates:      "TextEditingCandidates",
+	EventTypeScreenKeyboardShown:        "ScreenKeyboardShown",
+	EventTypeScreenKeyboardHidden:       "ScreenKeyboardHidden",
+	EventTypeMouseMotion:                "MouseMotion",
+	EventTypeMouseButtonDown:            "MouseButtonDown",
+	EventTypeMouseButtonUp:              "MouseButtonUp",
+	EventTypeMouseWheel:                 "MouseWheel",
+	EventTypeMouseAdded:                 "MouseAdded",
+	EventTypeMouseRemoved:               "MouseRemoved",
+	EventTypeJoystickAxisMotion:         "JoystickAxisMotion",
+	EventTypeJoystickBallMotion:         "JoystickBallMotion",
+	EventTypeJoystickHatMotion:          "JoystickHatMotion",
+	EventTypeJoystickButtonDown:         "JoystickButtonDown",
+	EventTypeJoystickButtonUp:           "JoystickButtonUp",
+	EventTypeJoystickAdded:              "JoystickAdded",
+	EventTypeJoystickRemoved:            "JoystickRemoved",
+	EventTypeJoystickBatteryUpdated:     "JoystickBatteryUpdated",
+	EventTypeJoystickUpdateComplete:     "JoystickUpdateComplete",
+	EventTypeGamepadAxisMotion:          "GamepadAxisMotion",
+	EventTypeGamepadButtonDown:          "GamepadButtonDown",
+	EventTypeGamepadButtonUp:            "GamepadButtonUp",
+	EventTypeGamepadAdded:               "GamepadAdded",
+	EventTypeGamepadRemoved:             "GamepadRemoved",
+	EventTypeGamepadRemapped:            "GamepadRemapped",
+	EventTypeGamepadTouchpadDown:        "GamepadTouchpadDown",
+	EventTypeGamepadTouchpadMotion:      "GamepadTouchpadMotion",
+	EventTypeGamepadTouchpadUp:          "GamepadTouchpadUp",
+	EventTypeGamepadSensorUpdate:        "GamepadSensorUpdate",
+	EventTypeGamepadUpdateComplete:      "GamepadUpdateComplete",
+	EventTypeGamepadSteamHandleUpdated:  "GamepadSteamHandleUpdated",
+	EventTypeFingerDown:                 "FingerDown",
+	EventTypeFingerUp:                   "FingerUp",
+	EventTypeFingerMotion:               "FingerMotion",
+	EventTypeFingerCanceled:             "FingerCanceled",
+	EventTypePinchBegin:                 "PinchBegin",
+	EventTypePinchUpdate:                "PinchUpdate",
+	EventTypePinchEnd:                   "PinchEnd",
+	EventTypeClipboardUpdate:            "ClipboardUpdate",
+	EventTypeDropFile:                   "DropFile",
+	EventTypeDropText:                   "DropText",
+	EventTypeDropBegin:                  "DropBegin",
+	EventTypeDropComplete:               "DropComplete",
+	EventTypeDropPosition:               "DropPosition",
+	EventTypeAudioDeviceAdded:           "AudioDeviceAdded",
+	EventTypeAudioDeviceRemoved:         "AudioDeviceRemoved",
+	EventTypeAudioDeviceFormatChanged:   "AudioDeviceFormatChanged",
+	EventTypeSensorUpdate:               "SensorUpdate",
+	EventTypePenProximityIn:             "PenProximityIn",
+	EventTypePenProximityOut:            "PenProximityOut",
+	EventTypePenDown:                    "PenDown",
+	EventTypePenUp:                      "PenUp",
+	EventTypePenButtonDown:              "PenButtonDown",
+	EventTypePenButtonUp:                "PenButtonUp",
+	EventTypePenMotion:                  "PenMotion",
+	EventTypePenAxis:                    "PenAxis",
+	EventTypeCameraDeviceAdded:          "CameraDeviceAdded",
+	EventTypeCameraDeviceRemoved:        "CameraDeviceRemoved",
+	EventTypeCameraDeviceApproved:       "CameraDeviceApproved",
+	EventTypeCameraDeviceDenied:         "CameraDeviceDenied",
+	EventTypeRenderTargetsReset:         "RenderTargetsReset",
+	EventTypeRenderDeviceReset:          "RenderDeviceReset",
+	EventTypeRenderDeviceLost:           "RenderDeviceLost",
+	EventTypePrivate0:                   "Private0",
+	EventTypePrivate1:                   "Private1",
+	EventTypePrivate2:                   "Private2",
+	EventTypePrivate3:                   "Private3",
+	EventTypePollSentinel:               "PollSentinel",
+	EventTypeUser:                       "User",
+	EventTypeLast:                       "Last",
+	EventTypeEnumPadding:                "EnumPadding",
+}
 
 type wrapperFn func(*C.SDL_Event) Event
 
