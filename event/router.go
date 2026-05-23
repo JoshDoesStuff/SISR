@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"runtime/debug"
 
 	"github.com/Alia5/SISR/event/handler"
 	"github.com/Alia5/SISR/sdl"
@@ -35,7 +36,12 @@ func (r *router) RouteEvent(appCtx context.Context, ev sdl.Event) {
 				defer func() {
 					if rec := recover(); rec != nil {
 						eventData, _ := json.Marshal(ev)
-						slog.Error("Panic while handling event", "panic", rec, "event", string(eventData))
+						slog.Error("Panic while handling event",
+							"panic", rec,
+							"event", string(eventData),
+							"eventName", ev.Base().Type.String(),
+							"stack", string(debug.Stack()),
+						)
 					}
 				}()
 
