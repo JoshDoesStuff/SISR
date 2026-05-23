@@ -2,59 +2,63 @@ package event
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
-	"runtime"
 
 	"github.com/Alia5/SISR/event/handler"
 	"github.com/Alia5/SISR/sdl"
-	"github.com/Alia5/SISR/sdl/extras"
-	"github.com/Alia5/SISR/webview"
 )
 
 type Router interface {
 	RouteEvent(ctx context.Context, sdlEvent sdl.Event)
+	hndlMap() map[sdl.EventType][]func(context.Context, sdl.Event) error
 }
 
 type router struct {
-	window   *sdl.Window
-	renderer sdl.Renderer
-	webview  webview.WebView
-	quitFn   func()
-
 	handlers map[sdl.EventType][]func(context.Context, sdl.Event) error
 }
 
-func NewRouter(window *sdl.Window, renderer sdl.Renderer, wv webview.WebView, quitFn func()) Router {
+func NewRouter() Router {
 	r := &router{
-		window:   window,
-		renderer: renderer,
-		webview:  wv,
-		quitFn:   quitFn,
 		handlers: make(map[sdl.EventType][]func(context.Context, sdl.Event) error),
 	}
-	r.RegisterHandlers(&handler.RegisterParams{
-		Window:  window,
-		WebView: wv,
-		QuitFn:  quitFn,
-	})
 	return r
 }
 
 func (r *router) RouteEvent(appCtx context.Context, ev sdl.Event) {
-	if runtime.GOOS == "linux" {
-		err := extras.HandleCursorHitTestWindowEvent(r.window, ev)
-		if err != nil {
-			slog.Error("Failed to handle cursor hit test window event", "error", err)
-		}
-	}
 	ctx := context.WithValue(appCtx, "eventTime", ev.Base().Timestamp)
 	handlers := r.handlers[ev.Base().Type]
 	if len(handlers) > 0 {
 		for _, handler := range handlers {
-			err := handler(ctx, ev)
-			if err != nil {
-				slog.Error("Failed to handle event", "error", err)
-			}
+			func() {
+				defer func() {
+					if rec := recover(); rec != nil {
+						eventData, _ := json.Marshal(ev)
+						slog.Error("Panic while handling event", "panic", rec, "event", string(eventData))
+					}
+				}()
+
+				err := handler(ctx, ev)
+				if err != nil {
+					slog.Error("Failed to handle event", "error", err)
+				}
+			}()
 		}
 	}
+}
+
+func (r *router) hndlMap() map[sdl.EventType][]func(context.Context, sdl.Event) error {
+	return r.handlers
+}
+
+func RegisterHandler[T sdl.Event](r Router, op handler.Operation[T]) {
+	r.hndlMap()[op.Event] = append(r.hndlMap()[op.Event], func(ctx context.Context, sdlEvent sdl.Event) error {
+		ev, ok := sdlEvent.(T)
+		if !ok {
+			return fmt.Errorf("unexpected event type %T for %v", sdlEvent, op.Event)
+		}
+
+		return op.Handler.Handle(ctx, ev)
+	})
 }

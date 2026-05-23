@@ -533,6 +533,11 @@ func GetGamepadStringForType(t GamepadType) string {
 	return C.GoString(cStr)
 }
 
+// Name gets the string name of a gamepad type.
+func (t GamepadType) Name() string {
+	return GetGamepadStringForType(t)
+}
+
 // GetGamepadAxisFromString converts a string to a GamepadAxis.
 func GetGamepadAxisFromString(s string) GamepadAxis {
 	cStr := C.CString(s)
