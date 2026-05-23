@@ -4,65 +4,210 @@ import (
 	"context"
 	"log/slog"
 	"slices"
+	"sync"
+	"time"
 
+	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/apiclient"
+	"github.com/Alia5/VIIPER/apitypes"
 )
 
 type ViiperBridge interface {
-	AttachViiperDevice(ctx context.Context, d *Device) error
+	CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *ViiperDevice, chan error)
+	CreateDeviceScheduled(gamepadID sdl.GamepadID) bool
+	// RemoveViiperDevice(ctx context.Context, vd *ViiperDevice)
+}
+
+const minSupportedVIIPERVersion = "v0.6.1"
+const defaultDeviceType = "xbox360"
+const createTimeout = 5 * time.Second
+
+func NewViiperBridge(ctx context.Context, dl DeviceStore) ViiperBridge {
+	v := &viiperBridge{
+		client:     apiclient.New("localhost:3242"),
+		scheduled:  make(map[sdl.GamepadID]*createScheduleWhatever),
+		deviceList: dl,
+	}
+	return v
 }
 
 type viiperBridge struct {
-	client *apiclient.Client
-	busID  uint32
+	client           *apiclient.Client
+	busID            uint32
+	viiperServerInfo *apitypes.PingResponse
+	deviceList       DeviceStore
+
+	scheduled map[sdl.GamepadID]*createScheduleWhatever
+
+	mtx sync.Mutex
 }
 
-func NewViiperBridge() ViiperBridge {
-	return &viiperBridge{
-		client: apiclient.New("localhost:3242"),
+type createScheduleWhatever struct {
+	deviceType   string
+	createdChans []chan *ViiperDevice
+	errorChans   []chan error
+}
+
+func (v *viiperBridge) CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *ViiperDevice, chan error) {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	deviceChan := make(chan *ViiperDevice, 1)
+	errorChan := make(chan error, 1)
+	if meh, ok := v.scheduled[gamepadID]; ok {
+		meh.deviceType = deviceType
+		meh.createdChans = append(meh.createdChans, deviceChan)
+		meh.errorChans = append(meh.errorChans, errorChan)
+		return deviceChan, errorChan
+	} else {
+		v.scheduled[gamepadID] = &createScheduleWhatever{
+			deviceType:   deviceType,
+			createdChans: []chan *ViiperDevice{deviceChan},
+			errorChans:   []chan error{errorChan},
+		}
 	}
+	go func() {
+		defer func() {
+			v.mtx.Lock()
+			defer v.mtx.Unlock()
+			delete(v.scheduled, gamepadID)
+		}()
+
+		// TODO: wait for ready
+
+		busID, err := v.ensureBus(ctx)
+		if err != nil {
+			v.mtx.Lock()
+			defer v.mtx.Unlock()
+			for _, ch := range v.scheduled[gamepadID].errorChans {
+				ch <- err
+			}
+			return
+		}
+
+		v.mtx.Lock()
+		deviceType := v.scheduled[gamepadID].deviceType
+		v.mtx.Unlock()
+		if deviceType == "" {
+			deviceType = defaultDeviceType
+		}
+
+		s, r, err := v.client.AddDeviceAndConnect(ctx, busID, deviceType, nil)
+		if err != nil {
+			v.mtx.Lock()
+			defer v.mtx.Unlock()
+			for _, ch := range v.scheduled[gamepadID].errorChans {
+				ch <- err
+			}
+			return
+		}
+		closeFunc := func() error {
+			_, err := v.client.DeviceRemoveCtx(context.Background(), r.BusID, r.DevId)
+			return err
+		}
+		vd := NewViiperDevice(s, r, closeFunc)
+		v.mtx.Lock()
+		defer v.mtx.Unlock()
+		for _, ch := range v.scheduled[gamepadID].createdChans {
+			ch <- vd
+		}
+	}()
+	return deviceChan, errorChan
 }
 
-func (vb *viiperBridge) AttachViiperDevice(ctx context.Context, d *Device) error {
-	err := vb.ensureBus(ctx)
+func (v *viiperBridge) CreateDeviceScheduled(gamepadID sdl.GamepadID) bool {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	_, ok := v.scheduled[gamepadID]
+	return ok
+}
+
+func (v *viiperBridge) ping(ctx context.Context) (*apitypes.PingResponse, error) {
+	resp, err := v.client.PingCtx(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	controlStream, apiDevice, err := vb.client.AddDeviceAndConnect(ctx, vb.busID, "xbox360", nil)
-	if err != nil {
-		return err
-	}
-	d.viiperDevice = NewViiperDevice(controlStream, apiDevice)
-	slog.Info("Created VIIPER device", "viiperDevice", *apiDevice, "busID", vb.busID)
-
-	return nil
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+	v.viiperServerInfo = resp
+	return resp, nil
 }
 
-func (vb *viiperBridge) ensureBus(ctx context.Context) error {
-	if vb.busID == 0 {
+func (v *viiperBridge) Ready() bool {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	return v.viiperServerInfo != nil
+}
+
+func (v *viiperBridge) ensureBus(ctx context.Context) (busID uint32, err error) {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	if v.busID == 0 {
 		slog.Debug("No previews VIIPER bus used, creating new bus")
-		bus, err := vb.client.BusCreateCtx(ctx, 0)
+		bus, err := v.client.BusCreateCtx(ctx, 0)
 		if err != nil {
-			return err
+			return 0, err
 		}
-		vb.busID = bus.BusID
-		slog.Info("Created VIIPER bus", "busID", vb.busID)
-		return nil
+		v.busID = bus.BusID
+		slog.Info("Created VIIPER bus", "busID", v.busID)
+		return v.busID, nil
 	}
 
-	busResp, err := vb.client.BusListCtx(ctx)
+	busResp, err := v.client.BusListCtx(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	if !slices.Contains(busResp.Buses, vb.busID) {
+	if !slices.Contains(busResp.Buses, v.busID) {
 		slog.Warn("Created VIIPER bus not found; Recreating")
-		bus, err := vb.client.BusCreateCtx(ctx, vb.busID)
+		bus, err := v.client.BusCreateCtx(ctx, v.busID)
 		if err != nil {
-			return err
+			return 0, err
 		}
-		vb.busID = bus.BusID
-		slog.Info("Re-Created VIIPER bus", "busID", vb.busID)
+		v.busID = bus.BusID
+		slog.Info("Re-Created VIIPER bus", "busID", v.busID)
 	}
-	return nil
+	return v.busID, nil
 }
+
+func (v *viiperBridge) close() {
+	// close(v.updateDeviceChan)
+	// close(v.readyChan)
+}
+
+// func (v *viiperBridge) CreateDevice(ctx context.Context, deviceType string) (*ViiperDevice, error) {
+// 	v.mtx.Lock()
+// 	defer v.mtx.Unlock()
+
+// 	err := v.ensureBus(ctx)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if deviceType == "" {
+// 		deviceType = defaultDeviceType
+// 	}
+
+// 	controlStream, apiDevice, err := v.client.AddDeviceAndConnect(ctx, v.busID, deviceType, nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	busId, devId := apiDevice.BusID, apiDevice.DevId
+// 	closeFunc := func() error {
+// 		_, err := v.client.DeviceRemoveCtx(context.Background(), busId, devId)
+// 		return err
+// 	}
+// 	vd := NewViiperDevice(controlStream, apiDevice, closeFunc)
+// 	slog.Info("Created VIIPER device", "viiperDevice", *apiDevice, "busID", v.busID)
+
+// 	return vd, nil
+// }
+
+// func (vb *viiperBridge) RemoveViiperDevice(ctx context.Context, vd *ViiperDevice) error {
+// 	_, err := vb.client.DeviceRemoveCtx(ctx, vd.deviceInfo.BusID, vd.deviceInfo.DevId)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }

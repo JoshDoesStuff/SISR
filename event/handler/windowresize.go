@@ -6,7 +6,7 @@ import (
 	"github.com/Alia5/SISR/sdl"
 )
 
-func WindowResize(rp *RegisterParams) Operation[*sdl.WindowEvent] {
+func WindowResize(rp *Env) Operation[*sdl.WindowEvent] {
 	return Operation[*sdl.WindowEvent]{
 		Event: sdl.EventTypeWindowResized,
 		Handler: HandleFunc(

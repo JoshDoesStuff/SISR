@@ -8,11 +8,12 @@ import (
 	"github.com/Alia5/SISR/webview"
 )
 
-type RegisterParams struct {
-	Window        *sdl.Window
-	WebView       webview.WebView
-	DeviceHandler input.DeviceHandler
-	QuitFn        context.CancelFunc
+type Env struct {
+	Window       *sdl.Window
+	WebView      webview.WebView
+	DeviceStore  input.DeviceStore
+	ViiperBridge input.ViiperBridge
+	QuitFn       context.CancelFunc
 }
 
 type Handler[T sdl.Event] interface {

@@ -5,6 +5,6 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-func RegisterAPI(hAPI huma.API, p *handler.RegisterParams) {
+func RegisterAPI(hAPI huma.API, e *handler.Env) {
 	// TODO:
 }

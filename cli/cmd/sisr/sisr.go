@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/Alia5/SISR/helper"
 	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/sdl"
-	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/webview"
 )
 
@@ -57,22 +55,30 @@ func (s *SISR) Run(cfg config.Global) error {
 		window.Destroy()
 	}()
 
-	router := event.NewRouter()
-	dh, dhCleanup, err := input.NewDeviceHandler(window, wv)
+	unhookSteamHid()
+	err = sdl.InitSubSystem(sdl.InitFlagGamepad | sdl.InitFlagSensor | sdl.InitFlagHaptic)
 	if err != nil {
-		slog.Error("Failed to initialite DeviceHanlder", "error", err)
+		return err
 	}
-	defer dhCleanup()
 
-	handlerParams := &handler.RegisterParams{
-		Window:        window,
-		WebView:       wv,
-		DeviceHandler: dh,
-		QuitFn:        stop,
+	router := event.NewRouter()
+	deviceStore, deviceStoreClose, err := input.NewDeviceStore()
+	if err != nil {
+		slog.Error("Failed to initialite DeviceStore", "error", err)
 	}
-	registerEventHandlers(router, handlerParams)
+	defer deviceStoreClose()
+	viiperBridge := input.NewViiperBridge(ctx, deviceStore)
 
-	_, apiAddr := s.runAPIServer(window, wv, dh, stop)
+	handlerEnv := &handler.Env{
+		Window:       window,
+		WebView:      wv,
+		DeviceStore:  deviceStore,
+		ViiperBridge: viiperBridge,
+		QuitFn:       stop,
+	}
+	registerEventHandlers(router, handlerEnv)
+
+	_, apiAddr := s.runAPIServer(window, wv, deviceStore, stop)
 	frontendAddr := s.FrontendAddress
 	if frontendAddr == "" {
 		frontendAddr = apiAddr
@@ -80,7 +86,7 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	wv.Navigate(frontendAddr)
 
-	return s.run(ctx, renderer, wv, router, stop)
+	return s.run(ctx, renderer, wv, router)
 }
 
 func (s *SISR) run(
@@ -88,7 +94,6 @@ func (s *SISR) run(
 	renderer sdl.Renderer,
 	wv webview.WebView,
 	router event.Router,
-	stop context.CancelFunc,
 ) error {
 	for {
 		select {
@@ -117,29 +122,6 @@ func (s *SISR) run(
 		}
 
 	}
-}
-
-func registerEventHandlers(r event.Router, rp *handler.RegisterParams) {
-	if runtime.GOOS == "linux" {
-		hittestfunc := handler.HandleFunc(
-			func(_ context.Context, ev *sdl.WindowEvent) error {
-				return extras.HandleCursorHitTestWindowEvent(rp.Window, ev)
-			},
-		)
-		event.RegisterHandler(r, handler.Operation[*sdl.WindowEvent]{
-			Event:   sdl.EventTypeWindowPixelSizeChanged,
-			Handler: hittestfunc,
-		})
-		event.RegisterHandler(r, handler.Operation[*sdl.WindowEvent]{
-			Event:   sdl.EventTypeWindowResized,
-			Handler: hittestfunc,
-		})
-	}
-	event.RegisterHandler(r, handler.Quit(rp))
-	event.RegisterHandler(r, handler.WindowResize(rp))
-	event.RegisterHandler(r, handler.GamepadAdded(rp))
-	event.RegisterHandler(r, handler.GamepadRemoved(rp))
-	event.RegisterHandler(r, handler.GamepadUpdated(rp))
 }
 
 func cleanup() {

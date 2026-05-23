@@ -6,24 +6,35 @@ import (
 	"github.com/Alia5/SISR/sdl"
 )
 
-func GamepadUpdated(rp *RegisterParams) Operation[*sdl.GamepadDeviceEvent] {
+func GamepadUpdated(e *Env) Operation[*sdl.GamepadDeviceEvent] {
 	return Operation[*sdl.GamepadDeviceEvent]{
 		Event:   sdl.EventTypeGamepadUpdateComplete,
-		Handler: HandleFunc(gpUpdate(rp)),
+		Handler: HandleFunc(gpUpdate(e)),
 	}
 }
 
-func gpUpdate(rp *RegisterParams) func(_ context.Context, ev *sdl.GamepadDeviceEvent) error {
-	return func(_ context.Context, ev *sdl.GamepadDeviceEvent) error {
+func gpUpdate(e *Env) func(ctx context.Context, ev *sdl.GamepadDeviceEvent) error {
+	return func(ctx context.Context, ev *sdl.GamepadDeviceEvent) error {
 		gpID := sdl.GamepadID(ev.Which)
-		dev, ok := rp.DeviceHandler.DeviceForID(gpID)
+		dev, ok := e.DeviceStore.DeviceForID(gpID)
 		if !ok {
 			return nil
 		}
-		err := dev.UpdateViiperDevice(gpID)
-		if err != nil {
-			return err
+		dev.Lock()
+		defer dev.Unlock()
+
+		if dev.SteamVirtualGamepad == nil {
+			return nil
 		}
+		if dev.SteamVirtualGamepad.ID() != gpID {
+			return nil
+		}
+
+		if dev.ViiperDevice == nil {
+			createViiperDevice(ctx, e.ViiperBridge, gpID, dev)
+		}
+
+		dev.ViiperDevice.Update(dev.SteamVirtualGamepad)
 
 		return nil
 	}

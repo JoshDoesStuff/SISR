@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"log/slog"
 	"math"
+	"sync"
 
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/apiclient"
@@ -11,32 +12,43 @@ import (
 	"github.com/Alia5/VIIPER/device/xbox360"
 )
 
-type viiperDevice struct {
+type ViiperDevice struct {
 	controlStream *apiclient.DeviceStream
 	deviceInfo    *apitypes.Device
-	stateChan     chan encoding.BinaryMarshaler
+
+	closeFunc func() error
+	closeOnce sync.Once
+
+	stateChan chan encoding.BinaryMarshaler
+	done      chan struct{}
 }
 
-func NewViiperDevice(controlStream *apiclient.DeviceStream, deviceInfo *apitypes.Device) *viiperDevice {
+func NewViiperDevice(
+	controlStream *apiclient.DeviceStream,
+	deviceInfo *apitypes.Device,
+	closeFunc func() error,
+) *ViiperDevice {
 	stateChan := make(chan encoding.BinaryMarshaler, 10)
-	d := &viiperDevice{
+	d := &ViiperDevice{
 		controlStream: controlStream,
 		deviceInfo:    deviceInfo,
+		closeFunc:     closeFunc,
 		stateChan:     stateChan,
+		done:          make(chan struct{}),
 	}
 	go d.handleState()
 	return d
 }
 
-func (d *viiperDevice) Update(gp *sdl.Gamepad) {
+func (d *ViiperDevice) Info() *apitypes.Device {
+	return d.deviceInfo
+}
+
+func (d *ViiperDevice) Update(gp *sdl.Gamepad) {
 	if gp == nil {
 		slog.Warn("Attempted to update VIIPER device with nil gamepad")
 		return
 	}
-	if d.stateChan == nil {
-		return
-	}
-
 	state := &xbox360.InputState{}
 
 	if gp.GetButton(sdl.GamepadButtonSouth) {
@@ -101,27 +113,54 @@ func (d *viiperDevice) Update(gp *sdl.Gamepad) {
 	state.RX = gp.GetAxis(sdl.GamepadAxisRightX)
 	state.RY = int16(max(math.MinInt16, min(math.MaxInt16, -int32(gp.GetAxis(sdl.GamepadAxisRightY)))))
 
-	d.stateChan <- state
+	select {
+	case <-d.done:
+		return
+	default:
+	}
+
+	select {
+	case <-d.done:
+		return
+	case d.stateChan <- state:
+	default:
+		slog.Warn("Dropping VIIPER device state update because buffer is full")
+	}
 }
 
-func (d *viiperDevice) handleState() {
-	for state := range d.stateChan {
-		err := d.controlStream.WriteBinary(state)
-		if err != nil {
-			slog.Error("Failed to send state to VIIPER device", "error", err)
+func (d *ViiperDevice) handleState() {
+	for {
+		select {
+		case <-d.done:
+			return
+		case state := <-d.stateChan:
+			err := d.controlStream.WriteBinary(state)
+			if err != nil {
+				slog.Error("Failed to send state to VIIPER device", "error", err)
+			}
 		}
-		slog.Debug("Sent state to VIIPER device")
 	}
 }
 
-// TODO: remove device from fgjdkjfg
-func (d *viiperDevice) Close() error {
-	err := d.controlStream.Close()
-	if err != nil {
-		return err
-	}
-	d.controlStream = nil
-	close(d.stateChan)
-	d.stateChan = nil
-	return nil
+func (d *ViiperDevice) Close() error {
+	var err error
+	d.closeOnce.Do(func() {
+		close(d.done)
+
+		if d.controlStream != nil {
+			err = d.controlStream.Close()
+			d.controlStream = nil
+		}
+
+		if d.closeFunc != nil {
+			go func(closeFunc func() error) {
+				err := closeFunc()
+				if err != nil {
+					slog.Error("Failed to remove VIIPER device", "error", err)
+				}
+			}(d.closeFunc)
+		}
+	})
+
+	return err
 }

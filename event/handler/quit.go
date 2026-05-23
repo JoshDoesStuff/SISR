@@ -6,7 +6,7 @@ import (
 	"github.com/Alia5/SISR/sdl"
 )
 
-func Quit(rp *RegisterParams) Operation[sdl.Event] {
+func Quit(rp *Env) Operation[sdl.Event] {
 	return Operation[sdl.Event]{
 		Event: sdl.EventTypeQuit,
 		Handler: HandleFunc(

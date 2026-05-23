@@ -25,7 +25,7 @@ import (
 func (s *SISR) runAPIServer(
 	window *sdl.Window,
 	wv webview.WebView,
-	dh input.DeviceHandler,
+	deviceStore input.DeviceStore,
 	stopFn context.CancelFunc,
 ) (*http.Server, string) {
 	l, err := net.Listen("tcp", s.ListenAddress)
@@ -108,11 +108,11 @@ func (s *SISR) runAPIServer(
 		))
 	})
 
-	api.RegisterAPI(hAPI, &handler.RegisterParams{
-		Window:        window,
-		WebView:       wv,
-		DeviceHandler: dh,
-		QuitFn:        stopFn,
+	api.RegisterAPI(hAPI, &handler.Env{
+		Window:      window,
+		WebView:     wv,
+		DeviceStore: deviceStore,
+		QuitFn:      stopFn,
 	})
 
 	allowedOrigins := slices.Concat(
