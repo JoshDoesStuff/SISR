@@ -2,9 +2,13 @@ package input
 
 import (
 	"log/slog"
+	"math"
 	"sync"
 
 	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/VIIPER/device/dualshock4"
+	"github.com/Alia5/VIIPER/device/keyboard"
+	"github.com/Alia5/VIIPER/device/xbox360"
 )
 
 type Device struct {
@@ -60,4 +64,80 @@ func (d *Device) SetViiperDevice(vd *ViiperDevice) {
 		}
 	}
 	d.ViiperDevice = vd
+	go d.handleFeedback()
+
+}
+
+func (d *Device) handleFeedback() {
+	// TODO: type!!
+	for {
+		select {
+		case fb := <-d.ViiperDevice.feedbackCh:
+			if fb == nil {
+				return
+			}
+
+			switch fb := fb.(type) {
+			case *xbox360.XRumbleState:
+				d.handleXbox360Feedback(fb)
+				continue
+			case *dualshock4.OutputState:
+				d.handleDualShock4Feedback(fb)
+				continue
+			case *keyboard.LEDState:
+				d.handleKeyboardFeedback(fb)
+				continue
+			default:
+				slog.Warn("Received feedback of unknown type for VIIPER device; ignoring", "feedback", fb)
+				continue
+			}
+		case e := <-d.ViiperDevice.feedbackErrCh:
+			if e != nil {
+				slog.Debug("feedback error", "error", e)
+			}
+			return
+		case <-d.ViiperDevice.deviceCtx.Done():
+			return
+		}
+	}
+}
+
+func (d *Device) handleXbox360Feedback(rs *xbox360.XRumbleState) {
+	d.mtx.Lock()
+	defer d.mtx.Unlock()
+	gp := d.SteamVirtualGamepad
+	if gp == nil {
+		slog.Warn("Received feedback for VIIPER device without a Steam virtual gamepad assigned; ignoring rumble command")
+		return
+	}
+	_ = gp.Rumble(uint16(rs.LeftMotor)*257, uint16(rs.RightMotor)*257, math.MaxUint32)
+}
+
+func (d *Device) handleDualShock4Feedback(os *dualshock4.OutputState) {
+	d.mtx.Lock()
+	defer d.mtx.Unlock()
+	gp := d.SteamVirtualGamepad
+	if gp == nil {
+		slog.Warn("Received feedback for VIIPER device without a Steam virtual gamepad assigned; ignoring rumble/led command")
+		return
+	}
+	_ = gp.Rumble(uint16(os.RumbleLarge)*257, uint16(os.RumbleSmall)*257, math.MaxUint32)
+
+	// TODO: handleFlashOnFlashOff
+	rgp := d.RealGamepad
+	if rgp != nil {
+		props := rgp.GetProperties()
+		switch {
+		case props == 0:
+		case sdl.GetBooleanProperty(props, sdl.PropGamepadCapRGBLEDBoolean(), false):
+			_ = gp.SetLED(os.LedRed, os.LedGreen, os.LedBlue)
+		case sdl.GetBooleanProperty(props, sdl.PropGamepadCapMonoLEDBoolean(), false):
+			avg := (os.LedRed + os.LedGreen + os.LedBlue)
+			_ = gp.SetLED(avg, avg, avg)
+		}
+	}
+}
+
+func (d *Device) handleKeyboardFeedback(ls *keyboard.LEDState) {
+	// TODO: Implement keyboard LED feedback handling
 }

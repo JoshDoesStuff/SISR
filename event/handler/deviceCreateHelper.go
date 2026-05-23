@@ -9,7 +9,7 @@ import (
 )
 
 func createViiperDevice(ctx context.Context, env *Env, gpID sdl.GamepadID, dev *input.Device) {
-	if env.ViiperBridge.CreateDeviceScheduled(gpID) {
+	if env.ViiperBridge.IsCreateDeviceScheduled(gpID) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
@@ -18,9 +18,10 @@ func createViiperDevice(ctx context.Context, env *Env, gpID sdl.GamepadID, dev *
 		select {
 		case vd := <-deviceChan:
 			dev.Lock()
-			defer dev.Unlock()
 			dev.SetViiperDevice(vd)
+			dev.Unlock()
 			slog.Info("VIIPER device created and assigned to gamepad", "gamepad_id", gpID, "viiper_device", vd.Info())
+			// TODO: check settings and stuff
 			err := env.BindingEnforcer.ForceOwnAppID()
 			if err != nil {
 				slog.Error("Failed to force SteamInput layout", "error", err)

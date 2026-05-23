@@ -32,6 +32,7 @@ func gpUpdate(e *Env) func(ctx context.Context, ev *sdl.GamepadDeviceEvent) erro
 
 		if dev.ViiperDevice == nil {
 			createViiperDevice(ctx, e, gpID, dev)
+			return nil
 		}
 
 		dev.ViiperDevice.Update(dev.SteamVirtualGamepad)

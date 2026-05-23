@@ -14,7 +14,7 @@ import (
 
 type ViiperBridge interface {
 	CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *ViiperDevice, chan error)
-	CreateDeviceScheduled(gamepadID sdl.GamepadID) bool
+	IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool
 	// RemoveViiperDevice(ctx context.Context, vd *ViiperDevice)
 }
 
@@ -115,7 +115,7 @@ func (v *viiperBridge) CreateDevice(ctx context.Context, gamepadID sdl.GamepadID
 	return deviceChan, errorChan
 }
 
-func (v *viiperBridge) CreateDeviceScheduled(gamepadID sdl.GamepadID) bool {
+func (v *viiperBridge) IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool {
 	v.mtx.Lock()
 	defer v.mtx.Unlock()
 

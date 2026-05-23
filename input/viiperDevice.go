@@ -1,7 +1,10 @@
 package input
 
 import (
+	"bufio"
+	"context"
 	"encoding"
+	"io"
 	"log/slog"
 	"math"
 	"sync"
@@ -9,8 +12,12 @@ import (
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/apiclient"
 	"github.com/Alia5/VIIPER/apitypes"
+	"github.com/Alia5/VIIPER/device/dualshock4"
+	"github.com/Alia5/VIIPER/device/keyboard"
 	"github.com/Alia5/VIIPER/device/xbox360"
 )
+
+const inputBufferSize = 10
 
 type ViiperDevice struct {
 	controlStream *apiclient.DeviceStream
@@ -18,6 +25,12 @@ type ViiperDevice struct {
 
 	closeFunc func() error
 	closeOnce sync.Once
+
+	deviceCtx       context.Context
+	deviceCtxCancel context.CancelFunc
+
+	feedbackCh    <-chan encoding.BinaryUnmarshaler
+	feedbackErrCh <-chan error
 
 	stateChan chan encoding.BinaryMarshaler
 	done      chan struct{}
@@ -28,13 +41,31 @@ func NewViiperDevice(
 	deviceInfo *apitypes.Device,
 	closeFunc func() error,
 ) *ViiperDevice {
-	stateChan := make(chan encoding.BinaryMarshaler, 10)
+	stateChan := make(chan encoding.BinaryMarshaler, inputBufferSize)
+	deviceCtx, cancel := context.WithCancel(context.Background())
+
+	decodeFeedback := readUnknownFeedback
+	switch deviceInfo.Type {
+	case "keyboard":
+		decodeFeedback = readKeyboardFeedback
+	case "dualshock4":
+		decodeFeedback = readDualShock4Feedback
+	case "xbox360":
+		decodeFeedback = readXbox360Feedback
+	}
+
+	feedbackCh, errCh := controlStream.StartReading(deviceCtx, 8 /*TODO */, decodeFeedback)
+
 	d := &ViiperDevice{
-		controlStream: controlStream,
-		deviceInfo:    deviceInfo,
-		closeFunc:     closeFunc,
-		stateChan:     stateChan,
-		done:          make(chan struct{}),
+		controlStream:   controlStream,
+		deviceInfo:      deviceInfo,
+		closeFunc:       closeFunc,
+		stateChan:       stateChan,
+		deviceCtx:       deviceCtx,
+		deviceCtxCancel: cancel,
+		feedbackCh:      feedbackCh,
+		feedbackErrCh:   errCh,
+		done:            make(chan struct{}),
 	}
 	go d.handleState()
 	return d
@@ -116,12 +147,6 @@ func (d *ViiperDevice) Update(gp *sdl.Gamepad) {
 	select {
 	case <-d.done:
 		return
-	default:
-	}
-
-	select {
-	case <-d.done:
-		return
 	case d.stateChan <- state:
 	default:
 		slog.Warn("Dropping VIIPER device state update because buffer is full")
@@ -146,6 +171,7 @@ func (d *ViiperDevice) Close() error {
 	var err error
 	d.closeOnce.Do(func() {
 		close(d.done)
+		d.deviceCtxCancel()
 
 		if d.controlStream != nil {
 			err = d.controlStream.Close()
@@ -163,4 +189,51 @@ func (d *ViiperDevice) Close() error {
 	})
 
 	return err
+}
+
+func readXbox360Feedback(r *bufio.Reader) (encoding.BinaryUnmarshaler, error) {
+	var b [2]byte
+	if _, err := io.ReadFull(r, b[:]); err != nil {
+		return nil, err
+	}
+
+	msg := new(xbox360.XRumbleState)
+	if err := msg.UnmarshalBinary(b[:]); err != nil {
+		return nil, err
+	}
+
+	return msg, nil
+}
+
+func readDualShock4Feedback(r *bufio.Reader) (encoding.BinaryUnmarshaler, error) {
+	var b [7]byte
+	if _, err := io.ReadFull(r, b[:]); err != nil {
+		return nil, err
+	}
+
+	msg := new(dualshock4.OutputState)
+	if err := msg.UnmarshalBinary(b[:]); err != nil {
+		return nil, err
+	}
+
+	return msg, nil
+}
+
+func readKeyboardFeedback(r *bufio.Reader) (encoding.BinaryUnmarshaler, error) {
+	var b [1]byte
+	if _, err := io.ReadFull(r, b[:]); err != nil {
+		return nil, err
+	}
+
+	msg := new(keyboard.LEDState)
+	if err := msg.UnmarshalBinary(b[:]); err != nil {
+		return nil, err
+	}
+
+	return msg, nil
+}
+
+func readUnknownFeedback(_ *bufio.Reader) (encoding.BinaryUnmarshaler, error) {
+	slog.Warn("Received feedback for device with unknown device type")
+	return nil, io.EOF
 }
