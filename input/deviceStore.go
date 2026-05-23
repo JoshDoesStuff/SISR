@@ -138,9 +138,8 @@ func (ds *deviceStore) quit() {
 	for id, dev := range ds.devices {
 		if dev != nil {
 			dev.Lock()
-			defer dev.Unlock()
-
 			dev.Close()
+			dev.Unlock()
 		}
 		delete(ds.devices, id)
 	}
