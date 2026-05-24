@@ -15,9 +15,10 @@ import (
 type ViiperBridge interface {
 	CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *viiperdevice.Device, chan error)
 	IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool
+	Ping(ctx context.Context) (*apitypes.PingResponse, error)
 }
 
-const minSupportedVIIPERVersion = "v0.6.1"
+// const minSupportedVIIPERVersion = "v0.6.1"
 const defaultDeviceType = "xbox360"
 
 func NewViiperBridge(ctx context.Context, dl DeviceStore) ViiperBridge {
@@ -121,7 +122,7 @@ func (v *viiperBridge) IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool {
 	return ok
 }
 
-func (v *viiperBridge) ping(ctx context.Context) (*apitypes.PingResponse, error) {
+func (v *viiperBridge) Ping(ctx context.Context) (*apitypes.PingResponse, error) {
 	resp, err := v.client.PingCtx(ctx)
 	if err != nil {
 		return nil, err
@@ -168,9 +169,4 @@ func (v *viiperBridge) ensureBus(ctx context.Context) (busID uint32, err error) 
 		slog.Info("Re-Created VIIPER bus", "busID", v.busID)
 	}
 	return v.busID, nil
-}
-
-func (v *viiperBridge) close() {
-
-	// TODO
 }

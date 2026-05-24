@@ -61,7 +61,7 @@ func (s *SISR) Run(cfg config.Global) error {
 			slog.Error("Failed to set Steam marker environment", "error", err)
 		}
 		slog.Info("Loading overlay...")
-		err = steam.LoadOverlay(s.Steam.InstallDir)
+		err = steam.LoadOverlay(s.Steam.InstallDir) //nolint:staticcheck
 		if err != nil {
 			slog.Error("Failed to load Steam overlay", "error", err)
 		}

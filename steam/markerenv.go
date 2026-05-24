@@ -12,7 +12,7 @@ import (
 	"github.com/Alia5/SISR/steam/vdf"
 )
 
-func SetMarkerEnv(steamDir string, steamUserId uint32) error {
+func SetMarkerEnv(steamDir string, steamUserID uint32) error {
 
 	if steamDir == "" {
 		var err error
@@ -23,22 +23,22 @@ func SetMarkerEnv(steamDir string, steamUserId uint32) error {
 		}
 	}
 
-	if steamUserId == 0 {
+	if steamUserID == 0 {
 		var err error
-		steamUserId, err = ActiveUserID()
+		steamUserID, err = ActiveUserID()
 		if err != nil {
 			slog.Error("Could not detect active Steam user ID", "error", err)
 			return err
 		}
 	}
 
-	shortcutsPath, err := ShortcutsPath(steamDir, steamUserId)
+	shortcutsPath, err := ShortcutsPath(steamDir, steamUserID)
 	if err != nil {
 		slog.Error("Could not determine Steam shortcuts.vdf path", "error", err)
 		return err
 	}
 
-	markerAppID, err := MarkerAppId(shortcutsPath)
+	markerAppID, err := MarkerAppID(shortcutsPath)
 	if err != nil {
 		slog.Error("Failed to check for SISR marker in Steam shortcuts", "error", err)
 		return err
@@ -63,13 +63,14 @@ func SetMarkerEnv(steamDir string, steamUserId uint32) error {
 	return nil
 }
 
-func MarkerAppId(shortcutsPath string) (uint32, error) {
+func MarkerAppID(shortcutsPath string) (uint32, error) {
 
 	file, err := os.Open(shortcutsPath)
 	if err != nil {
 		return 0, err
 	}
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
+
 	vdfData, err := vdf.Read(file)
 	if err != nil {
 		return 0, err
