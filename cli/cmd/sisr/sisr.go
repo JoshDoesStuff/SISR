@@ -135,6 +135,12 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	wv.Navigate(frontendAddr)
 
+	// TODO: check settings and stuff
+	err = bindingEnforcer.ForceOwnAppID()
+	if err != nil {
+		slog.Error("Failed to force SteamInput layout", "error", err)
+	}
+
 	return s.run(ctx, renderer, wv, eventRouter)
 }
 
