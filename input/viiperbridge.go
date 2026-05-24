@@ -2,10 +2,21 @@ package input
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
+	"net"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"slices"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
+	"github.com/Alia5/SISR/config"
 	"github.com/Alia5/SISR/input/viiperdevice"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/apiclient"
@@ -16,17 +27,45 @@ type ViiperBridge interface {
 	CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *viiperdevice.Device, chan error)
 	IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool
 	Ping(ctx context.Context) (*apitypes.PingResponse, error)
+	Ready() bool
 }
 
-// const minSupportedVIIPERVersion = "v0.6.1"
+const minSupportedVIIPERVersion = "v0.6.1"
+const expectedServerName = "VIIPER"
 const defaultDeviceType = "xbox360"
+const defaultAddress = "localhost:3242"
+const startupPingTimeout = 1 * time.Second
 
-func NewViiperBridge(ctx context.Context, dl DeviceStore) ViiperBridge {
-	v := &viiperBridge{
-		client:     apiclient.New("localhost:3242"),
-		scheduled:  make(map[sdl.GamepadID]*createScheduleWhatever),
-		deviceList: dl,
+var ErrInvalidViiperServer = errors.New("invalid VIIPER server")
+var ErrUnsupportedViiperVersion = errors.New("unsupported VIIPER version")
+
+func NewViiperBridge(ctx context.Context, dl DeviceStore, cfg *config.Viiper) ViiperBridge {
+	address := defaultAddress
+	if cfg != nil && cfg.Address != "" {
+		address = cfg.Address
 	}
+	var client *apiclient.Client
+	if cfg != nil && cfg.Password != "" {
+		client = apiclient.NewWithPassword(address, cfg.Password)
+	} else {
+		client = apiclient.New(address)
+	}
+	v := &viiperBridge{
+		client:     client,
+		deviceList: dl,
+		scheduled:  make(map[sdl.GamepadID]*createDeviceEntry),
+		cfg:        cfg,
+		shutdown:   ctx.Done(),
+	}
+	go func() {
+		ctx, cancel := context.WithTimeout(ctx, startupPingTimeout)
+		defer cancel()
+
+		_, err := v.Ping(ctx)
+		if err != nil {
+			slog.Error("Initial VIIPER ping failed", "error", err)
+		}
+	}()
 	return v
 }
 
@@ -35,13 +74,16 @@ type viiperBridge struct {
 	busID            uint32
 	viiperServerInfo *apitypes.PingResponse
 	deviceList       DeviceStore
+	cfg              *config.Viiper
 
-	scheduled map[sdl.GamepadID]*createScheduleWhatever
+	scheduled                  map[sdl.GamepadID]*createDeviceEntry
+	viiperServerSpawnAttempted bool
+	shutdown                   <-chan struct{}
 
 	mtx sync.Mutex
 }
 
-type createScheduleWhatever struct {
+type createDeviceEntry struct {
 	deviceType   string
 	createdChans []chan *viiperdevice.Device
 	errorChans   []chan error
@@ -59,7 +101,7 @@ func (v *viiperBridge) CreateDevice(ctx context.Context, gamepadID sdl.GamepadID
 		meh.errorChans = append(meh.errorChans, errorChan)
 		return deviceChan, errorChan
 	} else {
-		v.scheduled[gamepadID] = &createScheduleWhatever{
+		v.scheduled[gamepadID] = &createDeviceEntry{
 			deviceType:   deviceType,
 			createdChans: []chan *viiperdevice.Device{deviceChan},
 			errorChans:   []chan error{errorChan},
@@ -71,8 +113,6 @@ func (v *viiperBridge) CreateDevice(ctx context.Context, gamepadID sdl.GamepadID
 			defer v.mtx.Unlock()
 			delete(v.scheduled, gamepadID)
 		}()
-
-		// TODO: wait for ready
 
 		busID, err := v.ensureBus(ctx)
 		if err != nil {
@@ -125,11 +165,29 @@ func (v *viiperBridge) IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool {
 func (v *viiperBridge) Ping(ctx context.Context) (*apitypes.PingResponse, error) {
 	resp, err := v.client.PingCtx(ctx)
 	if err != nil {
+		v.mtx.Lock()
+		v.viiperServerInfo = nil
+		if runtime.GOOS == "windows" && !v.viiperServerSpawnAttempted && v.cfg != nil {
+			if isLoopbackAddress(v.cfg.Address) {
+				v.viiperServerSpawnAttempted = true
+				defer v.trySpawnViiperServer()
+			}
+		}
+		v.mtx.Unlock()
 		return nil, err
 	}
+	if resp.Server != expectedServerName {
+		return nil, fmt.Errorf("%w: got %q, expected %q", ErrInvalidViiperServer, resp.Server, expectedServerName)
+	}
+
 	v.mtx.Lock()
 	defer v.mtx.Unlock()
 	v.viiperServerInfo = resp
+
+	if !isVersionSupported(resp.Version) {
+		return nil, fmt.Errorf("%w: got %q, need >= %q", ErrUnsupportedViiperVersion, resp.Version, minSupportedVIIPERVersion)
+	}
+
 	return resp, nil
 }
 
@@ -145,7 +203,7 @@ func (v *viiperBridge) ensureBus(ctx context.Context) (busID uint32, err error) 
 	defer v.mtx.Unlock()
 
 	if v.busID == 0 {
-		slog.Debug("No previews VIIPER bus used, creating new bus")
+		slog.Debug("No previous VIIPER bus used, creating new bus")
 		bus, err := v.client.BusCreateCtx(ctx, 0)
 		if err != nil {
 			return 0, err
@@ -169,4 +227,125 @@ func (v *viiperBridge) ensureBus(ctx context.Context) (busID uint32, err error) 
 		slog.Info("Re-Created VIIPER bus", "busID", v.busID)
 	}
 	return v.busID, nil
+}
+
+func isVersionSupported(v string) bool {
+	parts := strings.Split(v, ".")
+	if len(parts) != 3 {
+		return false
+	}
+	major, err := strconv.Atoi(strings.Trim(parts[0], "vV"))
+	if err != nil {
+		return false
+	}
+	minor, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return false
+	}
+	patchPart := parts[2]
+	for i, r := range patchPart {
+		if r < '0' || r > '9' {
+			patchPart = patchPart[:i]
+			break
+		}
+	}
+	if patchPart == "" {
+		return false
+	}
+	patch, err := strconv.Atoi(patchPart)
+	if err != nil {
+		return false
+	}
+
+	minParts := strings.Split(minSupportedVIIPERVersion, ".")
+	minMajor, _ := strconv.Atoi(strings.Trim(minParts[0], "vV"))
+	minMinor, _ := strconv.Atoi(minParts[1])
+	minPatch, _ := strconv.Atoi(minParts[2])
+
+	if major < minMajor {
+		return false
+	}
+	if major == minMajor && minor < minMinor {
+		return false
+	}
+	if major == minMajor && minor == minMinor && patch < minPatch {
+		return false
+	}
+	return true
+}
+
+func isLoopbackAddress(addr string) bool {
+	host, _, splitErr := net.SplitHostPort(addr)
+	if splitErr != nil {
+		slog.Error(
+			"Failed to split VIIPER address",
+			"address", addr,
+			"error", splitErr,
+		)
+		return false
+	}
+	ips, lookupErr := net.LookupIP(host)
+	if lookupErr != nil {
+		slog.Error(
+			"Failed to lookup VIIPER address host",
+			"host", host,
+			"error", lookupErr,
+		)
+		return false
+	}
+	if ips[0].IsLoopback() {
+		return true
+	}
+	return false
+}
+
+func (v *viiperBridge) trySpawnViiperServer() {
+	slog.Debug("Attempting to spawn bundled VIIPER")
+	ownExecutable, err := os.Executable()
+	if err != nil {
+		slog.Error("viiper_spawn: couldn't detect own executable", "error", err)
+	}
+	ownPath, err := filepath.EvalSymlinks(ownExecutable)
+	if err != nil {
+		slog.Error("viiper_spawn: couldn't evaluate symlinks for executable path", "path", ownExecutable, "error", err)
+	}
+	viiperPath := filepath.Join(filepath.Dir(ownPath), "viiper.exe")
+	if _, err := os.Stat(viiperPath); os.IsNotExist(err) {
+		slog.Error("viiper_spawn: viiper.exe not found next to SISR executable", "path", viiperPath)
+		return
+	}
+
+	cmd := exec.Command(viiperPath, "server", "--log.file=viiper.log")
+	err = cmd.Start()
+	if err != nil {
+		slog.Error("viiper_spawn: failed to start VIIPER server process", "error", err)
+		return
+	}
+	go func() {
+		_ = cmd.Wait()
+	}()
+	slog.Info("viiper_spawn: VIIPER server process started", "pid", cmd.Process.Pid)
+	go func() {
+		for range 10 {
+			time.Sleep(1 * time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), startupPingTimeout)
+			r, err := v.Ping(ctx)
+			if err == nil {
+				slog.Info("viiper_spawn: successfully connected to VIIPER server", "version", r.Version)
+				cancel()
+				if v.shutdown != nil {
+					<-v.shutdown
+					err = cmd.Process.Kill()
+					if err != nil && !errors.Is(err, os.ErrProcessDone) {
+						slog.Error("viiper_spawn: failed to stop VIIPER server process", "pid", cmd.Process.Pid, "error", err)
+						return
+					}
+					slog.Info("viiper_spawn: stopped VIIPER server process", "pid", cmd.Process.Pid)
+				}
+
+				return
+			}
+			cancel()
+		}
+	}()
 }

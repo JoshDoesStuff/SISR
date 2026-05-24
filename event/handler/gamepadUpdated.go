@@ -34,7 +34,11 @@ func gpUpdate(e *Env) func(ctx context.Context, ev *sdl.GamepadDeviceEvent) erro
 			createViiperDevice(ctx, e, gpID, dev)
 			return nil
 		}
-
+		if dev.ViiperDevice.IsClosed() {
+			// clear, exit, is recreated on next event
+			dev.ViiperDevice = nil
+			return nil
+		}
 		dev.ViiperDevice.Update(dev.SteamVirtualGamepad)
 
 		return nil

@@ -114,8 +114,19 @@ func (d *Device) handleState() {
 			err := d.controlStream.WriteBinary(state)
 			if err != nil {
 				slog.Error("Failed to send state to VIIPER device", "error", err)
+				d.Close() //nolint
+				return
 			}
 		}
+	}
+}
+
+func (d *Device) IsClosed() bool {
+	select {
+	case <-d.done:
+		return true
+	default:
+		return false
 	}
 }
 

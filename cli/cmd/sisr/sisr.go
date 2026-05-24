@@ -92,7 +92,7 @@ func (s *SISR) Run(cfg config.Global) error {
 		slog.Error("Failed to initialite DeviceStore", "error", err)
 	}
 	defer deviceStoreClose()
-	viiperBridge := input.NewViiperBridge(ctx, deviceStore)
+	viiperBridge := input.NewViiperBridge(ctx, deviceStore, &s.Viiper)
 
 	registerEventHandlers(eventRouter, &handler.Env{
 		Window:          window,

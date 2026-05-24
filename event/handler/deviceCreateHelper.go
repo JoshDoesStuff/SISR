@@ -3,12 +3,16 @@ package handler
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/sdl"
 )
 
 func createViiperDevice(ctx context.Context, env *Env, gpID sdl.GamepadID, dev *input.Device) {
+	if !env.ViiperBridge.Ready() {
+		return
+	}
 	if env.ViiperBridge.IsCreateDeviceScheduled(gpID) {
 		return
 	}
@@ -26,14 +30,13 @@ func createViiperDevice(ctx context.Context, env *Env, gpID sdl.GamepadID, dev *
 			dev.SetViiperDevice(vd)
 			dev.Unlock()
 			slog.Info("VIIPER device created and assigned to gamepad", "gamepad_id", gpID, "viiper_device", vd.Info())
-			// TODO: check settings and stuff
-			err := env.BindingEnforcer.ForceOwnAppID()
-			if err != nil {
-				slog.Error("Failed to force SteamInput layout", "error", err)
-			}
 		case err := <-errChan:
 			slog.Error("Failed to create VIIPER device", "error", err)
-			// TODO: handle error
+			// best attempt... otherwise user will have handle to via UI
+			// kiss
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			env.ViiperBridge.Ping(ctx) // nolint
 		case <-ctx.Done():
 			slog.Error("Timed out creating VIIPER device")
 		}
