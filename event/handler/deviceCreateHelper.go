@@ -13,7 +13,7 @@ func createViiperDevice(ctx context.Context, env *Env, gpID sdl.GamepadID, dev *
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
-	deviceChan, errChan := env.ViiperBridge.CreateDevice(ctx, gpID, "xbox360")
+	deviceChan, errChan := env.ViiperBridge.CreateDevice(ctx, gpID, env.Config.DefaultControllerType)
 	go func() {
 		select {
 		case vd := <-deviceChan:
