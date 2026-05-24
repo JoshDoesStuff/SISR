@@ -12,6 +12,7 @@ type DeviceStore interface {
 	OpenGamePad(id sdl.GamepadID) (*Device, error)
 	CloseGamePad(id sdl.GamepadID) error
 	DeviceForID(id sdl.GamepadID) (*Device, bool)
+	Empty() bool
 }
 
 type deviceStore struct {
@@ -121,8 +122,10 @@ func (ds *deviceStore) CloseGamePad(id sdl.GamepadID) error {
 	}
 	slog.Debug("Closing gamepad", "id", id, "name", gp.Name(), "steamHandle", gp.GetSteamHandle())
 	gp.Close()
-
 	delete(ds.devices, id)
+	if dev.RealGamepad == nil && dev.SteamVirtualGamepad == nil {
+		dev.Close()
+	}
 	return nil
 }
 
@@ -144,4 +147,10 @@ func (ds *deviceStore) quit() {
 		delete(ds.devices, id)
 	}
 
+}
+
+func (ds *deviceStore) Empty() bool {
+	ds.mtx.Lock()
+	defer ds.mtx.Unlock()
+	return len(ds.devices) == 0
 }
