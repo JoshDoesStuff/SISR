@@ -23,13 +23,10 @@ build_path := join(dist_dir, binary_name + exe_ext)
 default:
 	just --list
 
-[working-directory: 'dist']
-run *args:
-	go run ../{{ main_pkg }} {{ args }}
 
 [working-directory: 'dist']
-run-built:
-	{{ if os_family() == "windows" { "& './" + binary_name + exe_ext + "'" } else { "'./" + binary_name + exe_ext + "'" } }}
+run *args: build
+	{{ if os_family() == "windows" { "& './" + binary_name + exe_ext + "'" } else { "'./" + binary_name + exe_ext + "'" } }} {{ args }}
 
 win-resource:
 	goversioninfo -64 -o cmd/sisr/resource.syso versioninfo.json
