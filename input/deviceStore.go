@@ -67,7 +67,7 @@ func (ds *deviceStore) OpenGamePad(id sdl.GamepadID) (*Device, error) {
 		}
 		// We assume devices are opened in order
 		// Real Gamepad first and Steam virtual gamepad immediately after with Id+1
-		// I havent validated, but also haven't encountered anything else so far.
+		// I havent really validated, but also haven't encountered anything else so far.
 		var ok bool
 		dev, ok = ds.devices[id-1]
 		if !ok {
