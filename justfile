@@ -78,7 +78,7 @@ build-polyhook2 type="Debug":
 	}}
 
 [arg("type", long="type", help="Build type (Debug/Release)")]
-build-deps type="Debug": (build-sdl type) (build-polyhook2 type)
+build-deps type="Debug": (build-sdl type)
 
 build-sisr type="Debug": (build-deps type)
     {{ 
