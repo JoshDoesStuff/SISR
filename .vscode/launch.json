@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/sisr",
-            "output": "${workspaceFolder}/dist/__debug_bin",
+            "output": "${workspaceFolder}/dist/sisr",
             "cwd": "${workspaceFolder}/dist",
             "env": {
                 "NIX_HARDENING_ENABLE": "",
