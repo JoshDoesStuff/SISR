@@ -159,6 +159,7 @@ func (s *SISR) run(
 		ev, _ := sdl.WaitEventTimeout(s.targetFrameDuration)
 		if ev != nil {
 			router.RouteEvent(ctx, ev)
+			drainEvents(ctx, router)
 		}
 
 		if time.Since(s.lastRenderTime) >= s.targetFrameDuration || ev == nil {
@@ -176,6 +177,16 @@ func (s *SISR) run(
 			}
 		}
 
+	}
+}
+
+func drainEvents(ctx context.Context, router event.Router) {
+	for {
+		ev, _ := sdl.PollEvent()
+		if ev == nil {
+			break
+		}
+		router.RouteEvent(ctx, ev)
 	}
 }
 
