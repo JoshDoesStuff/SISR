@@ -3,6 +3,7 @@ module github.com/Alia5/SISR
 go 1.26.3
 
 require (
+	fyne.io/systray v1.12.0
 	github.com/Alia5/VIIPER v0.6.1
 	github.com/alecthomas/kong v1.15.0
 	github.com/alecthomas/kong-toml v0.4.0
@@ -20,6 +21,7 @@ require (
 	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/jchv/go-winloader v0.0.0-20250406163304-c1995be93bd1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect

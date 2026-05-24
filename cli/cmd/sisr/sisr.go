@@ -128,6 +128,7 @@ func (s *SISR) Run(cfg config.Global) error {
 		slog.Error("Failed to force SteamInput layout", "error", err)
 	}
 
+	tray.Run(ctx, cmdCtx)
 	return s.run(ctx, renderer, window, wv, eventRouter, winDispatcher)
 }
 
