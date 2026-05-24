@@ -151,13 +151,14 @@ jobs:
             - name: Create archive
               shell: bash
               run: |
-                  cd dist
                   if [ "${{ matrix.target.os }}" = "windows-latest" ]; then
+                    cd dist
                     7z a -tzip "SISR-${{ matrix.target.name }}${{ inputs.artifact_suffix }}.zip" *
+                    cd ..
                   else
-                    tar --exclude='./appimage' -czf "SISR-${{ matrix.target.name }}${{ inputs.artifact_suffix }}.tar.gz" .
+                    tar -C dist --exclude='./appimage' -czf "SISR-${{ matrix.target.name }}${{ inputs.artifact_suffix }}.tar.gz" .
+                    mv "SISR-${{ matrix.target.name }}${{ inputs.artifact_suffix }}.tar.gz" dist/
                   fi
-                  cd ..
 
             - name: Upload artifact
               if: ${{ inputs.upload_artifacts }}
