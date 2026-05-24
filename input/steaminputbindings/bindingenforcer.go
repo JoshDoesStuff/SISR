@@ -26,6 +26,9 @@ type enforcer struct {
 func NewEnforcer() Enforcer {
 	var ownAppID uint32
 	ownAppIDStr := os.Getenv("SteamAppId")
+	if ownAppIDStr == "" || ownAppIDStr == "0" {
+		ownAppIDStr = os.Getenv("SISR_MARKER_ID")
+	}
 	if ownAppIDStr != "" {
 		appID64, err := strconv.ParseUint(ownAppIDStr, 10, 32)
 		if err != nil {

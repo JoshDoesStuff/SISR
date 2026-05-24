@@ -15,6 +15,7 @@ import (
 	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/input/steaminputbindings"
 	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/steam"
 	"github.com/Alia5/SISR/webview"
 )
 
@@ -45,6 +46,24 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	setSDLHintEnv()
 	setSDLHints()
+
+	launchedViaSteam, launchedInGameMode := steam.LaunchedViaSteam()
+	_ = launchedInGameMode
+
+	if !launchedViaSteam {
+		slog.Info("Not launched via Steam, setting env...")
+		err := steam.SetMarkerEnv()
+		if err != nil {
+			slog.Error("Failed to set Steam marker environment", "error", err)
+		}
+		slog.Info("Loading overlay...")
+		err = steam.LoadOverlay()
+		if err != nil {
+			slog.Error("Failed to load Steam overlay", "error", err)
+		}
+	} else {
+		slog.Info("Launched via Steam")
+	}
 
 	window, renderer, wv, err := s.createWindow(&cfg)
 	if err != nil {

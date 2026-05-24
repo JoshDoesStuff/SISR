@@ -17,6 +17,7 @@ type Global struct {
 	ConfigPath   string `help:"Path to configuration file (json|yaml|toml)" name:"config" env:"SISR_CONFIG"`
 	Log          `embed:"" prefix:"log."`
 	PlatformOpts `embed:""`
+	Marker       bool `help:"dummy"`
 }
 
 type API struct {
