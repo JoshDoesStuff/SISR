@@ -1,7 +1,6 @@
 package steam
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -13,23 +12,27 @@ import (
 	"github.com/Alia5/SISR/steam/vdf"
 )
 
-var ErrMarkerNotFound = errors.New("SISR marker shortcut not found in Steam shortcuts")
+func SetMarkerEnv(steamDir string, steamUserId uint32) error {
 
-func SetMarkerEnv() error {
-
-	steamDir, err := steamPath()
-	if err != nil {
-		slog.Error("Could not detect Steam Path", "error", err)
-		return err
+	if steamDir == "" {
+		var err error
+		steamDir, err = steamPath()
+		if err != nil {
+			slog.Error("Could not detect Steam Path", "error", err)
+			return err
+		}
 	}
 
-	userID, err := ActiveUserID()
-	if err != nil {
-		slog.Error("Could not detect active Steam user ID", "error", err)
-		return err
+	if steamUserId == 0 {
+		var err error
+		steamUserId, err = ActiveUserID()
+		if err != nil {
+			slog.Error("Could not detect active Steam user ID", "error", err)
+			return err
+		}
 	}
 
-	shortcutsPath, err := ShortcutsPath(steamDir, userID)
+	shortcutsPath, err := ShortcutsPath(steamDir, steamUserId)
 	if err != nil {
 		slog.Error("Could not determine Steam shortcuts.vdf path", "error", err)
 		return err

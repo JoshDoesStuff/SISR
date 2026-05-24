@@ -157,7 +157,7 @@ func CEFRemoteDebugEnableFilePresent(cfg *config.Steam) (bool, error) {
 	steamDir := cfg.InstallDir
 	var err error
 	if steamDir == "" {
-		steamDir, err = ExecuteableDir()
+		steamDir, err = steamPath()
 		if err != nil {
 			slog.Error("Could not determine Steam Path", "error", err)
 			return false, err
@@ -174,4 +174,3 @@ func CEFRemoteDebugEnableFilePresent(cfg *config.Steam) (bool, error) {
 	slog.Error("Error checking for .cef-enable-remote-debugging file", "error", err)
 	return false, err
 }
-

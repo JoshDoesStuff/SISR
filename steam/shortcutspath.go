@@ -1,7 +1,6 @@
 package steam
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -31,7 +30,7 @@ func ShortcutsPath(steamDir string, userID uint32) (string, error) {
 		"shortcuts.vdf",
 	)
 	if _, err := os.Stat(shortcutsPath); err != nil {
-		return "", errors.New("shortcuts.vdf does not exist")
+		return "", ErrShortcutsVDFNotFound
 	}
 
 	return shortcutsPath, nil

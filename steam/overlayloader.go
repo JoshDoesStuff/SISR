@@ -1,7 +1,6 @@
 package steam
 
 import (
-	"errors"
 	"log/slog"
 	"os"
 	"path"
@@ -10,10 +9,7 @@ import (
 	"github.com/Alia5/SISR/helper"
 )
 
-var ErrOverlayLoadLaunchedViaSteam = errors.New("launched via Steam, overlay should already be loaded")
-var ErrSteamNotRunning = errors.New("Steam is not running, loading overlay is useless")
-
-func LoadOverlay() error {
+func LoadOverlay(steamDir string) error {
 	if launchedViaSteam, _ := LaunchedViaSteam(); launchedViaSteam {
 		return ErrOverlayLoadLaunchedViaSteam
 	}
@@ -22,17 +18,20 @@ func LoadOverlay() error {
 		return ErrSteamNotRunning
 	}
 
-	sp, err := steamPath()
-	if err != nil {
-		return err
+	if steamDir == "" {
+		var err error
+		steamDir, err = steamPath()
+		if err != nil {
+			return err
+		}
 	}
 
 	var overlayPath string
 	switch runtime.GOOS {
 	case "windows":
-		overlayPath = path.Join(sp, "GameOverlayRenderer64.dll")
+		overlayPath = path.Join(steamDir, "GameOverlayRenderer64.dll")
 	case "linux":
-		parentDir := path.Dir(sp)
+		parentDir := path.Dir(steamDir)
 		ubuntu12_64 := path.Join(parentDir, "ubuntu12_64", "gameoverlayrenderer.so")
 		bin64 := path.Join(parentDir, "bin64", "gameoverlayrenderer.so")
 
@@ -43,7 +42,7 @@ func LoadOverlay() error {
 		}
 	}
 	slog.Debug("Attempting to load steamoverlay", "path", overlayPath)
-	err = helper.LoadLib(overlayPath)
+	err := helper.LoadLib(overlayPath)
 	if err != nil {
 		return err
 	}
