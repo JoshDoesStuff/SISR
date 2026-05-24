@@ -111,11 +111,11 @@ func (s *SISR) runAPIServer(
 	})
 
 	api.RegisterAPI(hAPI, &handler.Env{
-		Window:      window,
-		WebView:     wv,
-		DeviceStore: deviceStore,
+		Window:          window,
+		WebView:         wv,
+		DeviceStore:     deviceStore,
 		BindingEnforcer: bindingEnforcer,
-		QuitFn:      stopFn,
+		QuitFn:          stopFn,
 	})
 
 	allowedOrigins := slices.Concat(

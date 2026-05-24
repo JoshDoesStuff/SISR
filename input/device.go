@@ -5,6 +5,7 @@ import (
 	"math"
 	"sync"
 
+	"github.com/Alia5/SISR/input/viiperdevice"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/device/dualshock4"
 	"github.com/Alia5/VIIPER/device/keyboard"
@@ -14,7 +15,7 @@ import (
 type Device struct {
 	RealGamepad         *sdl.Gamepad
 	SteamVirtualGamepad *sdl.Gamepad
-	ViiperDevice        *ViiperDevice
+	ViiperDevice        *viiperdevice.Device
 
 	mtx sync.Mutex
 }
@@ -55,7 +56,7 @@ func (d *Device) Close() {
 	}
 }
 
-func (d *Device) SetViiperDevice(vd *ViiperDevice) {
+func (d *Device) SetViiperDevice(vd *viiperdevice.Device) {
 	if d.ViiperDevice != nil {
 		slog.Warn("Device already has a VIIPER device assigned, Overwriting")
 		err := d.ViiperDevice.Close()
@@ -72,7 +73,7 @@ func (d *Device) handleFeedback() {
 	// TODO: type!!
 	for {
 		select {
-		case fb := <-d.ViiperDevice.feedbackCh:
+		case fb := <-d.ViiperDevice.FeedbackCh:
 			if fb == nil {
 				return
 			}
@@ -91,12 +92,12 @@ func (d *Device) handleFeedback() {
 				slog.Warn("Received feedback of unknown type for VIIPER device; ignoring", "feedback", fb)
 				continue
 			}
-		case e := <-d.ViiperDevice.feedbackErrCh:
+		case e := <-d.ViiperDevice.FeedbackErrCh:
 			if e != nil {
 				slog.Debug("feedback error", "error", e)
 			}
 			return
-		case <-d.ViiperDevice.deviceCtx.Done():
+		case <-d.ViiperDevice.DeviceCtx.Done():
 			return
 		}
 	}

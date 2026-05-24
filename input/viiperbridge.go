@@ -5,22 +5,20 @@ import (
 	"log/slog"
 	"slices"
 	"sync"
-	"time"
 
+	"github.com/Alia5/SISR/input/viiperdevice"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/apiclient"
 	"github.com/Alia5/VIIPER/apitypes"
 )
 
 type ViiperBridge interface {
-	CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *ViiperDevice, chan error)
+	CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *viiperdevice.Device, chan error)
 	IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool
-	// RemoveViiperDevice(ctx context.Context, vd *ViiperDevice)
 }
 
 const minSupportedVIIPERVersion = "v0.6.1"
 const defaultDeviceType = "xbox360"
-const createTimeout = 5 * time.Second
 
 func NewViiperBridge(ctx context.Context, dl DeviceStore) ViiperBridge {
 	v := &viiperBridge{
@@ -44,15 +42,15 @@ type viiperBridge struct {
 
 type createScheduleWhatever struct {
 	deviceType   string
-	createdChans []chan *ViiperDevice
+	createdChans []chan *viiperdevice.Device
 	errorChans   []chan error
 }
 
-func (v *viiperBridge) CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *ViiperDevice, chan error) {
+func (v *viiperBridge) CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *viiperdevice.Device, chan error) {
 	v.mtx.Lock()
 	defer v.mtx.Unlock()
 
-	deviceChan := make(chan *ViiperDevice, 1)
+	deviceChan := make(chan *viiperdevice.Device, 1)
 	errorChan := make(chan error, 1)
 	if meh, ok := v.scheduled[gamepadID]; ok {
 		meh.deviceType = deviceType
@@ -62,7 +60,7 @@ func (v *viiperBridge) CreateDevice(ctx context.Context, gamepadID sdl.GamepadID
 	} else {
 		v.scheduled[gamepadID] = &createScheduleWhatever{
 			deviceType:   deviceType,
-			createdChans: []chan *ViiperDevice{deviceChan},
+			createdChans: []chan *viiperdevice.Device{deviceChan},
 			errorChans:   []chan error{errorChan},
 		}
 	}
@@ -105,7 +103,7 @@ func (v *viiperBridge) CreateDevice(ctx context.Context, gamepadID sdl.GamepadID
 			_, err := v.client.DeviceRemoveCtx(context.Background(), r.BusID, r.DevId)
 			return err
 		}
-		vd := NewViiperDevice(s, r, closeFunc)
+		vd := viiperdevice.New(s, r, closeFunc)
 		v.mtx.Lock()
 		defer v.mtx.Unlock()
 		for _, ch := range v.scheduled[gamepadID].createdChans {
@@ -173,41 +171,6 @@ func (v *viiperBridge) ensureBus(ctx context.Context) (busID uint32, err error) 
 }
 
 func (v *viiperBridge) close() {
-	// close(v.updateDeviceChan)
-	// close(v.readyChan)
+
+	// TODO
 }
-
-// func (v *viiperBridge) CreateDevice(ctx context.Context, deviceType string) (*ViiperDevice, error) {
-// 	v.mtx.Lock()
-// 	defer v.mtx.Unlock()
-
-// 	err := v.ensureBus(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if deviceType == "" {
-// 		deviceType = defaultDeviceType
-// 	}
-
-// 	controlStream, apiDevice, err := v.client.AddDeviceAndConnect(ctx, v.busID, deviceType, nil)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	busId, devId := apiDevice.BusID, apiDevice.DevId
-// 	closeFunc := func() error {
-// 		_, err := v.client.DeviceRemoveCtx(context.Background(), busId, devId)
-// 		return err
-// 	}
-// 	vd := NewViiperDevice(controlStream, apiDevice, closeFunc)
-// 	slog.Info("Created VIIPER device", "viiperDevice", *apiDevice, "busID", v.busID)
-
-// 	return vd, nil
-// }
-
-// func (vb *viiperBridge) RemoveViiperDevice(ctx context.Context, vd *ViiperDevice) error {
-// 	_, err := vb.client.DeviceRemoveCtx(ctx, vd.deviceInfo.BusID, vd.deviceInfo.DevId)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
