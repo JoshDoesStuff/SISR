@@ -13,6 +13,15 @@ import (
 
 const stateBufferSize = 10
 
+type DeviceType string
+
+const (
+	DeviceTypeUnknown    DeviceType = "unknown"
+	DeviceTypeXbox360    DeviceType = "xbox360"
+	DeviceTypeDualShock4 DeviceType = "dualshock4"
+	DeviceTypeKeyboard   DeviceType = "keyboard"
+)
+
 type Device struct {
 	controlStream *apiclient.DeviceStream
 	deviceInfo    *apitypes.Device
@@ -39,12 +48,12 @@ func New(
 	deviceCtx, cancel := context.WithCancel(context.Background())
 
 	decodeFeedback := readUnknownFeedback
-	switch deviceInfo.Type {
-	case "keyboard":
+	switch DeviceType(deviceInfo.Type) {
+	case DeviceTypeKeyboard:
 		decodeFeedback = readKeyboardFeedback
-	case "dualshock4":
+	case DeviceTypeDualShock4:
 		decodeFeedback = readDualShock4Feedback
-	case "xbox360":
+	case DeviceTypeXbox360:
 		decodeFeedback = readXbox360Feedback
 	}
 
@@ -76,12 +85,12 @@ func (d *Device) Update(gp *sdl.Gamepad) {
 	}
 
 	var state encoding.BinaryMarshaler
-	switch d.deviceInfo.Type {
-	case "xbox360":
+	switch DeviceType(d.deviceInfo.Type) {
+	case DeviceTypeXbox360:
 		state = toXbox360State(gp)
-	// case "dualshock4":
-	// 	state = toDualShock4State(gp)
-	// case "keyboard":
+	case DeviceTypeDualShock4:
+		state = toDualShock4State(gp)
+	// case DeviceTypeKeyboard:
 	// 	state = toKeyboardState(gp)
 	default:
 		slog.Warn("Cant update unknown VIIPER device type", "device_type", d.deviceInfo.Type)
