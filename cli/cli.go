@@ -7,5 +7,5 @@ import (
 
 type CLI struct {
 	Config config.Global `embed:""`
-	SISR   sisr.SISR     `cmd:"" help:"Run SISR (Default)" default:"1" name:"run"`
+	SISR   sisr.SISR     `cmd:"" help:"Run SISR (Default)" default:"withargs" name:"run"`
 }

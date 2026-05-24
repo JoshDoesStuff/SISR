@@ -1,7 +1,6 @@
 package sisr
 
 import (
-	"context"
 	"log/slog"
 	"net"
 	"net/http"
@@ -11,24 +10,16 @@ import (
 
 	"github.com/Alia5/SISR/api"
 	"github.com/Alia5/SISR/api/handler"
-	"github.com/Alia5/SISR/input"
-	"github.com/Alia5/SISR/input/steaminputbindings"
 	"github.com/Alia5/SISR/logging"
 	"github.com/Alia5/SISR/meta"
 	"github.com/Alia5/SISR/middleware"
-	"github.com/Alia5/SISR/sdl"
-	"github.com/Alia5/SISR/webview"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
 	"github.com/rs/cors"
 )
 
 func (s *SISR) runAPIServer(
-	window *sdl.Window,
-	wv webview.WebView,
-	deviceStore input.DeviceStore,
-	bindingEnforcer steaminputbindings.Enforcer,
-	stopFn context.CancelFunc,
+	env *handler.Env,
 ) (*http.Server, string) {
 	l, err := net.Listen("tcp", s.ListenAddress)
 	if err != nil {
@@ -110,13 +101,7 @@ func (s *SISR) runAPIServer(
 		))
 	})
 
-	api.RegisterAPI(hAPI, &handler.Env{
-		Window:          window,
-		WebView:         wv,
-		DeviceStore:     deviceStore,
-		BindingEnforcer: bindingEnforcer,
-		QuitFn:          stopFn,
-	})
+	api.RegisterAPI(hAPI, env)
 
 	allowedOrigins := slices.Concat(
 		[]string{serverURL},

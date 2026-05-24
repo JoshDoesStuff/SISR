@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	apihandler "github.com/Alia5/SISR/api/handler"
 	"github.com/Alia5/SISR/config"
 	"github.com/Alia5/SISR/event"
 	"github.com/Alia5/SISR/event/handler"
@@ -20,11 +21,14 @@ import (
 )
 
 type SISR struct {
-	config.API   `embed:"" prefix:""`
-	UpdateNotify config.UpdateNotify `help:"Update notification level: none, stable, prerelease" default:"stable" env:"SISR_UPDATE_NOTIFY"`
-
-	Steam  config.Steam `embed:"" prefix:"steam."`
-	MaxFPS uint32       `default:"60" help:"Maximim FPS for SteamOverlay/UI (Does not affect inputs)" env:"SISR_MAX_FPS"`
+	config.AutoUpdate             `embed:""`
+	config.RunMode                `embed:""`
+	config.ControllerEmulation    `embed:""`
+	config.KeyboardMouseEmulation `embed:""`
+	config.API                    `embed:"" prefix:"api."`
+	config.Viiper                 `embed:"" prefix:"viiper."`
+	config.Window                 `embed:"" prefix:"window."`
+	config.Steam                  `embed:"" prefix:"steam."`
 	//
 	lastRenderTime      time.Time
 	targetFrameDuration time.Duration
@@ -52,12 +56,12 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	if !launchedViaSteam {
 		slog.Info("Not launched via Steam, setting env...")
-		err := steam.SetMarkerEnv()
+		err := steam.SetMarkerEnv(s.Steam.InstallDir, s.Steam.UserID) //nolint:staticcheck
 		if err != nil {
 			slog.Error("Failed to set Steam marker environment", "error", err)
 		}
 		slog.Info("Loading overlay...")
-		err = steam.LoadOverlay()
+		err = steam.LoadOverlay(s.Steam.InstallDir)
 		if err != nil {
 			slog.Error("Failed to load Steam overlay", "error", err)
 		}
@@ -90,17 +94,40 @@ func (s *SISR) Run(cfg config.Global) error {
 	defer deviceStoreClose()
 	viiperBridge := input.NewViiperBridge(ctx, deviceStore)
 
-	handlerEnv := &handler.Env{
+	registerEventHandlers(eventRouter, &handler.Env{
 		Window:          window,
 		WebView:         wv,
 		DeviceStore:     deviceStore,
 		ViiperBridge:    viiperBridge,
 		BindingEnforcer: bindingEnforcer,
 		QuitFn:          stop,
-	}
-	registerEventHandlers(eventRouter, handlerEnv)
+		Config: &handler.RunConfig{
+			AutoUpdate:             &s.AutoUpdate,
+			RunMode:                &s.RunMode,
+			ControllerEmulation:    &s.ControllerEmulation,
+			KeyboardMouseEmulation: &s.KeyboardMouseEmulation,
+			Viiper:                 &s.Viiper,
+			Window:                 &s.Window,
+			Steam:                  &s.Steam,
+		},
+	})
 
-	_, apiAddr := s.runAPIServer(window, wv, deviceStore, bindingEnforcer, stop)
+	_, apiAddr := s.runAPIServer(&apihandler.Env{
+		Window:          window,
+		WebView:         wv,
+		DeviceStore:     deviceStore,
+		BindingEnforcer: bindingEnforcer,
+		QuitFn:          stop,
+		Config: &apihandler.RunConfig{
+			AutoUpdate:             &s.AutoUpdate,
+			RunMode:                &s.RunMode,
+			ControllerEmulation:    &s.ControllerEmulation,
+			KeyboardMouseEmulation: &s.KeyboardMouseEmulation,
+			Viiper:                 &s.Viiper,
+			Window:                 &s.Window,
+			Steam:                  &s.Steam,
+		},
+	})
 	frontendAddr := s.FrontendAddress
 	if frontendAddr == "" {
 		frontendAddr = apiAddr
