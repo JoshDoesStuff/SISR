@@ -29,6 +29,10 @@ func GamepadAdded(e *Env) Operation[*sdl.GamepadDeviceEvent] {
 				slog.Error("Failed to open gamepad", "error", err)
 				return err
 			}
+			if dev == nil {
+				slog.Debug("No device for sdlId, skipped")
+				return nil
+			}
 
 			dev.Lock()
 			defer dev.Unlock()
