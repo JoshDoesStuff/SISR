@@ -8,15 +8,15 @@ import (
 	"syscall"
 	"time"
 
-	apihandler "github.com/Alia5/SISR/api/handler"
+	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/config"
 	"github.com/Alia5/SISR/event"
-	"github.com/Alia5/SISR/event/handler"
 	"github.com/Alia5/SISR/helper"
 	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/input/steaminputbindings"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/SISR/steam"
+	"github.com/Alia5/SISR/tray"
 	"github.com/Alia5/SISR/webview"
 )
 
@@ -94,14 +94,14 @@ func (s *SISR) Run(cfg config.Global) error {
 	defer deviceStoreClose()
 	viiperBridge := input.NewViiperBridge(ctx, deviceStore, &s.Viiper)
 
-	registerEventHandlers(eventRouter, &handler.Env{
-		Window:          window,
-		WebView:         wv,
-		DeviceStore:     deviceStore,
-		ViiperBridge:    viiperBridge,
-		BindingEnforcer: bindingEnforcer,
-		QuitFn:          stop,
-		Config: &handler.RunConfig{
+	winDispatcher := cmd.NewWindowDispatcher[any]()
+	cmdCtx := &cmd.SISRContext{
+		WindowDispatcher: winDispatcher,
+		DeviceStore:      deviceStore,
+		ViiperBridge:     viiperBridge,
+		BindingEnforcer:  bindingEnforcer,
+		QuitFn:           stop,
+		Config: &cmd.SessionConfig{
 			AutoUpdate:             &s.AutoUpdate,
 			RunMode:                &s.RunMode,
 			ControllerEmulation:    &s.ControllerEmulation,
@@ -110,24 +110,11 @@ func (s *SISR) Run(cfg config.Global) error {
 			Window:                 &s.Window,
 			Steam:                  &s.Steam,
 		},
-	})
+	}
 
-	_, apiAddr := s.runAPIServer(&apihandler.Env{
-		Window:          window,
-		WebView:         wv,
-		DeviceStore:     deviceStore,
-		BindingEnforcer: bindingEnforcer,
-		QuitFn:          stop,
-		Config: &apihandler.RunConfig{
-			AutoUpdate:             &s.AutoUpdate,
-			RunMode:                &s.RunMode,
-			ControllerEmulation:    &s.ControllerEmulation,
-			KeyboardMouseEmulation: &s.KeyboardMouseEmulation,
-			Viiper:                 &s.Viiper,
-			Window:                 &s.Window,
-			Steam:                  &s.Steam,
-		},
-	})
+	registerEventHandlers(eventRouter, cmdCtx, window, wv)
+
+	_, apiAddr := s.runAPIServer(cmdCtx)
 	frontendAddr := s.FrontendAddress
 	if frontendAddr == "" {
 		frontendAddr = apiAddr
@@ -141,14 +128,16 @@ func (s *SISR) Run(cfg config.Global) error {
 		slog.Error("Failed to force SteamInput layout", "error", err)
 	}
 
-	return s.run(ctx, renderer, wv, eventRouter)
+	return s.run(ctx, renderer, window, wv, eventRouter, winDispatcher)
 }
 
 func (s *SISR) run(
 	ctx context.Context,
 	renderer sdl.Renderer,
+	window *sdl.Window,
 	wv webview.WebView,
 	router event.Router,
+	dispatcher cmd.WindowDispatcher[any],
 ) error {
 	for {
 		select {
@@ -161,7 +150,7 @@ func (s *SISR) run(
 			router.RouteEvent(ctx, ev)
 			drainEvents(ctx, router)
 		}
-
+		dispatcher.Dispatch(window, wv)
 		if time.Since(s.lastRenderTime) >= s.targetFrameDuration || ev == nil {
 			s.lastRenderTime = time.Now()
 			wv.Tick()

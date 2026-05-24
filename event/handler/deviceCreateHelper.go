@@ -5,19 +5,20 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/sdl"
 )
 
-func createViiperDevice(ctx context.Context, env *Env, gpID sdl.GamepadID, dev *input.Device) {
-	if !env.ViiperBridge.Ready() {
+func createViiperDevice(ctx context.Context, c *cmd.SISRContext, gpID sdl.GamepadID, dev *input.Device) {
+	if !c.ViiperBridge.Ready() {
 		return
 	}
-	if env.ViiperBridge.IsCreateDeviceScheduled(gpID) {
+	if c.ViiperBridge.IsCreateDeviceScheduled(gpID) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
-	deviceChan, errChan := env.ViiperBridge.CreateDevice(ctx, gpID, env.Config.DefaultControllerType)
+	deviceChan, errChan := c.ViiperBridge.CreateDevice(ctx, gpID, c.Config.DefaultControllerType)
 	go func() {
 		select {
 		case vd := <-deviceChan:
@@ -25,7 +26,7 @@ func createViiperDevice(ctx context.Context, env *Env, gpID sdl.GamepadID, dev *
 			if vd.Info().Type != "xbox360" {
 				ignoreNextCount = 2
 			}
-			env.DeviceStore.IgnoreNextDevice(ignoreNextCount)
+			c.DeviceStore.IgnoreNextDevice(ignoreNextCount)
 			dev.Lock()
 			dev.SetViiperDevice(vd)
 			dev.Unlock()
@@ -36,7 +37,7 @@ func createViiperDevice(ctx context.Context, env *Env, gpID sdl.GamepadID, dev *
 			// kiss
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			env.ViiperBridge.Ping(ctx) // nolint
+			c.ViiperBridge.Ping(ctx) // nolint
 		case <-ctx.Done():
 			slog.Error("Timed out creating VIIPER device")
 		}

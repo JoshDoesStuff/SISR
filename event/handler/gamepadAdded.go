@@ -5,16 +5,17 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/sdl"
 )
 
-func GamepadAdded(e *Env) Operation[*sdl.GamepadDeviceEvent] {
+func GamepadAdded(c *cmd.SISRContext) Operation[*sdl.GamepadDeviceEvent] {
 	return Operation[*sdl.GamepadDeviceEvent]{
 		Event: sdl.EventTypeGamepadAdded,
 		Handler: HandleFunc(func(ctx context.Context, ev *sdl.GamepadDeviceEvent) error {
 			gpID := sdl.GamepadID(ev.Which)
-			dev, err := e.DeviceStore.OpenGamePad(gpID)
+			dev, err := c.DeviceStore.OpenGamePad(gpID)
 			if err == input.ErrVirtualWithoutRealGamepad || errors.Unwrap(err) == input.ErrVirtualWithoutRealGamepad {
 				slog.Warn("Virtual gamepad detected without a real gamepad, Likeley XBOX / VIIPER controller; ignoring.",
 					"error", err)
@@ -38,7 +39,7 @@ func GamepadAdded(e *Env) Operation[*sdl.GamepadDeviceEvent] {
 			defer dev.Unlock()
 
 			if dev.SteamVirtualGamepad != nil {
-				createViiperDevice(ctx, e, gpID, dev)
+				createViiperDevice(ctx, c, gpID, dev)
 			}
 
 			return nil

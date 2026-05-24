@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/Alia5/SISR/api"
-	"github.com/Alia5/SISR/api/handler"
+	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/logging"
 	"github.com/Alia5/SISR/meta"
 	"github.com/Alia5/SISR/middleware"
@@ -19,7 +19,7 @@ import (
 )
 
 func (s *SISR) runAPIServer(
-	env *handler.Env,
+	c *cmd.SISRContext,
 ) (*http.Server, string) {
 	l, err := net.Listen("tcp", s.ListenAddress)
 	if err != nil {
@@ -101,7 +101,7 @@ func (s *SISR) runAPIServer(
 		))
 	})
 
-	api.RegisterAPI(hAPI, env)
+	api.RegisterAPI(hAPI, c)
 
 	allowedOrigins := slices.Concat(
 		[]string{serverURL},

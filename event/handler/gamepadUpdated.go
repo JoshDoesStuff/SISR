@@ -3,20 +3,21 @@ package handler
 import (
 	"context"
 
+	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/sdl"
 )
 
-func GamepadUpdated(e *Env) Operation[*sdl.GamepadDeviceEvent] {
+func GamepadUpdated(c *cmd.SISRContext) Operation[*sdl.GamepadDeviceEvent] {
 	return Operation[*sdl.GamepadDeviceEvent]{
 		Event:   sdl.EventTypeGamepadUpdateComplete,
-		Handler: HandleFunc(gpUpdate(e)),
+		Handler: HandleFunc(gpUpdate(c)),
 	}
 }
 
-func gpUpdate(e *Env) func(ctx context.Context, ev *sdl.GamepadDeviceEvent) error {
+func gpUpdate(c *cmd.SISRContext) func(ctx context.Context, ev *sdl.GamepadDeviceEvent) error {
 	return func(ctx context.Context, ev *sdl.GamepadDeviceEvent) error {
 		gpID := sdl.GamepadID(ev.Which)
-		dev, ok := e.DeviceStore.DeviceForID(gpID)
+		dev, ok := c.DeviceStore.DeviceForID(gpID)
 		if !ok {
 			return nil
 		}
@@ -31,7 +32,7 @@ func gpUpdate(e *Env) func(ctx context.Context, ev *sdl.GamepadDeviceEvent) erro
 		}
 
 		if dev.ViiperDevice == nil {
-			createViiperDevice(ctx, e, gpID, dev)
+			createViiperDevice(ctx, c, gpID, dev)
 			return nil
 		}
 		if dev.ViiperDevice.IsClosed() {

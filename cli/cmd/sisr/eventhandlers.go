@@ -4,17 +4,19 @@ import (
 	"context"
 	"runtime"
 
+	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/event"
 	"github.com/Alia5/SISR/event/handler"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/SISR/sdl/extras"
+	"github.com/Alia5/SISR/webview"
 )
 
-func registerEventHandlers(r event.Router, e *handler.Env) {
+func registerEventHandlers(r event.Router, c *cmd.SISRContext, window *sdl.Window, wv webview.WebView) {
 	if runtime.GOOS == "linux" {
 		hittestfunc := handler.HandleFunc(
 			func(_ context.Context, ev *sdl.WindowEvent) error {
-				return extras.HandleCursorHitTestWindowEvent(e.Window, ev)
+				return extras.HandleCursorHitTestWindowEvent(window, ev)
 			},
 		)
 		event.RegisterHandler(r, handler.Operation[*sdl.WindowEvent]{
@@ -26,9 +28,9 @@ func registerEventHandlers(r event.Router, e *handler.Env) {
 			Handler: hittestfunc,
 		})
 	}
-	event.RegisterHandler(r, handler.Quit(e))
-	event.RegisterHandler(r, handler.WindowResize(e))
-	event.RegisterHandler(r, handler.GamepadAdded(e))
-	event.RegisterHandler(r, handler.GamepadRemoved(e))
-	event.RegisterHandler(r, handler.GamepadUpdated(e))
+	event.RegisterHandler(r, handler.Quit(c))
+	event.RegisterHandler(r, handler.WindowResize(c, wv))
+	event.RegisterHandler(r, handler.GamepadAdded(c))
+	event.RegisterHandler(r, handler.GamepadRemoved(c))
+	event.RegisterHandler(r, handler.GamepadUpdated(c))
 }
