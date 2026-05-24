@@ -14,7 +14,7 @@ SDL_LIB="${sdl_libs[0]}"
 
 rm -rf AppDir
 mkdir -p AppDir/usr/lib64
-export LD_LIBRARY_PATH="dist:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="dist${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export LINUXDEPLOY_EXCLUDED_LIBRARIES=""
 
 NO_STRIP=1 APPIMAGE_EXTRACT_AND_RUN=1 linuxdeploy --appimage-extract-and-run --appdir AppDir -l "$SDL_LIB" -e dist/SISR -d sisr.desktop -i docs/SISR.svg --output appimage
