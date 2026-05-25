@@ -10,6 +10,8 @@ import (
 	"github.com/Alia5/SISR/assets"
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/meta"
+	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/webview"
 )
 
 func Run(ctx context.Context, c *cmd.SISRContext) {
@@ -40,6 +42,15 @@ func onReady(ctx context.Context, c *cmd.SISRContext) {
 
 	systray.AddSeparator()
 
+	toggleUIItem := systray.AddMenuItem("Toggle UI", "Show or hide the SISR UI")
+	enableOverlayItem := systray.AddMenuItemCheckbox(
+		"Enable Steam Overlay",
+		"Enables the Steam overlay as transparent borderless window",
+		c.Config.Fullscreen,
+	)
+
+	systray.AddSeparator()
+
 	allowDesktopLayoutItem := systray.AddMenuItemCheckbox(
 		"Allow Steam Desktop Layout",
 		"Uses Steams Desktop Layout instead of SISR Marker (or specific SISR layout when launched via Steam)",
@@ -51,9 +62,14 @@ func onReady(ctx context.Context, c *cmd.SISRContext) {
 	exitItem := systray.AddMenuItem("Quit", "Exit SISR")
 
 	t := &tray{
-		SISRContext:            c,
-		exitItem:               exitItem,
+		SISRContext: c,
+
+		toggleUIItem:      toggleUIItem,
+		enableOverlayItem: enableOverlayItem,
+
 		allowDesktopLayoutItem: allowDesktopLayoutItem,
+
+		exitItem: exitItem,
 	}
 
 	t.run(ctx)
@@ -61,8 +77,13 @@ func onReady(ctx context.Context, c *cmd.SISRContext) {
 
 type tray struct {
 	*cmd.SISRContext
-	exitItem               *systray.MenuItem
+
+	toggleUIItem      *systray.MenuItem
+	enableOverlayItem *systray.MenuItem
+
 	allowDesktopLayoutItem *systray.MenuItem
+
+	exitItem *systray.MenuItem
 }
 
 func (t *tray) run(ctx context.Context) {
@@ -71,12 +92,110 @@ func (t *tray) run(ctx context.Context) {
 		case <-ctx.Done():
 			systray.Quit()
 			return
-		case <-t.exitItem.ClickedCh:
-			t.QuitFn()
+		case <-t.toggleUIItem.ClickedCh:
+			t.handleToggleUI(ctx)
+		case <-t.enableOverlayItem.ClickedCh:
+			t.handleToggleOverlay(ctx)
 		case <-t.allowDesktopLayoutItem.ClickedCh:
 			t.handleAllowDesktopConfig()
+		case <-t.exitItem.ClickedCh:
+			t.QuitFn()
 		}
 	}
+}
+
+func (t *tray) handleToggleUI(ctx context.Context) {
+	_, err := cmd.ScheduleWindowDispatch(ctx, t.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) bool {
+		t.Config.Lock()
+		fullscreen := t.Config.Fullscreen
+		t.Config.Unlock()
+		if wv.Visible() {
+			w.ShowWindow()
+			wv.SetVisible(true)
+			return true
+		} else {
+			if !fullscreen {
+				w.HideWindow()
+			}
+			wv.SetVisible(false)
+			return false
+		}
+	})
+	if err != nil {
+		slog.Error("Failed to toggle UI visibility", "error", err)
+	}
+}
+
+func (t *tray) handleToggleOverlay(ctx context.Context) {
+	if t.enableOverlayItem.Checked() {
+		t.enableOverlayItem.Uncheck()
+	} else {
+		t.enableOverlayItem.Check()
+	}
+	t.Config.Lock()
+	t.Config.Fullscreen = t.enableOverlayItem.Checked()
+	fullscreen := t.Config.Fullscreen
+	t.Config.Unlock()
+
+	err, dispatchErr := cmd.ScheduleWindowDispatch(ctx, t.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) error {
+		if wv.Visible() {
+			wv.SetVisible(false)
+		}
+		if fullscreen {
+			w.ShowWindow()
+			err := w.SetWindowFullscreen(true)
+			if err != nil {
+				slog.Debug("Failed to set window fullscreen", "error", err)
+				return err
+			}
+			err = w.SetWindowAlwaysOnTop(true)
+			if err != nil {
+				slog.Debug("Failed to set window always on top", "error", err)
+				return err
+			}
+			err = w.SetWindowResizable(false)
+			if err != nil {
+				slog.Debug("Failed to set window resizable", "error", err)
+				return err
+			}
+			err = w.SetWindowBordered(false)
+			if err != nil {
+				slog.Debug("Failed to set window bordered", "error", err)
+				return err
+			}
+		} else {
+			w.HideWindow()
+			wv.SetVisible(true)
+			err := w.SetWindowFullscreen(false)
+			if err != nil {
+				slog.Debug("Failed to set window fullscreen", "error", err)
+				return err
+			}
+			err = w.SetWindowAlwaysOnTop(false)
+			if err != nil {
+				slog.Debug("Failed to set window always on top", "error", err)
+				return err
+			}
+			err = w.SetWindowResizable(false)
+			if err != nil {
+				slog.Debug("Failed to set window resizable", "error", err)
+				return err
+			}
+			err = w.SetWindowBordered(false)
+			if err != nil {
+				slog.Debug("Failed to set window bordered", "error", err)
+				return err
+			}
+		}
+		return nil
+	})
+	if dispatchErr != nil {
+		slog.Error("Error dispatching fullscreen state change to window", "error", err)
+	}
+	if err != nil {
+		slog.Error("Failed to change fullscreen state", "error", err)
+	}
+
 }
 
 func (t *tray) handleAllowDesktopConfig() {
