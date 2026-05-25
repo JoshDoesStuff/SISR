@@ -2,8 +2,10 @@
 
 ## Prerequisites
 
-- Rust toolchain  
-  [rustup.rs](https://rustup.rs/)
+- Go toolchain  
+  [go.dev/dl](https://go.dev/dl/)
+- Just command runner  
+  [just.systems](https://just.systems/man/en/)
 - CMake and Ninja  
   SDL3 is built from source via CMake w/ Ninja
 - Node.js  
@@ -11,7 +13,7 @@
   interact with Steam's CEF remote debugging interface
 
 !!! info "SDL3"
-    SDL3 is compiled from source via `sdl3-sys`. `build.rs` sets `CMAKE_GENERATOR=Ninja`.
+    SDL3 is compiled from source in `deps/SDL` via CMake + Ninja (`just build-sdl`).
 
 ### 🪟 Windows
 
@@ -36,35 +38,23 @@ sudo apt-get install ninja-build cmake pkg-config libgtk-3-dev \
 
 ## Build
 
-Build the CEF payloads and the Web UI first, then build SISR.
+Use the `justfile`.
 
-**1. CEF Payloads** (Steam overlay injection scripts):
+**1. Checkout**:
 
 ```bash
-cd cefpayloads
-npm install
-npm run build
-cd ..
+git clone git@github.com:Alia5/SISR.git
+cd SISR
+git submodule update --init --recursive
 ```
 
-**2. Web UI** (SvelteKit frontend served inside the app window):
+**2. Build**:
 
 ```bash
-cd UI
-npm install
-npm run build
-cd ..
-```
-
-**3. SISR**:
-
-```bash
-cargo build
-# or for a release build:
-cargo build --release
+just build release
 ```
 
 !!! info "VIIPER"
-    VIIPER is downloaded at build time based on `package.metadata.viiper` in `Cargo.toml`.  
-    Binary is placed in `target/<triple>/<profile>/viiper(.exe)`.  
-    Internet required on first build; subsequent builds use cached copy.
+    CI builds bundle VIIPER (windows only)  
+    Please install/run a VIIPER server before running SISR.    
+    [VIIPER Docs](https://alia5.github.io/VIIPER/)  
