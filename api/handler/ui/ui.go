@@ -37,7 +37,10 @@ func showHideUI(c *cmd.SISRContext) func(ctx context.Context, req *ShowHideUIReq
 		_, err := cmd.ScheduleWindowDispatch(ctx, c.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) bool {
 			if req.Body.Show {
 				w.ShowWindow()
-				wv.SetVisible(true)
+				_ = c.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+					wv.SetVisible(true)
+					return nil
+				})
 				err := extras.SetCursorHitTest(w, true)
 				if err != nil {
 					slog.Error("Failed setting window cursor hittest", "error", err)

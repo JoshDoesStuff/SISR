@@ -122,8 +122,12 @@ func (t *tray) handleToggleUI(ctx context.Context) {
 			return false
 		} else {
 			w.ShowWindow()
-			wv.SetVisible(true)
-			err  := extras.SetCursorHitTest(w, true)
+			// wv.SetVisible(true)
+			_ = t.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+				wv.SetVisible(true)
+				return nil
+			})
+			err := extras.SetCursorHitTest(w, true)
 			if err != nil {
 				slog.Error("Failed setting window cursor hittest", "error", err)
 			}
@@ -152,9 +156,11 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 		}
 		if fullscreen {
 			w.ShowWindow()
-			extras.SetCursorHitTest(w, false)
-
-			err := w.SetWindowFullscreen(true)
+			err := extras.SetCursorHitTest(w, false)
+			if err != nil {
+				slog.Error("Failed setting window cursor hittest", "error", err)
+			}
+			err = w.SetWindowFullscreen(true)
 			if err != nil {
 				slog.Debug("Failed to set window fullscreen", "error", err)
 				return err
@@ -176,9 +182,15 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 			}
 		} else {
 			w.HideWindow()
-			wv.SetVisible(true)
-			extras.SetCursorHitTest(w, true)
-			err := w.SetWindowFullscreen(false)
+			_ = t.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+				wv.SetVisible(true)
+				return nil
+			})
+			err := extras.SetCursorHitTest(w, true)
+			if err != nil {
+				slog.Error("Failed setting window cursor hittest", "error", err)
+			}
+			err = w.SetWindowFullscreen(false)
 			if err != nil {
 				slog.Debug("Failed to set window fullscreen", "error", err)
 				return err
