@@ -21,6 +21,8 @@ let quickSettingsVisible = $state(false);
 
 let setupChecker = $state<CheckInitialSetup>()!;
 
+let showUpdateModal = $derived(data?.versionInfo.update_available && !data?.versionInfo.update_dismissed);
+
 // TODO: re-introduce!!
 // onMount(() => {
 // 	wrapClientError(client.POST('/api/v1/inject_overlay_notifier'))
@@ -40,11 +42,7 @@ let setupChecker = $state<CheckInitialSetup>()!;
 	steamStatus={data.steamStatus}
 	initialLaunch={data.initialLaunch.is_initial_launch} />
 
-{#if data.versionInfo.update_available}
-	<UpdateModal
-		versionInfo={data.versionInfo}
-		show={data.versionInfo.update_available && !data.versionInfo.update_dismissed} />
-{/if}
+<UpdateModal versionInfo={data.versionInfo} bind:show={showUpdateModal} />
 
 <main>
 	<div>
