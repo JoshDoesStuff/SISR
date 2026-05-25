@@ -3,6 +3,7 @@ package tray
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"runtime"
 
 	"fyne.io/systray"
@@ -11,17 +12,12 @@ import (
 	"github.com/Alia5/SISR/meta"
 )
 
-type tray struct {
-	*cmd.SISRContext
-	exitItem *systray.MenuItem
-}
-
-func Run(ctx context.Context, env *cmd.SISRContext) {
+func Run(ctx context.Context, c *cmd.SISRContext) {
 	start, end := systray.RunWithExternalLoop(
 		func() {
-			onReady(ctx, env)
+			onReady(ctx, c)
 		},
-		onExit,
+		func() {},
 	)
 	start()
 	go func() {
@@ -30,19 +26,7 @@ func Run(ctx context.Context, env *cmd.SISRContext) {
 	}()
 }
 
-func (t *tray) run(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			systray.Quit()
-			return
-		case <-t.exitItem.ClickedCh:
-			t.QuitFn()
-		}
-	}
-}
-
-func onReady(ctx context.Context, env *cmd.SISRContext) {
+func onReady(ctx context.Context, c *cmd.SISRContext) {
 	if runtime.GOOS == "windows" {
 		systray.SetIcon(assets.IconICO)
 	} else {
@@ -56,15 +40,67 @@ func onReady(ctx context.Context, env *cmd.SISRContext) {
 
 	systray.AddSeparator()
 
+	allowDesktopLayoutItem := systray.AddMenuItemCheckbox(
+		"Allow Steam Desktop Layout",
+		"Uses Steams Desktop Layout instead of SISR Marker (or specific SISR layout when launched via Steam)",
+		c.Config.AllowSteamDesktopLayout,
+	)
+
+	systray.AddSeparator()
+
 	exitItem := systray.AddMenuItem("Quit", "Exit SISR")
 
 	t := &tray{
-		SISRContext: env,
-		exitItem:    exitItem,
+		SISRContext:            c,
+		exitItem:               exitItem,
+		allowDesktopLayoutItem: allowDesktopLayoutItem,
 	}
 
 	t.run(ctx)
 }
 
-func onExit() {
+type tray struct {
+	*cmd.SISRContext
+	exitItem               *systray.MenuItem
+	allowDesktopLayoutItem *systray.MenuItem
+}
+
+func (t *tray) run(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			systray.Quit()
+			return
+		case <-t.exitItem.ClickedCh:
+			t.QuitFn()
+		case <-t.allowDesktopLayoutItem.ClickedCh:
+			t.handleAllowDesktopConfig()
+		}
+	}
+}
+
+func (t *tray) handleAllowDesktopConfig() {
+	if t.allowDesktopLayoutItem.Checked() {
+		t.allowDesktopLayoutItem.Uncheck()
+	} else {
+		t.allowDesktopLayoutItem.Check()
+	}
+	if t.allowDesktopLayoutItem.Checked() {
+		err := t.BindingEnforcer.ForceInputAppID(0) // 0 reverts to non-forced, including desktop-layout when out of focus
+		if err != nil {
+			slog.Error("Failed to reset forced inputAppID", "error", err)
+			t.allowDesktopLayoutItem.Uncheck()
+			return
+		}
+	} else {
+		err := t.BindingEnforcer.ForceOwnAppID()
+		if err != nil {
+			slog.Error("Failed to force SteamInput layout", "error", err)
+			t.allowDesktopLayoutItem.Check()
+			return
+		}
+	}
+	t.Config.Lock()
+	t.Config.AllowSteamDesktopLayout = t.allowDesktopLayoutItem.Checked()
+	t.Config.Unlock()
 }

@@ -29,6 +29,7 @@ type SISR struct {
 	config.Viiper                 `embed:"" prefix:"viiper."`
 	config.Window                 `embed:"" prefix:"window."`
 	config.Steam                  `embed:"" prefix:"steam."`
+
 	//
 	lastRenderTime      time.Time
 	targetFrameDuration time.Duration
@@ -122,10 +123,11 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	wv.Navigate(frontendAddr)
 
-	// TODO: check settings and stuff
-	err = bindingEnforcer.ForceOwnAppID()
-	if err != nil {
-		slog.Error("Failed to force SteamInput layout", "error", err)
+	if !s.AllowSteamDesktopLayout {
+		err = bindingEnforcer.ForceOwnAppID()
+		if err != nil {
+			slog.Error("Failed to force SteamInput layout", "error", err)
+		}
 	}
 
 	tray.Run(ctx, cmdCtx)
