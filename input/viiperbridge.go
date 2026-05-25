@@ -27,6 +27,7 @@ type ViiperBridge interface {
 	CreateDevice(ctx context.Context, gamepadID sdl.GamepadID, deviceType string) (chan *viiperdevice.Device, chan error)
 	IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool
 	Ping(ctx context.Context) (*apitypes.PingResponse, error)
+	Info() *apitypes.PingResponse
 	Ready() bool
 }
 
@@ -162,7 +163,19 @@ func (v *viiperBridge) IsCreateDeviceScheduled(gamepadID sdl.GamepadID) bool {
 	return ok
 }
 
+func (v *viiperBridge) Info() *apitypes.PingResponse {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	if v.viiperServerInfo != nil {
+		vi := *v.viiperServerInfo
+		return &vi
+	}
+	return nil
+}
+
 func (v *viiperBridge) Ping(ctx context.Context) (*apitypes.PingResponse, error) {
+	slog.Debug("Pinging VIIPER server...")
 	resp, err := v.client.PingCtx(ctx)
 	if err != nil {
 		v.mtx.Lock()
@@ -183,6 +196,7 @@ func (v *viiperBridge) Ping(ctx context.Context) (*apitypes.PingResponse, error)
 	v.mtx.Lock()
 	defer v.mtx.Unlock()
 	v.viiperServerInfo = resp
+	slog.Info("VIIPER server ping successful", "version", resp.Version)
 
 	if !isVersionSupported(resp.Version) {
 		return nil, fmt.Errorf("%w: got %q, need >= %q", ErrUnsupportedViiperVersion, resp.Version, minSupportedVIIPERVersion)

@@ -1,4 +1,4 @@
-package handler
+package quit
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-func RegisterQuit(a huma.API, c *cmd.SISRContext) {
+func Register(a huma.API, c *cmd.SISRContext) {
 	huma.Register(a, huma.Operation{
 		Method: http.MethodPost,
-		Path:   "/api/v1/shutdown",
-	}, quitHanleFunc(c))
+		Path:   "/api/v1/quit",
+	}, quit(c))
 }
 
-func quitHanleFunc(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*struct{}, error) {
+func quit(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*struct{}, error) {
 	return func(ctx context.Context, req *struct{}) (*struct{}, error) {
 		defer func() {
 			c.QuitFn()

@@ -1,5 +1,63 @@
 components:
   schemas:
+    APIDevice:
+      additionalProperties: false
+      properties:
+        real_device:
+          $ref: "#/components/schemas/APIGamepad"
+        steam_virtual_device:
+          $ref: "#/components/schemas/APIGamepad"
+        viiper_device:
+          $ref: "#/components/schemas/Device"
+      type: object
+    APIGamepad:
+      additionalProperties: false
+      properties:
+        id:
+          format: int32
+          type: integer
+        name:
+          type: string
+        player_index:
+          format: int64
+          type: integer
+        real_type:
+          type: string
+        steam_handle:
+          type: string
+        type:
+          type: string
+      required:
+        - id
+        - name
+        - player_index
+      type: object
+    Device:
+      additionalProperties: false
+      properties:
+        busId:
+          format: int32
+          minimum: 0
+          type: integer
+        devId:
+          type: string
+        deviceSpecific:
+          additionalProperties: {}
+          type: object
+        pid:
+          type: string
+        type:
+          type: string
+        vid:
+          type: string
+      required:
+        - busId
+        - devId
+        - vid
+        - pid
+        - type
+        - deviceSpecific
+      type: object
     ErrorDetail:
       additionalProperties: false
       properties:
@@ -59,13 +117,39 @@ components:
           format: uri
           type: string
       type: object
-    SteamStatusBody:
+    InitialLaunch:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/SteamStatusBody.json
+            - http://127.0.0.1:5746/schemas/InitialLaunch.json
+          format: uri
+          readOnly: true
+          type: string
+        is_initial_launch:
+          type: boolean
+      required:
+        - is_initial_launch
+      type: object
+    PingResponse:
+      additionalProperties: false
+      properties:
+        server:
+          type: string
+        version:
+          type: string
+      required:
+        - server
+        - version
+      type: object
+    SteamAndCefStatus:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://127.0.0.1:5746/schemas/SteamAndCefStatus.json
           format: uri
           readOnly: true
           type: string
@@ -74,6 +158,8 @@ components:
         cef_debug_reachable:
           type: boolean
         launched_via_steam:
+          type: boolean
+        no_steam_mode:
           type: boolean
         steam_app_id:
           format: int32
@@ -90,16 +176,99 @@ components:
         - steam_path
         - cef_debug_enabled
         - cef_debug_reachable
+        - no_steam_mode
         - launched_via_steam
         - steam_game_id
         - steam_app_id
       type: object
+    VIIPERStatus:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://127.0.0.1:5746/schemas/VIIPERStatus.json
+          format: uri
+          readOnly: true
+          type: string
+        status:
+          $ref: "#/components/schemas/PingResponse"
+      type: object
+    VersionInfo:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://127.0.0.1:5746/schemas/VersionInfo.json
+          format: uri
+          readOnly: true
+          type: string
+        new_version:
+          type: string
+        update_available:
+          type: boolean
+        version:
+          type: string
+      required:
+        - version
+        - update_available
+      type: object
 info:
   title: SISR API
-  version: v0.4.2-77-gb20106a
+  version: v0.4.2-79-gbe88bbe
 openapi: 3.1.0
 paths:
-  /api/v1/shutdown:
+  /api/v1/devices:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/APIDevice"
+                type:
+                  - array
+                  - "null"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/initial_launch:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InitialLaunch"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+    post:
+      description: Writes the initial launch done file marker
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InitialLaunch"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/quit:
     post:
       responses:
         "204":
@@ -110,14 +279,74 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
-  /api/v1/steam_status:
+  /api/v1/steam/status:
     get:
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SteamStatusBody"
+                $ref: "#/components/schemas/SteamAndCefStatus"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/version/info:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionInfo"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/version/update_ceck:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionInfo"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/viiper/ping:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VIIPERStatus"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/viiper/status:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VIIPERStatus"
           description: OK
         default:
           content:
