@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "nefrob.vscode-just-syntax",
+        "golang.go",
+        "fill-labs.dependi",
+        "svelte.svelte-vscode"
+    ]
+}
