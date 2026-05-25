@@ -14,22 +14,25 @@ type DeviceStore interface {
 	DeviceForID(id sdl.GamepadID) (*Device, bool)
 	IgnoreNextDevice(num int)
 	Empty() bool
+	Devices() []*Device
 }
 
 type deviceStore struct {
 	devices        map[sdl.GamepadID]*Device
 	deviceIdxOrder []sdl.GamepadID
 	ignoreNext     int
+	noSteamMode    bool
 
 	mtx sync.Mutex
 }
 
-func NewDeviceStore() (DeviceStore, func(), error) {
+func NewDeviceStore(noSteamMode bool) (DeviceStore, func(), error) {
 
 	opener := &deviceStore{
 		devices:        make(map[sdl.GamepadID]*Device),
 		deviceIdxOrder: make([]sdl.GamepadID, 0),
 		ignoreNext:     0,
+		noSteamMode:    noSteamMode,
 	}
 	return opener, opener.quit, nil
 }
@@ -76,6 +79,15 @@ func (ds *deviceStore) OpenGamePad(id sdl.GamepadID) (*Device, error) {
 		"type", gpType.Name(),
 		"realType", realType.Name(),
 	)
+
+	if ds.noSteamMode {
+		dev = &Device{
+			RealGamepad:         gp,
+			SteamVirtualGamepad: gp,
+		}
+		ds.devices[id] = dev
+		return dev, nil
+	}
 
 	if steamHandle != 0 {
 		if len(ds.deviceIdxOrder) == 0 {
@@ -198,6 +210,19 @@ func (ds *deviceStore) IgnoreNextDevice(num int) {
 
 	ds.ignoreNext += num
 	slog.Debug("Updated ignore-next-device counter", "added", num, "total", ds.ignoreNext)
+}
+
+func (ds *deviceStore) Devices() []*Device {
+	ds.mtx.Lock()
+	defer ds.mtx.Unlock()
+
+	devices := make([]*Device, 0, len(ds.devices))
+	for _, dev := range ds.devices {
+		if dev != nil && !slices.Contains(devices, dev) {
+			devices = append(devices, dev)
+		}
+	}
+	return devices
 }
 
 func (ds *deviceStore) quit() {
