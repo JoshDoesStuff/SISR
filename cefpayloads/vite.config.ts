@@ -1,4 +1,4 @@
-import { build, defineConfig} from 'vite';
+import { build, defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -73,8 +73,7 @@ export default defineConfig({
             }
         }),
         svelte(),
-                goTmpl()
-
+        goTmpl()
     ],
     build: {
         assetsInlineLimit: Infinity,
@@ -82,7 +81,7 @@ export default defineConfig({
             treeshake: true,
             output: {
                 inlineDynamicImports: true,
-                entryFileNames: '[name].js',
+                entryFileNames: '[name].js.tmpl',
                 intro: '(function() {\nlet __INJECT_RETURN;\n',
                 outro: '\n return __INJECT_RETURN;\n})();'
             }

@@ -12,7 +12,6 @@ declare global {
         __sisrCleanup?: {
             [key: string]: (() => void);
         };
-        __SISR_API_URL: string;
 
         appStore: {
             allApps: {
@@ -26,7 +25,6 @@ declare global {
     }
 
     let __sisrCleanup: { [key: string]: (() => void) } | undefined;
-    let __SISR_API_URL: string;
 
 
     const SteamClient: SteamClient;
