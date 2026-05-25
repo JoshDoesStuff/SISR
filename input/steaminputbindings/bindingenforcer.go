@@ -52,6 +52,12 @@ func (e *enforcer) ForceInputAppID(appID uint32) error {
 	e.mtx.Lock()
 	defer e.mtx.Unlock()
 
+	if appID == 0 {
+		slog.Info("Unforcing SteamInput layout")
+	} else {
+		slog.Info("Forcing SteamInput layout for appID", "appID", appID)
+	}
+
 	err := helper.OpenURL("steam://forceinputappid/" + strconv.FormatUint(uint64(appID), 10))
 	if err != nil {
 		return err
@@ -67,6 +73,9 @@ func (e *enforcer) ForceOwnAppID() error {
 	if e.ownAppID == 0 {
 		return ErrNoSteamAppID
 	}
+
+	slog.Info("Forcing SteamInput layout for own appID", "appID", e.ownAppID)
+
 	err := helper.OpenURL("steam://forceinputappid/" + strconv.FormatUint(uint64(e.ownAppID), 10))
 	if err != nil {
 		return err

@@ -35,14 +35,16 @@ func NewDeviceStore() (DeviceStore, func(), error) {
 }
 
 func (ds *deviceStore) OpenGamePad(id sdl.GamepadID) (*Device, error) {
-	ds.mtx.Lock()
-	defer ds.mtx.Unlock()
 	defer func() {
+		ds.mtx.Lock()
+		defer ds.mtx.Unlock()
 		if slices.Contains(ds.deviceIdxOrder, id) {
 			return
 		}
 		ds.deviceIdxOrder = append(ds.deviceIdxOrder, id)
 	}()
+	ds.mtx.Lock()
+	defer ds.mtx.Unlock()
 
 	if dev, exists := ds.devices[id]; exists {
 		return dev, nil

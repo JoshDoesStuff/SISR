@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/sdl"
@@ -32,10 +33,12 @@ func gpUpdate(c *cmd.SISRContext) func(ctx context.Context, ev *sdl.GamepadDevic
 		}
 
 		if dev.ViiperDevice == nil {
+			slog.Debug("No VIIPER device for gamepad found, scheduling create", "id", gpID)
 			createViiperDevice(ctx, c, gpID, dev)
 			return nil
 		}
 		if dev.ViiperDevice.IsClosed() {
+			slog.Info("VIIPER device is closed, cleaning up...", "id", gpID)
 			// clear, exit, is recreated on next event
 			dev.ViiperDevice = nil
 			return nil

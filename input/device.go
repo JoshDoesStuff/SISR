@@ -40,14 +40,17 @@ func (d *Device) Gamepad(id sdl.GamepadID) (gp *sdl.Gamepad, isVirtual bool, err
 
 func (d *Device) Close() {
 	if d.RealGamepad != nil {
+		slog.Debug("Closing real gamepad", "id", d.RealGamepad.ID())
 		d.RealGamepad.Close()
 		d.RealGamepad = nil
 	}
 	if d.SteamVirtualGamepad != nil {
+		slog.Debug("Closing steam virtual gamepad", "id", d.SteamVirtualGamepad.ID())
 		d.SteamVirtualGamepad.Close()
 		d.SteamVirtualGamepad = nil
 	}
 	if d.ViiperDevice != nil {
+		slog.Debug("Closing VIIPER device", "info", d.ViiperDevice.Info())
 		err := d.ViiperDevice.Close()
 		if err != nil {
 			slog.Error("Failed to close VIIPER device", "error", err)
@@ -65,19 +68,17 @@ func (d *Device) SetViiperDevice(vd *viiperdevice.Device) {
 		}
 	}
 	d.ViiperDevice = vd
-	go d.handleFeedback()
-
+	go d.handleFeedback(vd)
 }
 
-func (d *Device) handleFeedback() {
-	// TODO: type!!
+func (d *Device) handleFeedback(vd *viiperdevice.Device) {
 	for {
 		select {
-		case fb := <-d.ViiperDevice.FeedbackCh:
+		case fb := <-vd.FeedbackCh:
 			if fb == nil {
+				slog.Warn("Received nil feedback for VIIPER device; stopping feedback handling")
 				return
 			}
-
 			switch fb := fb.(type) {
 			case *xbox360.XRumbleState:
 				d.handleXbox360Feedback(fb)
@@ -92,12 +93,13 @@ func (d *Device) handleFeedback() {
 				slog.Warn("Received feedback of unknown type for VIIPER device; ignoring", "feedback", fb)
 				continue
 			}
-		case e := <-d.ViiperDevice.FeedbackErrCh:
+		case e := <-vd.FeedbackErrCh:
 			if e != nil {
 				slog.Debug("feedback error", "error", e)
 			}
 			return
-		case <-d.ViiperDevice.DeviceCtx.Done():
+		case <-vd.DeviceCtx.Done():
+			slog.Debug("VIIPER device context done, stopping feedback handling")
 			return
 		}
 	}
