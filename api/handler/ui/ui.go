@@ -29,10 +29,10 @@ func showHideUI(c *cmd.SISRContext) func(ctx context.Context, req *ShowHideUIReq
 	return func(ctx context.Context, req *ShowHideUIRequest) (*struct{}, error) {
 
 		c.Config.Lock()
-		fullscreen := c.Config.Window.Fullscreen
+		fullscreen := c.Config.Fullscreen
 		c.Config.Unlock()
 
-		_, err := cmd.ScheduleWindowDispatch[bool](ctx, c.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) bool {
+		_, err := cmd.ScheduleWindowDispatch(ctx, c.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) bool {
 			if req.Body.Show {
 				w.ShowWindow()
 				wv.SetVisible(true)
