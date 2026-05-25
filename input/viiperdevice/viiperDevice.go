@@ -5,13 +5,14 @@ import (
 	"encoding"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/apiclient"
 	"github.com/Alia5/VIIPER/apitypes"
 )
 
-const stateBufferSize = 10
+const stateBufferSize = 32
 
 type DeviceType string
 
@@ -96,22 +97,29 @@ func (d *Device) Update(gp *sdl.Gamepad) {
 		slog.Warn("Cant update unknown VIIPER device type", "device_type", d.deviceInfo.Type)
 	}
 
+	timer := time.NewTimer(1 * time.Second)
+	defer timer.Stop()
+
 	select {
 	case <-d.done:
+		slog.Warn("Attempted to update VIIPER device after it was closed")
 		return
 	case d.stateChan <- state:
-	default:
-		slog.Warn("Dropping VIIPER device state update because buffer is full")
+		// sent successfully
+	case <-timer.C:
+		slog.Warn("Timed out sending state update to VIIPER device;")
 	}
 }
 
 func (d *Device) handleState() {
+	stream := d.controlStream
+
 	for {
 		select {
 		case <-d.done:
 			return
 		case state := <-d.stateChan:
-			err := d.controlStream.WriteBinary(state)
+			err := stream.WriteBinary(state)
 			if err != nil {
 				slog.Error("Failed to send state to VIIPER device", "error", err)
 				d.Close() //nolint
