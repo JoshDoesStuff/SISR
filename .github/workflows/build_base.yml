@@ -69,15 +69,15 @@ jobs:
                   node-version: "25"
                   cache: npm
                   cache-dependency-path: |
-                      CEF_Payloads/package-lock.json
+                      cefpayloads/package-lock.json
                       UI/package-lock.json
 
             - name: CEF deps
-              working-directory: CEF_Payloads
+              working-directory: cefpayloads
               run: npm ci
 
             - name: CEF build
-              working-directory: CEF_Payloads
+              working-directory: cefpayloads
               run: npm run build
 
             - name: UI deps

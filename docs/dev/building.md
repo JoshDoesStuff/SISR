@@ -7,7 +7,7 @@
 - CMake and Ninja  
   SDL3 is built from source via CMake w/ Ninja
 - Node.js  
-  Required to build the UI (`UI/`) and the CEF payloads (`CEF_Payloads/`) that
+  Required to build the UI (`UI/`) and the CEF payloads (`cefpayloads/`) that
   interact with Steam's CEF remote debugging interface
 
 !!! info "SDL3"
@@ -41,7 +41,7 @@ Build the CEF payloads and the Web UI first, then build SISR.
 **1. CEF Payloads** (Steam overlay injection scripts):
 
 ```bash
-cd CEF_Payloads
+cd cefpayloads
 npm install
 npm run build
 cd ..
