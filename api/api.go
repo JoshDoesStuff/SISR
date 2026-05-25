@@ -8,4 +8,5 @@ import (
 
 func RegisterAPI(hAPI huma.API, c *cmd.SISRContext) {
 	handler.RegisterQuit(hAPI, c)
+	handler.RegisterSteamStatus(hAPI, c)
 }

@@ -59,9 +59,44 @@ components:
           format: uri
           type: string
       type: object
+    SteamStatusBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://127.0.0.1:5746/schemas/SteamStatusBody.json
+          format: uri
+          readOnly: true
+          type: string
+        cef_debug_enabled:
+          type: boolean
+        cef_debug_reachable:
+          type: boolean
+        launched_via_steam:
+          type: boolean
+        steam_app_id:
+          format: int32
+          minimum: 0
+          type: integer
+        steam_game_id:
+          type: string
+        steam_path:
+          type: string
+        steam_running:
+          type: boolean
+      required:
+        - steam_running
+        - steam_path
+        - cef_debug_enabled
+        - cef_debug_reachable
+        - launched_via_steam
+        - steam_game_id
+        - steam_app_id
+      type: object
 info:
   title: SISR API
-  version: v0.4.2-76-g90a2d28
+  version: v0.4.2-77-gb20106a
 openapi: 3.1.0
 paths:
   /api/v1/shutdown:
@@ -69,6 +104,21 @@ paths:
       responses:
         "204":
           description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/steam_status:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SteamStatusBody"
+          description: OK
         default:
           content:
             application/problem+json:
