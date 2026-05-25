@@ -98,6 +98,14 @@ func (s *SISR) Run(cfg config.Global) error {
 	defer deviceStoreClose()
 	viiperBridge := input.NewViiperBridge(ctx, deviceStore, &s.Viiper)
 	updateChecker := update.NewChecker(s.UpdateNotify)
+	go func() {
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		_, err := updateChecker.CheckForUpdate(ctx)
+		if err != nil {
+			slog.Error("Failed to check for updates", "error", err)
+		}
+	}()
 
 	winDispatcher := cmd.NewWindowDispatcher[any]()
 	cmdCtx := &cmd.SISRContext{
