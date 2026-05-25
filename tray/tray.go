@@ -15,10 +15,16 @@ import (
 	"github.com/Alia5/SISR/webview"
 )
 
-func Run(ctx context.Context, c *cmd.SISRContext) {
+type TrayNotifyCh chan any
+
+type UpdateAvailableNotification struct {
+	Version string
+}
+
+func Run(ctx context.Context, c *cmd.SISRContext, trayNotifyCh TrayNotifyCh) {
 	start, end := systray.RunWithExternalLoop(
 		func() {
-			onReady(ctx, c)
+			onReady(ctx, c, trayNotifyCh)
 		},
 		func() {},
 	)
@@ -29,7 +35,7 @@ func Run(ctx context.Context, c *cmd.SISRContext) {
 	}()
 }
 
-func onReady(ctx context.Context, c *cmd.SISRContext) {
+func onReady(ctx context.Context, c *cmd.SISRContext, trayNotifyCh TrayNotifyCh) {
 	if runtime.GOOS == "windows" {
 		systray.SetIcon(assets.IconICO)
 	} else {
@@ -40,6 +46,9 @@ func onReady(ctx context.Context, c *cmd.SISRContext) {
 	infoStr := fmt.Sprintf("SISR - %s", meta.Version)
 	versionItem := systray.AddMenuItem(infoStr, infoStr)
 	versionItem.Disable()
+
+	updateAvailableItem := systray.AddMenuItem("", "")
+	updateAvailableItem.Hide()
 
 	systray.AddSeparator()
 
@@ -64,6 +73,9 @@ func onReady(ctx context.Context, c *cmd.SISRContext) {
 
 	t := &tray{
 		SISRContext: c,
+		notifyCh:    trayNotifyCh,
+
+		updateAvailableItem: updateAvailableItem,
 
 		toggleUIItem:      toggleUIItem,
 		enableOverlayItem: enableOverlayItem,
@@ -79,6 +91,10 @@ func onReady(ctx context.Context, c *cmd.SISRContext) {
 type tray struct {
 	*cmd.SISRContext
 
+	notifyCh TrayNotifyCh
+
+	updateAvailableItem *systray.MenuItem
+
 	toggleUIItem      *systray.MenuItem
 	enableOverlayItem *systray.MenuItem
 
@@ -93,6 +109,13 @@ func (t *tray) run(ctx context.Context) {
 		case <-ctx.Done():
 			systray.Quit()
 			return
+		case notification := <-t.notifyCh:
+			switch n := notification.(type) {
+			case *UpdateAvailableNotification:
+				t.handleUpdateAvailableNotification(n)
+			}
+		case <-t.updateAvailableItem.ClickedCh:
+			t.handleUpdateAvailableClick(ctx)
 		case <-t.toggleUIItem.ClickedCh:
 			t.handleToggleUI(ctx)
 		case <-t.enableOverlayItem.ClickedCh:
@@ -102,6 +125,33 @@ func (t *tray) run(ctx context.Context) {
 		case <-t.exitItem.ClickedCh:
 			t.QuitFn()
 		}
+	}
+}
+
+func (t *tray) handleUpdateAvailableNotification(n *UpdateAvailableNotification) {
+	toggleText := fmt.Sprintf("⬆️ Update available: %s", n.Version)
+	t.updateAvailableItem.SetTitle(toggleText)
+	t.updateAvailableItem.SetTooltip(toggleText)
+	t.updateAvailableItem.Show()
+}
+
+func (t *tray) handleUpdateAvailableClick(ctx context.Context) {
+	t.UpdateChecker.SetDismissed(false)
+	_, err := cmd.ScheduleWindowDispatch(ctx, t.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) bool {
+		w.ShowWindow()
+		wv.Eval("window.invalidateAll();")
+		_ = t.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+			wv.SetVisible(true)
+			return nil
+		})
+		err := extras.SetCursorHitTest(w, true)
+		if err != nil {
+			slog.Error("Failed setting window cursor hittest", "error", err)
+		}
+		return true
+	})
+	if err != nil {
+		slog.Error("Failed to dispatch update available click to window", "error", err)
 	}
 }
 
@@ -122,7 +172,7 @@ func (t *tray) handleToggleUI(ctx context.Context) {
 			return false
 		} else {
 			w.ShowWindow()
-			// wv.SetVisible(true)
+			wv.Eval("window.invalidateAll();")
 			_ = t.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
 				wv.SetVisible(true)
 				return nil
@@ -156,6 +206,7 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 		}
 		if fullscreen {
 			w.ShowWindow()
+			wv.Eval("window.invalidateAll();")
 			err := extras.SetCursorHitTest(w, false)
 			if err != nil {
 				slog.Error("Failed setting window cursor hittest", "error", err)
@@ -205,7 +256,7 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 				slog.Debug("Failed to set window resizable", "error", err)
 				return err
 			}
-			err = w.SetWindowBordered(false)
+			err = w.SetWindowBordered(true)
 			if err != nil {
 				slog.Debug("Failed to set window bordered", "error", err)
 				return err

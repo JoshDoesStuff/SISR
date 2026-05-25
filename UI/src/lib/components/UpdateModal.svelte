@@ -7,10 +7,10 @@ import { fade } from 'svelte/transition';
 
 let {
 	show = $bindable(false),
-	updateInfo
+	versionInfo
 }: {
 	show?: boolean;
-	updateInfo: components['schemas']['UpdateStateResponse'];
+	versionInfo: components['schemas']['VersionInfo'];
 } = $props();
 </script>
 
@@ -18,13 +18,13 @@ let {
 	<div class="card glass dialog-content" transition:fade>
 		<h2>Update Available</h2>
 		<div>
-			<p>A new version of SISR ({updateInfo.update_version}) is available.</p>
+			<p>A new version of SISR ({versionInfo.new_version}) is available.</p>
 			<div class="button-group">
 				<button
 					name="skip"
 					class="negative"
 					onclick={() => {
-						wrapClientError(client.POST('/api/v1/update/skip'))
+						wrapClientError(client.POST('/api/v1/version/skip-update'))
 							.catch((e) => {
 								toast({
 									color: 'firebrick',
@@ -39,7 +39,7 @@ let {
 					name="remind-me"
 					class="negative"
 					onclick={() => {
-						wrapClientError(client.POST('/api/v1/update/remind-later'))
+						wrapClientError(client.POST('/api/v1/version/update-remind-later'))
 							.catch((e) => {
 								toast({
 									color: 'firebrick',
@@ -54,7 +54,7 @@ let {
 					name="view-on-github"
 					style="background-color: rgb(128 128 200);"
 					onclick={() => {
-						wrapClientError(client.POST('/api/v1/update/view-on-github')).catch((e) => {
+						wrapClientError(client.POST('/api/v1/version/update-view-on-github')).catch((e) => {
 							toast({
 								color: 'firebrick',
 								message: `Failed to open GitHub page.\n Error: ${e}`
@@ -64,7 +64,7 @@ let {
 				<button
 					name="update-now"
 					onclick={() => {
-						wrapClientError(client.POST('/api/v1/update/install'))
+						wrapClientError(client.POST('/api/v1/version/install-update'))
 							.catch((e) => {
 								toast({
 									color: 'firebrick',

@@ -89,6 +89,9 @@ func (s *SISR) Run(cfg config.Global) error {
 		return err
 	}
 
+	trayNotifyCh := make(chan any, 10)
+	winDispatcher := cmd.NewWindowDispatcher[any]()
+
 	bindingEnforcer := steaminputbindings.NewEnforcer()
 	eventRouter := event.NewRouter()
 	deviceStore, deviceStoreClose, err := input.NewDeviceStore(s.NoSteam)
@@ -97,17 +100,27 @@ func (s *SISR) Run(cfg config.Global) error {
 	}
 	defer deviceStoreClose()
 	viiperBridge := input.NewViiperBridge(ctx, deviceStore, &s.Viiper)
-	updateChecker := update.NewChecker(s.UpdateNotify)
-	go func() {
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-		_, err := updateChecker.CheckForUpdate(ctx)
-		if err != nil {
-			slog.Error("Failed to check for updates", "error", err)
-		}
-	}()
+	updateChecker := update.NewChecker(
+		s.UpdateNotify,
+		func() {
+			winDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+				w.ShowWindow()
+				wv.Eval("window.invalidateAll();")
+				winDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+					wv.SetVisible(true)
+					return nil
+				})
+				return nil
+			})
+		},
+		func(version string) {
+			slog.Debug("Notifying tray about update availability", "version", version)
+			trayNotifyCh <- &tray.UpdateAvailableNotification{
+				Version: version,
+			}
+		},
+	)
 
-	winDispatcher := cmd.NewWindowDispatcher[any]()
 	cmdCtx := &cmd.SISRContext{
 		WindowDispatcher: winDispatcher,
 		DeviceStore:      deviceStore,
@@ -143,7 +156,17 @@ func (s *SISR) Run(cfg config.Global) error {
 		}
 	}
 
-	tray.Run(ctx, cmdCtx)
+	tray.Run(ctx, cmdCtx, trayNotifyCh)
+
+	go func() {
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		_, err := updateChecker.CheckForUpdate(ctx)
+		if err != nil {
+			slog.Error("Failed to check for updates", "error", err)
+		}
+	}()
+
 	return s.run(ctx, renderer, window, wv, eventRouter, winDispatcher)
 }
 

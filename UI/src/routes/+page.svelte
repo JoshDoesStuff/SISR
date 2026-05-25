@@ -42,8 +42,8 @@ let setupChecker = $state<CheckInitialSetup>()!;
 
 {#if data.versionInfo.update_available}
 	<UpdateModal
-		updateInfo={data.updateInfo}
-		show={data.updateInfo.update_available && !data.updateInfo.dismissed && !data.updateInfo.skipped} />
+		versionInfo={data.versionInfo}
+		show={data.versionInfo.update_available && !data.versionInfo.update_dismissed} />
 {/if}
 
 <main>

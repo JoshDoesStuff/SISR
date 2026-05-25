@@ -6,6 +6,7 @@ const (
 	UpdateNotifyNone       UpdateNotify = "none"
 	UpdateNotifyStable     UpdateNotify = "stable"
 	UpdateNotifyPrerelease UpdateNotify = "prerelease"
+	UpdateNotifyAlways     UpdateNotify = "always"
 )
 
 type Log struct {
@@ -38,7 +39,7 @@ type RunMisc struct {
 }
 
 type AutoUpdate struct {
-	UpdateNotify UpdateNotify `default:"stable" enum:"none,stable,prerelease" help:"Update notification level" env:"SISR_UPDATE_NOTIFY"`
+	UpdateNotify UpdateNotify `default:"stable" enum:"none,stable,prerelease,always" help:"Update notification level" env:"SISR_UPDATE_NOTIFY"`
 }
 
 type Window struct {

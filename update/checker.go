@@ -6,12 +6,15 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/Alia5/SISR/config"
+	"github.com/Alia5/SISR/helper"
 	"github.com/Alia5/SISR/meta"
 )
 
@@ -22,17 +25,48 @@ var versionRegex = regexp.MustCompile(`v(\d+)\.(\d+)\.(\d+)(?:-(\d+)-g[0-9a-f]+)
 type Checker interface {
 	GetVersionInfo() *VersionInfo
 	CheckForUpdate(ctx context.Context) (*VersionInfo, error)
+	SkipUpdate() error
+	RemindLater() error
+	SetDismissed(dismissed bool)
 }
 
-func NewChecker(updateChannel config.UpdateNotify) Checker {
+func NewChecker(updateChannel config.UpdateNotify, showWindowFn func(), notifyTray func(version string)) Checker {
+
+	skippedVersion := ""
+	ownExeDir, err := helper.GetOwnExecutableDir()
+	if err != nil {
+		slog.Error("Failed to get own executable directory", "error", err)
+	} else {
+		skiFlePath := filepath.Join(ownExeDir, ".update_skipped")
+		data, err := os.ReadFile(skiFlePath)
+		if err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
+				slog.Error("Failed to read update skip file", "error", err)
+			}
+		} else {
+			skippedVersion = string(data)
+		}
+	}
+
+	if skippedVersion == "" {
+		skippedVersion = "-1"
+	}
 	return &checker{
-		updateChannel: updateChannel,
+		updateChannel:  updateChannel,
+		skippedVersion: skippedVersion,
+		showWindowFn:   showWindowFn,
+		notifyTray:     notifyTray,
 	}
 }
 
 type checker struct {
 	updateAvailable bool
 	newVersion      string
+	updateDismissed bool
+	skippedVersion  string
+
+	showWindowFn func()
+	notifyTray   func(version string)
 
 	updateChannel config.UpdateNotify
 
@@ -45,6 +79,7 @@ type VersionInfo struct {
 	Date            string
 	UpdateAvailable bool
 	NewVersion      string
+	UpdateDismissed bool
 }
 
 type release struct {
@@ -64,6 +99,7 @@ func (c *checker) GetVersionInfo() *VersionInfo {
 		Date:            meta.Date,
 		UpdateAvailable: c.updateAvailable,
 		NewVersion:      c.newVersion,
+		UpdateDismissed: c.updateDismissed || c.newVersion == c.skippedVersion,
 	}
 }
 
@@ -77,6 +113,7 @@ func (c *checker) CheckForUpdate(ctx context.Context) (*VersionInfo, error) {
 			Date:            meta.Date,
 			UpdateAvailable: c.updateAvailable,
 			NewVersion:      c.newVersion,
+			UpdateDismissed: c.updateDismissed || c.newVersion == c.skippedVersion,
 		}, nil
 	}
 	var r release
@@ -105,6 +142,7 @@ func (c *checker) CheckForUpdate(ctx context.Context) (*VersionInfo, error) {
 				Date:            meta.Date,
 				UpdateAvailable: c.updateAvailable,
 				NewVersion:      c.newVersion,
+				UpdateDismissed: c.updateDismissed || c.newVersion == c.skippedVersion,
 			}, nil
 		}
 		r = releases[0]
@@ -137,6 +175,10 @@ func (c *checker) CheckForUpdate(ctx context.Context) (*VersionInfo, error) {
 		(remote.Major == cur.Major && remote.Minor == cur.Minor && remote.Patch > cur.Patch) ||
 		(remote.Major == cur.Major && remote.Minor == cur.Minor && remote.Patch == cur.Patch && remote.Commits > cur.Commits)
 
+	if notify == config.UpdateNotifyAlways {
+		newer = true
+	}
+
 	if !newer {
 		return &VersionInfo{
 			Version:         meta.Version,
@@ -144,6 +186,7 @@ func (c *checker) CheckForUpdate(ctx context.Context) (*VersionInfo, error) {
 			Date:            meta.Date,
 			UpdateAvailable: false,
 			NewVersion:      "",
+			UpdateDismissed: c.updateDismissed || c.newVersion == c.skippedVersion,
 		}, nil
 	}
 
@@ -154,13 +197,48 @@ func (c *checker) CheckForUpdate(ctx context.Context) (*VersionInfo, error) {
 	c.newVersion = matched
 	c.mtx.Unlock()
 
+	c.showWindowFn()
+	c.notifyTray(matched)
+
 	return &VersionInfo{
 		Version:         meta.Version,
 		Commit:          meta.Commit,
 		Date:            meta.Date,
 		UpdateAvailable: true,
 		NewVersion:      matched,
+		UpdateDismissed: c.updateDismissed || c.newVersion == c.skippedVersion,
 	}, nil
+}
+
+func (c *checker) SkipUpdate() error {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.updateDismissed = true
+
+	ownExeDir, err := helper.GetOwnExecutableDir()
+	if err != nil {
+		slog.Error("Failed to get own executable directory", "error", err)
+	}
+	skiFlePath := filepath.Join(ownExeDir, ".update_skipped")
+	err = os.WriteFile(skiFlePath, []byte(c.newVersion), 0644)
+	if err != nil {
+		slog.Error("Failed to write update skip file", "error", err)
+	}
+
+	return nil
+}
+
+func (c *checker) RemindLater() error {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.updateDismissed = true
+	return nil
+}
+
+func (c *checker) SetDismissed(dismissed bool) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.updateDismissed = dismissed
 }
 
 type version struct {
