@@ -76,9 +76,6 @@ Read the [documentation](https://alia5.github.io/SISR/)!
 PRs welcome!
 See [GitHub Issues](https://github.com/Alia5/SISR/issues) for open tasks.
 
-Do note that I never written Rust before this project, and I discovered that I dislike Rust very much.  
-And it shows, the code is a hot mess, but I do not care for a 90% useless toy project.  
-
 ## 📄 License
 
 ```license
