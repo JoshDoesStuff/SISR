@@ -4,6 +4,7 @@ let z = 0;
 
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { fade } from 'svelte/transition';
 
 const interactiveSelector = [
 	'a',
@@ -242,6 +243,7 @@ let onResizeLostCapture = () => {
 	style:height={size.height ? `${size.height}px` : undefined}
 	style:z-index={zIndex}
 	style:cursor={drag.isDragging ? 'grabbing' : undefined}
+	transition:fade
 	onpointerdown={onPointerDown}
 	onpointermove={onPointerMove}
 	onpointerup={onPointerUp}
@@ -283,7 +285,7 @@ section {
 	position: relative;
 	padding: 0;
 	min-width: 36ch;
-	height: 100%;
+	height: auto;
 
 	&:active {
 		cursor: grabbing;

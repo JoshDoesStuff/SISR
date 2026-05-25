@@ -48,6 +48,12 @@ let setupChecker = $state<CheckInitialSetup>()!;
 
 <main>
 	<div>
+		{#if quickSettingsVisible}
+			<QuickSettingsCard
+				steamStatusInfo={data.steamStatus}
+				config={data.config}
+				onClose={() => (quickSettingsVisible = false)} />
+		{/if}
 		{#if debugInfoCardVisible}
 			<DebugInfoCard
 				steamStatusInfo={data.steamStatus}
@@ -55,12 +61,6 @@ let setupChecker = $state<CheckInitialSetup>()!;
 				viiperInfo={data.viiperInfo}
 				versionInfo={data.versionInfo}
 				onClose={() => (debugInfoCardVisible = false)} />
-		{/if}
-		{#if quickSettingsVisible}
-			<QuickSettingsCard
-				steamStatusInfo={data.steamStatus}
-				config={data.config}
-				onClose={() => (quickSettingsVisible = false)} />
 		{/if}
 	</div>
 	<div>
@@ -135,7 +135,6 @@ main {
 			max-width: 100%;
 			max-height: calc(100% - 2em);
 			overflow: hidden;
-			position: absolute;
 			top: 1em;
 		}
 	}
