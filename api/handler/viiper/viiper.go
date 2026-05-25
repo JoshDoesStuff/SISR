@@ -14,7 +14,8 @@ type VIIPERStatusResponse struct {
 }
 
 type VIIPERStatus struct {
-	Status *apitypes.PingResponse `json:"status,omitempty"`
+	Status  *apitypes.PingResponse `json:"status,omitempty"`
+	Address string                 `json:"address,omitempty"`
 }
 
 func Register(a huma.API, c *cmd.SISRContext) {
@@ -32,7 +33,8 @@ func status(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*VIIPE
 	return func(ctx context.Context, req *struct{}) (*VIIPERStatusResponse, error) {
 		return &VIIPERStatusResponse{
 			Body: VIIPERStatus{
-				Status: c.ViiperBridge.Info(),
+				Status:  c.ViiperBridge.Info(),
+				Address: c.ViiperBridge.ResolvedAddressAndPort(),
 			},
 		}, nil
 	}
@@ -46,7 +48,8 @@ func ping(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*VIIPERS
 		}
 		return &VIIPERStatusResponse{
 			Body: VIIPERStatus{
-				Status: resp,
+				Status:  resp,
+				Address: c.ViiperBridge.ResolvedAddressAndPort(),
 			},
 		}, nil
 	}

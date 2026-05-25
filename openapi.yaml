@@ -191,6 +191,8 @@ components:
           format: uri
           readOnly: true
           type: string
+        address:
+          type: string
         status:
           $ref: "#/components/schemas/PingResponse"
       type: object

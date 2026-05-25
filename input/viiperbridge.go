@@ -29,6 +29,7 @@ type ViiperBridge interface {
 	Ping(ctx context.Context) (*apitypes.PingResponse, error)
 	Info() *apitypes.PingResponse
 	Ready() bool
+	ResolvedAddressAndPort() string
 }
 
 const minSupportedVIIPERVersion = "v0.6.1"
@@ -212,6 +213,22 @@ func (v *viiperBridge) Ready() bool {
 	return v.viiperServerInfo != nil
 }
 
+func (v *viiperBridge) ResolvedAddressAndPort() string {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	if v.cfg != nil && v.cfg.Address != "" {
+		ip, port, err := lookupIP(v.cfg.Address)
+		if err != nil {
+			slog.Error("Failed to lookup VIIPER address", "address", v.cfg.Address, "error", err)
+			slog.Info("Returning as is...")
+			return v.cfg.Address
+		}
+		return fmt.Sprintf("%s:%s", ip.String(), port)
+	}
+	return defaultAddress
+}
+
 func (v *viiperBridge) ensureBus(ctx context.Context) (busID uint32, err error) {
 	v.mtx.Lock()
 	defer v.mtx.Unlock()
@@ -288,15 +305,15 @@ func isVersionSupported(v string) bool {
 	return true
 }
 
-func isLoopbackAddress(addr string) bool {
-	host, _, splitErr := net.SplitHostPort(addr)
+func lookupIP(addr string) (net.IP, string, error) {
+	host, port, splitErr := net.SplitHostPort(addr)
 	if splitErr != nil {
 		slog.Error(
 			"Failed to split VIIPER address",
 			"address", addr,
 			"error", splitErr,
 		)
-		return false
+		return nil, port, splitErr
 	}
 	ips, lookupErr := net.LookupIP(host)
 	if lookupErr != nil {
@@ -305,12 +322,17 @@ func isLoopbackAddress(addr string) bool {
 			"host", host,
 			"error", lookupErr,
 		)
+		return nil, port, lookupErr
+	}
+	return ips[0], port, nil
+}
+
+func isLoopbackAddress(addr string) bool {
+	ip, _, err := lookupIP(addr)
+	if err != nil {
 		return false
 	}
-	if ips[0].IsLoopback() {
-		return true
-	}
-	return false
+	return ip.IsLoopback()
 }
 
 func (v *viiperBridge) trySpawnViiperServer() {
