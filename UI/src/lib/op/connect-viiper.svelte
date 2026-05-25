@@ -3,7 +3,7 @@ import { client, wrapClientError } from '$lib/api/client';
 import { log } from '$lib/log';
 
 export const connect = async () => {
-	wrapClientError(client.POST('/api/v1/connect_viiper'))
+	wrapClientError(client.POST('/api/v1/viiper/ping'))
 		.then(() => {
 			log.info('Connected to VIIPER successfully');
 		})

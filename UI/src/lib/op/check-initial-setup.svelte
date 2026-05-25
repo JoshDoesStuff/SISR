@@ -12,16 +12,14 @@ import InitalSetupModal from './setup-modals/InitalSetupModal.svelte';
 
 const {
 	steamStatus,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	inputInfo
+	initialLaunch
 }: {
-	steamStatus: components['schemas']['SteamStatus'];
-	inputInfo: components['schemas']['InputInfoResponse'];
+	steamStatus: components['schemas']['SteamAndCefStatus'];
+	initialLaunch: boolean;
+	// devices: components['schemas']['InputInfoResponse'];
 } = $props();
 
 let connectViiper = $state<ConnectViiper>()!;
-
-let initialLaunch = steamStatus.initial_launch;
 
 let showInitialSetupModal = $derived(initialLaunch);
 
@@ -32,7 +30,7 @@ let showSteamNotRunningModal = $derived.by(() => {
 	if (steamStatus.no_steam_mode) {
 		return false;
 	}
-	return !steamStatus.running;
+	return !steamStatus.steam_running;
 });
 let showCefRemoteDebugDisabledModal = $derived.by(() => {
 	if (initialLaunch) {
@@ -44,7 +42,7 @@ let showCefRemoteDebugDisabledModal = $derived.by(() => {
 	if (showSteamNotRunningModal) {
 		return false;
 	}
-	return !steamStatus.remote_debug.enabled;
+	return !steamStatus.cef_debug_enabled;
 });
 let showSisrMarkerNotPresentModal = $derived.by(() => {
 	if (initialLaunch) {
@@ -73,7 +71,7 @@ onMount(() => {
 		return;
 	}
 	void wrapClientError(
-		client.POST('/api/v1/show_hide_ui', {
+		client.POST('/api/v1/ui', {
 			body: {
 				show: true
 			}
