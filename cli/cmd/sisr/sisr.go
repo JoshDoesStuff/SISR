@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -17,12 +18,13 @@ import (
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/SISR/steam"
 	"github.com/Alia5/SISR/tray"
+	"github.com/Alia5/SISR/update"
 	"github.com/Alia5/SISR/webview"
 )
 
 type SISR struct {
 	config.AutoUpdate             `embed:""`
-	config.RunMode                `embed:""`
+	config.RunMisc                `embed:""`
 	config.ControllerEmulation    `embed:""`
 	config.KeyboardMouseEmulation `embed:""`
 	config.API                    `embed:"" prefix:"api."`
@@ -51,6 +53,7 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	setSDLHintEnv()
 	setSDLHints()
+	s.checkInitialLaunch()
 
 	launchedViaSteam, launchedInGameMode := steam.LaunchedViaSteam()
 	_ = launchedInGameMode
@@ -88,12 +91,13 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	bindingEnforcer := steaminputbindings.NewEnforcer()
 	eventRouter := event.NewRouter()
-	deviceStore, deviceStoreClose, err := input.NewDeviceStore()
+	deviceStore, deviceStoreClose, err := input.NewDeviceStore(s.NoSteam)
 	if err != nil {
 		slog.Error("Failed to initialite DeviceStore", "error", err)
 	}
 	defer deviceStoreClose()
 	viiperBridge := input.NewViiperBridge(ctx, deviceStore, &s.Viiper)
+	updateChecker := update.NewChecker(s.UpdateNotify)
 
 	winDispatcher := cmd.NewWindowDispatcher[any]()
 	cmdCtx := &cmd.SISRContext{
@@ -102,9 +106,10 @@ func (s *SISR) Run(cfg config.Global) error {
 		ViiperBridge:     viiperBridge,
 		BindingEnforcer:  bindingEnforcer,
 		QuitFn:           stop,
+		UpdateChecker:    updateChecker,
 		Config: &cmd.SessionConfig{
 			AutoUpdate:             &s.AutoUpdate,
-			RunMode:                &s.RunMode,
+			RunMisc:                &s.RunMisc,
 			ControllerEmulation:    &s.ControllerEmulation,
 			KeyboardMouseEmulation: &s.KeyboardMouseEmulation,
 			Viiper:                 &s.Viiper,
@@ -188,5 +193,26 @@ func cleanup() {
 	err := helper.OpenURL("steam://forceinputappid/0")
 	if err != nil {
 		slog.Error("Failed to reset steam controller config", "error", err)
+	}
+}
+
+func (s *SISR) checkInitialLaunch() {
+	if s.InitialLaunch || s.NoSteam {
+		// is ignored / irrelevant
+		return
+	}
+	ownExeDir, err := os.Executable()
+	if err != nil {
+		slog.Error("Failed to get own executable path", "error", err)
+		return
+	}
+	ownExeDir, err = filepath.EvalSymlinks(ownExeDir)
+	if err != nil {
+		slog.Error("Failed to evaluate symlinks for own executable path", "error", err)
+		return
+	}
+	markerPath := filepath.Join(filepath.Dir(ownExeDir), ".initial_setup_done")
+	if _, err := os.Stat(markerPath); os.IsNotExist(err) {
+		s.InitialLaunch = true
 	}
 }

@@ -32,8 +32,9 @@ type Steam struct {
 	CEFRemoteDebugPort uint16 `help:"CEF remote debugging port (optional, will attempt to auto-detect if not set)" env:"SISR_STEAM_CEF_REMOTE_DEBUG_PORT"`
 }
 
-type RunMode struct {
-	NoSteam bool `default:"false" help:"Run in no-Steam mode" env:"SISR_NO_STEAM"`
+type RunMisc struct {
+	NoSteam       bool `default:"false" help:"Run in no-Steam mode" env:"SISR_NO_STEAM"`
+	InitialLaunch bool `default:"false" hidden:""`
 }
 
 type AutoUpdate struct {

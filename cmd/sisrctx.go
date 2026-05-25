@@ -8,6 +8,7 @@ import (
 	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/input/steaminputbindings"
 	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/update"
 	"github.com/Alia5/SISR/webview"
 )
 
@@ -17,12 +18,13 @@ type SISRContext struct {
 	ViiperBridge     input.ViiperBridge
 	BindingEnforcer  steaminputbindings.Enforcer
 	QuitFn           context.CancelFunc
+	UpdateChecker    update.Checker
 	Config           *SessionConfig
 }
 
 type SessionConfig struct {
 	*config.AutoUpdate
-	*config.RunMode
+	*config.RunMisc
 	*config.ControllerEmulation
 	*config.KeyboardMouseEmulation
 	*config.Viiper
