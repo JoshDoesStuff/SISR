@@ -13,15 +13,15 @@ const STEAM_DESKTOP_CONFIG_APPID = 413080;
 
 const {
 	steamStatusInfo,
-	inputInfo,
+	config,
 	onClose
 }: {
-	steamStatusInfo: components['schemas']['SteamStatus'];
-	inputInfo: components['schemas']['InputInfoResponse'];
+	steamStatusInfo: components['schemas']['SteamAndCefStatus'];
+	config: components['schemas']['Config'];
 	onClose?: () => void;
 } = $props();
 
-let allowDesktopConfig = $derived(!inputInfo.force_controller_config);
+let allowDesktopConfig = $derived(config.controllerEmulation.AllowSteamDesktopLayout);
 </script>
 
 <FloatingCard>
@@ -65,7 +65,7 @@ let allowDesktopConfig = $derived(!inputInfo.force_controller_config);
 								body: {
 									app_id: allowDesktopConfig
 										? STEAM_DESKTOP_CONFIG_APPID
-										: steamStatusInfo.marker_app_id
+										: steamStatusInfo.steam_app_id
 								}
 							})
 							.catch((e) => {
@@ -112,19 +112,6 @@ let allowDesktopConfig = $derived(!inputInfo.force_controller_config);
 		padding: 1em;
 		width: 100%;
 	}
-}
-
-h3 {
-	margin-top: 1em;
-	margin-bottom: 0.5em;
-}
-
-.heading {
-	display: grid;
-	grid-template-columns: min-content min-content;
-	gap: 0.5em;
-	place-items: center;
-	place-self: center;
 }
 
 .checkbox-wrap {

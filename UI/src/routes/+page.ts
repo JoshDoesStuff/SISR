@@ -7,7 +7,7 @@ export const load = async ({ fetch }) => {
     const client = clientWithSvelteFetch(fetch);
 
     log.debug('Fetching steam status...');
-    const [steamStatus, devices, viiperInfo, versionInfo, initialLaunch] = await Promise.all([
+    const [steamStatus, devices, viiperInfo, versionInfo, initialLaunch, config] = await Promise.all([
         wrapClientError(client.GET('/api/v1/steam/status', {
             signal: AbortSignal.timeout(TIMEOUT_MS)
         })),
@@ -22,6 +22,9 @@ export const load = async ({ fetch }) => {
         })),
         wrapClientError(client.GET('/api/v1/initial_launch', {
             signal: AbortSignal.timeout(TIMEOUT_MS)
+        })),
+        wrapClientError(client.GET('/api/v1/config', {
+            signal: AbortSignal.timeout(TIMEOUT_MS)
         }))
     ]);
 
@@ -30,6 +33,7 @@ export const load = async ({ fetch }) => {
         devices: devices,
         viiperInfo: viiperInfo,
         versionInfo: versionInfo,
-        initialLaunch: initialLaunch
+        initialLaunch: initialLaunch,
+        config: config
     };
 };

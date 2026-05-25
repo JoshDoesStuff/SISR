@@ -11,8 +11,8 @@ import { tooltip } from '$lib/attachments/tooltip.svelte';
 import CheckInitialSetup from '$lib/op/check-initial-setup.svelte';
 import UpdateModal from '$lib/components/UpdateModal.svelte';
 
-import IcoClose from '~icons/mdi/close';
 import IcoSettings from '~icons/mdi/cog';
+import IcoMinimize from '~icons/mdi/window-minimize';
 
 let { data }: PageProps = $props();
 
@@ -21,17 +21,18 @@ let quickSettingsVisible = $state(false);
 
 let setupChecker = $state<CheckInitialSetup>()!;
 
-onMount(() => {
-	wrapClientError(client.POST('/api/v1/inject_overlay_notifier'))
-		.then(() => {
-			log.info('Overlay notifier injected successfully');
-		})
-		.catch((e) => {
-			log.error('Failed to inject overlay notifier', 'error', e);
-		});
-	// if (!data.inputInfo.viiper.) {
-	// }
-});
+// TODO: re-introduce!!
+// onMount(() => {
+// 	wrapClientError(client.POST('/api/v1/inject_overlay_notifier'))
+// 		.then(() => {
+// 			log.info('Overlay notifier injected successfully');
+// 		})
+// 		.catch((e) => {
+// 			log.error('Failed to inject overlay notifier', 'error', e);
+// 		});
+// 	// if (!data.inputInfo.viiper.) {
+// 	// }
+// });
 </script>
 
 <CheckInitialSetup
@@ -40,9 +41,9 @@ onMount(() => {
 	initialLaunch={data.initialLaunch.is_initial_launch} />
 
 {#if data.versionInfo.update_available}
-	<!-- <UpdateModal
+	<UpdateModal
 		updateInfo={data.updateInfo}
-		show={data.updateInfo.update_available && !data.updateInfo.dismissed && !data.updateInfo.skipped} /> -->
+		show={data.updateInfo.update_available && !data.updateInfo.dismissed && !data.updateInfo.skipped} />
 {/if}
 
 <main>
@@ -58,7 +59,7 @@ onMount(() => {
 		{#if quickSettingsVisible}
 			<QuickSettingsCard
 				steamStatusInfo={data.steamStatus}
-				inputInfo={data.inputInfo}
+				config={data.config}
 				onClose={() => (quickSettingsVisible = false)} />
 		{/if}
 	</div>
@@ -82,21 +83,21 @@ onMount(() => {
 			<span>Debug Info</span>
 		</label>
 	</div>
-	{#if /*data.inputInfo?.fullscreen*/ true}
-		<button
-			class="quit"
-			{@attach tooltip({
-				arrow: true,
-				arrowFollowCursor: true,
-				content: 'Completely shut down SISR'
-			})}
-			onclick={() =>
-				void wrapClientError(client.POST('/api/v1/quit')).catch((e) => {
-					toast({
-						color: 'firebrick',
-						message: e.message || `Failed to quit SISR.`
-					});
-				})}>Quit SISR</button>
+	<button
+		class="quit"
+		{@attach tooltip({
+			arrow: true,
+			arrowFollowCursor: true,
+			content: 'Completely shut down SISR'
+		})}
+		onclick={() =>
+			void wrapClientError(client.POST('/api/v1/quit')).catch((e) => {
+				toast({
+					color: 'firebrick',
+					message: e.message || `Failed to quit SISR.`
+				});
+			})}>Quit SISR</button>
+	{#if data.config?.window?.Fullscreen}
 		<button
 			class="minimize"
 			{@attach tooltip({
@@ -106,7 +107,7 @@ onMount(() => {
 			})}
 			onclick={() =>
 				void wrapClientError(
-					client.POST('/api/v1/toggleUI', {
+					client.POST('/api/v1/ui', {
 						body: {
 							show: false
 						}
