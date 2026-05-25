@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"net"
 	"net/http"
 	"path"
 	"strings"
@@ -46,10 +47,39 @@ func Middleware(preserveDocs bool, preserveOpenAPISpec bool) func(next http.Hand
 			}
 
 			p := path.Clean(strings.TrimPrefix(r.URL.Path, "/"))
-			_, err := subFS.Open(p)
-			if err != nil {
-				r.URL.Path = "/"
+			serveIndex := p == "." || p == "" || p == "index.html"
+
+			if !serveIndex {
+				_, err := subFS.Open(p)
+				if err != nil {
+					serveIndex = true
+				}
 			}
+
+			if serveIndex {
+				apiPort := ""
+
+				_, hostPort, err := net.SplitHostPort(r.Host)
+				if err == nil {
+					apiPort = hostPort
+				} else if localAddr, ok := r.Context().Value(http.LocalAddrContextKey).(net.Addr); ok {
+					_, localPort, localErr := net.SplitHostPort(localAddr.String())
+					if localErr == nil {
+						apiPort = localPort
+					}
+				}
+
+				indexHTML, err := fs.ReadFile(subFS, "index.html")
+				if err != nil {
+					http.Error(w, "index.html not found", http.StatusInternalServerError)
+					return
+				}
+
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				_, _ = w.Write([]byte(strings.ReplaceAll(string(indexHTML), "%SISR_API_PORT%", apiPort)))
+				return
+			}
+
 			s.ServeHTTP(w, r)
 		})
 	}

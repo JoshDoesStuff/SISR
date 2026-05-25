@@ -70,7 +70,7 @@ func (s *SISR) Run(cfg config.Global) error {
 		slog.Info("Launched via Steam")
 	}
 
-	window, renderer, wv, err := s.createWindow(&cfg)
+	window, renderer, wv, err := s.createWindow(&s.Window)
 	if err != nil {
 		return err
 	}

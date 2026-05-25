@@ -12,7 +12,7 @@ import (
 )
 
 func (s *SISR) createWindow(
-	cfg *config.Global, //nolint:unparam
+	cfg *config.Window,
 ) (*sdl.Window, sdl.Renderer, webview.WebView, error) {
 
 	err := sdl.Init(sdl.InitFlagVideo)
@@ -22,7 +22,9 @@ func (s *SISR) createWindow(
 	}
 
 	flags := sdl.WindowFlagVulkan | sdl.WindowFlagTransparent | sdl.WindowFlagResizable
-	// sdl.WindowFlagBorderless | sdl.WindowFlagAlwaysOnTop // TODO:
+	if cfg.Fullscreen {
+		flags |= sdl.WindowFlagBorderless | sdl.WindowFlagAlwaysOnTop
+	}
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(
 		"SISR",
@@ -59,7 +61,12 @@ func (s *SISR) createWindow(
 		return nil, nil, nil, err
 	}
 
-	// window.HideWindow() // TODO:
+	if !cfg.Show {
+		window.HideWindow()
+	}
+	if cfg.Fullscreen {
+		wv.SetVisible(false)
+	}
 
 	return window, renderer, wv, nil
 }

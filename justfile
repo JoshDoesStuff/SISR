@@ -28,6 +28,10 @@ default:
 run *args: build
 	{{ if os_family() == "windows" { "$env:DEV='1'; & './" + binary_name + exe_ext + "'" } else { "DEV=1 './" + binary_name + exe_ext + "'" } }} {{ args }}
 
+[working-directory: 'dist']
+run-dev *args: build
+	{{ if os_family() == "windows" { "$env:DEV='1'; & './" + binary_name + exe_ext + "'" } else { "DEV=1 './" + binary_name + exe_ext + "'" } }} --api.frontend-address=localhost:5173 --api.listen-address=localhost:5746 --api.cors-origins=https://steamloopback.host,http://steamloopback.host,http://localhost:5173 {{ args }}
+
 win-resource:
 	goversioninfo -64 -o cmd/sisr/resource.syso versioninfo.json
 
