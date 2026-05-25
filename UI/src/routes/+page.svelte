@@ -34,12 +34,15 @@ onMount(() => {
 });
 </script>
 
-<CheckInitialSetup bind:this={setupChecker} steamStatus={data.steamStatus} inputInfo={data.inputInfo} />
+<CheckInitialSetup
+	bind:this={setupChecker}
+	steamStatus={data.steamStatus}
+	initialLaunch={data.initialLaunch.is_initial_launch} />
 
-{#if data.updateInfo}
-	<UpdateModal
+{#if data.versionInfo.update_available}
+	<!-- <UpdateModal
 		updateInfo={data.updateInfo}
-		show={data.updateInfo.update_available && !data.updateInfo.dismissed && !data.updateInfo.skipped} />
+		show={data.updateInfo.update_available && !data.updateInfo.dismissed && !data.updateInfo.skipped} /> -->
 {/if}
 
 <main>
@@ -47,7 +50,9 @@ onMount(() => {
 		{#if debugInfoCardVisible}
 			<DebugInfoCard
 				steamStatusInfo={data.steamStatus}
-				inputInfo={data.inputInfo}
+				devices={data.devices}
+				viiperInfo={data.viiperInfo}
+				versionInfo={data.versionInfo}
 				onClose={() => (debugInfoCardVisible = false)} />
 		{/if}
 		{#if quickSettingsVisible}
@@ -77,7 +82,7 @@ onMount(() => {
 			<span>Debug Info</span>
 		</label>
 	</div>
-	{#if data.inputInfo.fullscreen}
+	{#if /*data.inputInfo?.fullscreen*/ true}
 		<button
 			class="quit"
 			{@attach tooltip({
@@ -86,10 +91,10 @@ onMount(() => {
 				content: 'Completely shut down SISR'
 			})}
 			onclick={() =>
-				void wrapClientError(client.POST('/api/v1/shutdown')).catch((e) => {
+				void wrapClientError(client.POST('/api/v1/quit')).catch((e) => {
 					toast({
 						color: 'firebrick',
-						message: `Failed to quit SISR.\n Error: ${e}`
+						message: e.message || `Failed to quit SISR.`
 					});
 				})}>Quit SISR</button>
 		<button
@@ -101,7 +106,7 @@ onMount(() => {
 			})}
 			onclick={() =>
 				void wrapClientError(
-					client.POST('/api/v1/show_hide_ui', {
+					client.POST('/api/v1/toggleUI', {
 						body: {
 							show: false
 						}
@@ -109,9 +114,9 @@ onMount(() => {
 				).catch((e) => {
 					toast({
 						color: 'firebrick',
-						message: `Failed to minimize SISR.\n Error: ${e}`
+						message: e.message || `Failed to minimize SISR.`
 					});
-				})}><IcoClose style="width: 1.6em; height: 1.6em;" /></button>
+				})}><IcoMinimize style="width: 1.6em; height: 1.6em;" /></button>
 	{/if}
 </main>
 
