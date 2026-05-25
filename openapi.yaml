@@ -1,0 +1,9 @@
+components:
+  schemas: {}
+info:
+  title: SISR API
+  version: v0.4.2-73-g416f67d
+openapi: 3.1.0
+servers:
+  - description: SISR API
+    url: http://127.0.0.1:40171

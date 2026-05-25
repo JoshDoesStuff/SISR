@@ -26,7 +26,7 @@ default:
 
 [working-directory: 'dist']
 run *args: build
-	{{ if os_family() == "windows" { "& './" + binary_name + exe_ext + "'" } else { "'./" + binary_name + exe_ext + "'" } }} {{ args }}
+	{{ if os_family() == "windows" { "$env:DEV='1'; & './" + binary_name + exe_ext + "'" } else { "DEV=1 './" + binary_name + exe_ext + "'" } }} {{ args }}
 
 win-resource:
 	goversioninfo -64 -o cmd/sisr/resource.syso versioninfo.json
@@ -77,8 +77,28 @@ build-polyhook2 type="Debug":
 		} 
 	}}
 
+[working-directory: 'UI']
+build-frontend-deps:
+	{{
+		if os_family() == "windows" {
+			"if (!(Test-Path node_modules)) { npm i }"
+		} else {
+			"[ -d node_modules ] || npm i"
+		}
+	}}
+
+[working-directory: 'UI']
+build-frontend: build-frontend-deps
+	{{
+		if os_family() == "windows" {
+			"if (!(Test-Path .env) -and (Test-Path .env.example)) { Copy-Item .env.example .env } ; if (!(Test-Path build)) { npm run build }"
+		} else {
+			"[ -f .env ] || [ ! -f .env.example ] || cp .env.example .env ; [ -d build ] || npm run build"
+		}
+	}}
+
 [arg("type", long="type", help="Build type (Debug/Release)")]
-build-deps type="Debug": (build-sdl type)
+build-deps type="Debug": (build-sdl type) (build-frontend)
 
 build-sisr type="Debug": (build-deps type)
     {{ 

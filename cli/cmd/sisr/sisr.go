@@ -122,6 +122,7 @@ func (s *SISR) Run(cfg config.Global) error {
 	}
 
 	wv.Navigate(frontendAddr)
+	wv.SetVisible(true)
 
 	if !s.AllowSteamDesktopLayout {
 		err = bindingEnforcer.ForceOwnAppID()

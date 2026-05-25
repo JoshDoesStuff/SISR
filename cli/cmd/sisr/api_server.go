@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	ui "github.com/Alia5/SISR/UI"
 	"github.com/Alia5/SISR/api"
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/logging"
@@ -122,6 +123,7 @@ func (s *SISR) runAPIServer(
 				AllowedHeaders:   []string{"*"},
 				AllowCredentials: true,
 			}).Handler,
+			ui.Middleware(true, true),
 			middleware.UnregisteredRoute(hAPI),
 		),
 	}
@@ -147,7 +149,7 @@ func (s *SISR) runAPIServer(
 	}()
 
 	slog.Info("Started Server", "addr", apiSrv.Addr, "url", serverURL)
-	slog.Info("Docs on", "addr", apiSrv.Addr, "url", serverURL+"/docs")
+	slog.Info("APIDocs on", "addr", apiSrv.Addr, "url", serverURL+"/docs")
 
 	return &apiSrv, serverURL
 

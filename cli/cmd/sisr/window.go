@@ -2,6 +2,7 @@ package sisr
 
 import (
 	"log/slog"
+	"os"
 	"runtime"
 
 	"github.com/Alia5/SISR/config"
@@ -20,7 +21,7 @@ func (s *SISR) createWindow(
 		return nil, nil, nil, err
 	}
 
-	flags := sdl.WindowFlagVulkan | sdl.WindowFlagTransparent
+	flags := sdl.WindowFlagVulkan | sdl.WindowFlagTransparent | sdl.WindowFlagResizable
 	// sdl.WindowFlagBorderless | sdl.WindowFlagAlwaysOnTop // TODO:
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(
@@ -50,7 +51,7 @@ func (s *SISR) createWindow(
 		return nil, nil, nil, err
 	}
 
-	wv, err := webview.New(window, 1280, 720, true)
+	wv, err := webview.New(window, 1280, 720, os.Getenv("DEV") == "1")
 	if err != nil {
 		slog.Error("Failed to create webview", "error", err)
 		sdl.Quit()
