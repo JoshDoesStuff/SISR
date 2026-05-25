@@ -39,7 +39,7 @@ let loading = $state(false);
 					name="exit"
 					onclick={() => {
 						loading = true;
-						void wrapClientError(client.POST('/api/v1/shutdown'))
+						void wrapClientError(client.POST('/api/v1/quit'))
 							.catch((e) => {
 								toast({
 									color: 'firebrick',
@@ -55,7 +55,11 @@ let loading = $state(false);
 						loading = true;
 
 						try {
-							await wrapClientError(client.POST('/api/v1/enable_cef_remote_debug', { body: { restart_sisr: false } }));
+							await wrapClientError(
+								client.POST('/api/v1/enable_cef_remote_debug', {
+									body: { restart_sisr: false }
+								})
+							);
 						} catch (e) {
 							loading = false;
 							toast({

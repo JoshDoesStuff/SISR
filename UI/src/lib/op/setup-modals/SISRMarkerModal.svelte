@@ -34,7 +34,7 @@ let loading = $state(false);
 					name="exit"
 					onclick={() => {
 						loading = true;
-						void wrapClientError(client.POST('/api/v1/shutdown'))
+						void wrapClientError(client.POST('/api/v1/quit'))
 							.catch((e) => {
 								toast({
 									color: 'firebrick',
