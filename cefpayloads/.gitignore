@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 
+openapi.d.ts
 
 # Editor directories and files
 .vscode/*
