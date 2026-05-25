@@ -12,7 +12,7 @@ import (
 )
 
 func getCefDebugPortWindows(ctx context.Context) uint16 {
-	const defaultPort uint16 = 8080
+	const defaultPort uint16 = defaultCEFRemoteDebugPort
 	const prefix = "--remote-debugging-port="
 
 	procs, err := process.ProcessesWithContext(ctx)
@@ -45,6 +45,12 @@ func getCefDebugPortWindows(ctx context.Context) uint16 {
 			}
 
 			portStr := strings.TrimPrefix(arg, prefix)
+
+			if strings.Contains(portStr, ",") {
+				split := strings.Split(portStr, ",")
+				portStr = split[0]
+			}
+
 			port, parseErr := strconv.Atoi(portStr)
 			if parseErr != nil || port <= 0 || port > 65535 {
 				continue
