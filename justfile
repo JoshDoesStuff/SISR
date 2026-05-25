@@ -82,7 +82,7 @@ build-polyhook2 type="Debug":
 	}}
 
 [working-directory: 'UI']
-build-frontend-deps:
+install-frontend-deps:
 	{{
 		if os_family() == "windows" {
 			"if (!(Test-Path node_modules)) { npm i }"
@@ -92,7 +92,17 @@ build-frontend-deps:
 	}}
 
 [working-directory: 'UI']
-build-frontend: build-frontend-deps
+generate-openapi-frontend-types:
+	{{
+		if os_family() == "windows" {
+			"if (!(Test-Path src/lib/api/openapi.d.ts)) { npm run gen:openapi }"
+		} else {
+			"[ -f src/lib/api/openapi.d.ts ] || npm run gen:openapi"
+		}
+	}}
+
+[working-directory: 'UI']
+build-frontend: install-frontend-deps generate-openapi-frontend-types
 	{{
 		if os_family() == "windows" {
 			"if (!(Test-Path .env) -and (Test-Path .env.example)) { Copy-Item .env.example .env } ; if (!(Test-Path build)) { npm run build }"
