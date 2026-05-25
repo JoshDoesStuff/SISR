@@ -1,7 +1,7 @@
 import createClient, { type FetchResponse } from 'openapi-fetch';
 import type { paths } from './openapi';
 
-const apiURL = goTmpl('.SisrAPIURL');
+const apiURL = 'goTmpl(".SISRAPIURL")';
 
 export const client = createClient<paths>({
     baseUrl: apiURL

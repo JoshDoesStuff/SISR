@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Alia5/SISR/cefpayloads"
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/config"
 	"github.com/Alia5/SISR/event"
@@ -44,7 +45,7 @@ func (s *SISR) Run(cfg config.Global) error {
 		os.Interrupt, syscall.SIGTERM,
 	)
 	defer stop()
-	defer cleanup()
+	defer cleanup(&s.Steam)
 
 	if s.MaxFPS == 0 {
 		s.targetFrameDuration = 0
@@ -147,6 +148,7 @@ func (s *SISR) Run(cfg config.Global) error {
 	if frontendAddr == "" {
 		frontendAddr = apiAddr
 	}
+	cmdCtx.APIAddr = &apiAddr
 
 	wv.Navigate(frontendAddr)
 
@@ -236,9 +238,14 @@ func drainEvents(ctx context.Context, router event.Router) {
 	}
 }
 
-func cleanup() {
+func cleanup(c *config.Steam) {
 	slog.Info("Shutting down")
-	err := helper.OpenURL("steam://forceinputappid/0")
+	slog.Info("Cleaning up CEF payloads...")
+	err := cefpayloads.SISRCleanup(context.Background(), c)
+	if err != nil {
+		slog.Error("Failed to cleanup CEF payloads", "error", err)
+	}
+	err = helper.OpenURL("steam://forceinputappid/0")
 	if err != nil {
 		slog.Error("Failed to reset steam controller config", "error", err)
 	}

@@ -15,7 +15,7 @@ __INJECT_RETURN = (async () => {
     if (steamClientOverlay) {
         const unregister = await steamClientOverlay.RegisterForOverlayActivated(
             (_a, _b, overlayOpen) => {
-                void client.POST('/api/v1/overlay_state_changed', {
+                void client.POST('/api/v1/steam/cef/overlay-state-changed', {
                     body: {
                         open: overlayOpen
                     }
@@ -32,14 +32,14 @@ __INJECT_RETURN = (async () => {
         // but we can query focus of the big picture menu ;)
 
         const focusListener = () => {
-            void client.POST('/api/v1/overlay_state_changed', {
+            void client.POST('/api/v1/steam/cef/overlay-state-changed', {
                 body: {
                     open: document.hasFocus()
                 }
             }).catch((e) => console.error('Error sending overlay state change', e));
         };
         const focusOutListener = () => {
-            void client.POST('/api/v1/overlay_state_changed', {
+            void client.POST('/api/v1/steam/cef/overlay-state-changed', {
                 body: {
                     open: false
                 }

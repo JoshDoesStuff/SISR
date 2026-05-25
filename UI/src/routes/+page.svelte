@@ -23,18 +23,15 @@ let setupChecker = $state<CheckInitialSetup>()!;
 
 let showUpdateModal = $derived(data?.versionInfo.update_available && !data?.versionInfo.update_dismissed);
 
-// TODO: re-introduce!!
-// onMount(() => {
-// 	wrapClientError(client.POST('/api/v1/inject_overlay_notifier'))
-// 		.then(() => {
-// 			log.info('Overlay notifier injected successfully');
-// 		})
-// 		.catch((e) => {
-// 			log.error('Failed to inject overlay notifier', 'error', e);
-// 		});
-// 	// if (!data.inputInfo.viiper.) {
-// 	// }
-// });
+onMount(() => {
+	wrapClientError(client.POST('/api/v1/steam/cef/inject-overlay-notifier'))
+		.then(() => {
+			log.info('Overlay notifier injected successfully');
+		})
+		.catch((e) => {
+			log.error('Failed to inject overlay notifier', 'error', e);
+		});
+});
 </script>
 
 <CheckInitialSetup

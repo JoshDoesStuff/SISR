@@ -48,6 +48,52 @@ int set_x11_cursor_hittest(void *display_ptr, uintptr_t window_id, int hittest) 
 	return 0;
 }
 
+int get_x11_cursor_hittest(void *display_ptr, uintptr_t window_id) {
+	Display *display = (Display *)display_ptr;
+	Window window = (Window)window_id;
+	if (!display || !window) {
+		return -1;
+	}
+
+	Bool bounding_shaped = False;
+	Bool input_shaped = False;
+	int x_bounding = 0;
+	int y_bounding = 0;
+	unsigned int w_bounding = 0;
+	unsigned int h_bounding = 0;
+	int x_input = 0;
+	int y_input = 0;
+	unsigned int w_input = 0;
+	unsigned int h_input = 0;
+
+	if (!XShapeQueryExtents(
+			display,
+			window,
+			&bounding_shaped,
+			&x_bounding,
+			&y_bounding,
+			&w_bounding,
+			&h_bounding,
+			&input_shaped,
+			&x_input,
+			&y_input,
+			&w_input,
+			&h_input
+		)) {
+		return -1;
+	}
+
+	if (!input_shaped) {
+		return 1;
+	}
+
+	if (w_input == 0 || h_input == 0) {
+		return 0;
+	}
+
+	return 1;
+}
+
 struct wayland_registry_state {
 	struct wl_compositor *compositor;
 };
@@ -148,6 +194,12 @@ int set_wayland_cursor_hittest(void *display_ptr, void *surface_ptr, int hittest
 	(void)surface_ptr;
 	(void)hittest;
 	return 0;
+}
+
+int get_x11_cursor_hittest(void *display_ptr, uintptr_t window_id) {
+	(void)display_ptr;
+	(void)window_id;
+	return -1;
 }
 
 #endif

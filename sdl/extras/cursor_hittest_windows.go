@@ -9,6 +9,21 @@ import (
 	"github.com/Alia5/SISR/windows"
 )
 
+// GetWindowHitTest returns whether cursor hit-testing is currently enabled.
+func GetWindowHitTest(window *sdl.Window) bool {
+	hwnd := window.GetPointerProperty(sdl.WindowPointerPropertyWin32HWND)
+	if hwnd == 0 {
+		return true
+	}
+
+	hasTransparent, err := windows.HasWindowExStyleBits(hwnd, windows.WSExTransparent)
+	if err != nil {
+		return true
+	}
+
+	return !hasTransparent
+}
+
 // SetCursorHitTest controls whether the SDL window receives mouse hit-testing.
 func SetCursorHitTest(window *sdl.Window, hittest bool) error {
 	hwnd := window.GetPointerProperty(sdl.WindowPointerPropertyWin32HWND)

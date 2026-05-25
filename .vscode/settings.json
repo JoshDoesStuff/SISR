@@ -4,5 +4,6 @@
     },
     "gopls": {
         "verboseOutput": true
-    }
+    },
+    "files.eol": "\n"
 }

@@ -25,6 +25,7 @@ type SISRContext struct {
 	QuitFn           context.CancelFunc
 	UpdateChecker    update.Checker
 	Config           *SessionConfig
+	APIAddr          *string
 }
 
 type SessionConfig struct {

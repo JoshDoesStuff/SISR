@@ -212,6 +212,21 @@ components:
       required:
         - KeyboardMouseEmulation
       type: object
+    OverlayChanged:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://127.0.0.1:5746/schemas/OverlayChanged.json
+          format: uri
+          readOnly: true
+          type: string
+        open:
+          type: boolean
+      required:
+        - open
+      type: object
     PingResponse:
       additionalProperties: false
       properties:
@@ -382,7 +397,7 @@ components:
       type: object
 info:
   title: SISR API
-  version: v0.4.2-102-geffa85b
+  version: v0.4.2-107-gbf5a0b0
 openapi: 3.1.0
 paths:
   /api/v1/config:
@@ -460,6 +475,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
+  /api/v1/steam/cef/inject-overlay-notifier:
+    post:
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      tags:
+        - steam
+        - cef
+        - inject
+  /api/v1/steam/cef/overlay-state-changed:
+    post:
+      description: Callback for CEF Injectee when Steam overlay is opened/closed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OverlayChanged"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      tags:
+        - steam
+        - cef
+        - callback
   /api/v1/steam/status:
     get:
       responses:
