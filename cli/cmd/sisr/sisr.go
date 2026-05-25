@@ -16,6 +16,7 @@ import (
 	"github.com/Alia5/SISR/input"
 	"github.com/Alia5/SISR/input/steaminputbindings"
 	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/steam"
 	"github.com/Alia5/SISR/tray"
 	"github.com/Alia5/SISR/update"
@@ -166,6 +167,23 @@ func (s *SISR) Run(cfg config.Global) error {
 			slog.Error("Failed to check for updates", "error", err)
 		}
 	}()
+
+	if !s.Window.Show { // nolint
+		go func() {
+			winDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+				if !s.Fullscreen {
+					w.HideWindow()
+				} else {
+					err := extras.SetCursorHitTest(w, false)
+					if err != nil {
+						slog.Error("Failed setting window cursor hittest", "error", err)
+					}
+				}
+				wv.SetVisible(false)
+				return nil
+			})
+		}()
+	}
 
 	return s.run(ctx, renderer, window, wv, eventRouter, winDispatcher)
 }

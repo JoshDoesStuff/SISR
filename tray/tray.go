@@ -160,15 +160,17 @@ func (t *tray) handleToggleUI(ctx context.Context) {
 		t.Config.Lock()
 		fullscreen := t.Config.Fullscreen
 		t.Config.Unlock()
-		if wv.Visible() {
-			if !fullscreen {
-				w.HideWindow()
-			}
-			wv.SetVisible(false)
+		windowHidden := w.GetWindowFlags()&sdl.WindowFlagHidden != 0
+		uiVisible := wv.Visible() && !windowHidden
+		if uiVisible {
 			err := extras.SetCursorHitTest(w, false)
 			if err != nil {
 				slog.Error("Failed setting window cursor hittest", "error", err)
 			}
+			if !fullscreen {
+				w.HideWindow()
+			}
+			wv.SetVisible(false)
 			return false
 		} else {
 			w.ShowWindow()
@@ -207,65 +209,70 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 		if fullscreen {
 			w.ShowWindow()
 			wv.Eval("window.invalidateAll();")
-			err := extras.SetCursorHitTest(w, false)
-			if err != nil {
-				slog.Error("Failed setting window cursor hittest", "error", err)
-			}
-			err = w.SetWindowFullscreen(true)
-			if err != nil {
-				slog.Debug("Failed to set window fullscreen", "error", err)
-				return err
-			}
-			err = w.SetWindowAlwaysOnTop(true)
-			if err != nil {
-				slog.Debug("Failed to set window always on top", "error", err)
-				return err
-			}
-			err = w.SetWindowResizable(false)
-			if err != nil {
-				slog.Debug("Failed to set window resizable", "error", err)
-				return err
-			}
-			err = w.SetWindowBordered(false)
-			if err != nil {
-				slog.Debug("Failed to set window bordered", "error", err)
-				return err
-			}
+			t.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+				err := extras.SetCursorHitTest(w, false)
+				if err != nil {
+					slog.Error("Failed setting window cursor hittest", "error", err)
+				}
+				err = w.SetWindowFullscreen(true)
+				if err != nil {
+					slog.Debug("Failed to set window fullscreen", "error", err)
+					return err
+				}
+				err = w.SetWindowAlwaysOnTop(true)
+				if err != nil {
+					slog.Debug("Failed to set window always on top", "error", err)
+					return err
+				}
+				err = w.SetWindowResizable(false)
+				if err != nil {
+					slog.Debug("Failed to set window resizable", "error", err)
+					return err
+				}
+				err = w.SetWindowBordered(false)
+				if err != nil {
+					slog.Debug("Failed to set window bordered", "error", err)
+					return err
+				}
+				return nil
+			})
 		} else {
 			w.HideWindow()
 			_ = t.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
-				wv.SetVisible(true)
+				err := extras.SetCursorHitTest(w, true)
+				if err != nil {
+					slog.Error("Failed setting window cursor hittest", "error", err)
+				}
+				if !wv.Visible() {
+					wv.SetVisible(true)
+				}
+				err = w.SetWindowFullscreen(false)
+				if err != nil {
+					slog.Debug("Failed to set window fullscreen", "error", err)
+					return err
+				}
+				err = w.SetWindowAlwaysOnTop(false)
+				if err != nil {
+					slog.Debug("Failed to set window always on top", "error", err)
+					return err
+				}
+				err = w.SetWindowResizable(false)
+				if err != nil {
+					slog.Debug("Failed to set window resizable", "error", err)
+					return err
+				}
+				err = w.SetWindowBordered(true)
+				if err != nil {
+					slog.Debug("Failed to set window bordered", "error", err)
+					return err
+				}
 				return nil
 			})
-			err := extras.SetCursorHitTest(w, true)
-			if err != nil {
-				slog.Error("Failed setting window cursor hittest", "error", err)
-			}
-			err = w.SetWindowFullscreen(false)
-			if err != nil {
-				slog.Debug("Failed to set window fullscreen", "error", err)
-				return err
-			}
-			err = w.SetWindowAlwaysOnTop(false)
-			if err != nil {
-				slog.Debug("Failed to set window always on top", "error", err)
-				return err
-			}
-			err = w.SetWindowResizable(false)
-			if err != nil {
-				slog.Debug("Failed to set window resizable", "error", err)
-				return err
-			}
-			err = w.SetWindowBordered(true)
-			if err != nil {
-				slog.Debug("Failed to set window bordered", "error", err)
-				return err
-			}
 		}
 		return nil
 	})
 	if dispatchErr != nil {
-		slog.Error("Error dispatching fullscreen state change to window", "error", err)
+		slog.Error("Error dispatching fullscreen state change to window", "error", dispatchErr)
 	}
 	if err != nil {
 		slog.Error("Failed to change fullscreen state", "error", err)

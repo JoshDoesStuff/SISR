@@ -64,9 +64,6 @@ func (s *SISR) createWindow(
 		return nil, nil, nil, err
 	}
 
-	if !cfg.Show {
-		window.HideWindow()
-	}
 	if cfg.Fullscreen {
 		wv.SetVisible(false)
 		err := extras.SetCursorHitTest(window, false)

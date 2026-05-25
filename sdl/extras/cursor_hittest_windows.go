@@ -3,6 +3,8 @@
 package extras
 
 import (
+	"log/slog"
+
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/SISR/windows"
 )
@@ -13,19 +15,41 @@ func SetCursorHitTest(window *sdl.Window, hittest bool) error {
 	if hwnd == 0 {
 		return nil
 	}
-	if hittest {
-		err := windows.UpdateWindowExStyleBits(hwnd, 0, windows.WSExTransparent|windows.WSExLayered)
-		if err != nil {
-			return err
-		}
-		_ = windows.UpdateChildWindowsExStyleBits(hwnd, 0, windows.WSExTransparent)
-		return nil
-	}
-	err := windows.UpdateWindowExStyleBits(hwnd, windows.WSExTransparent|windows.WSExLayered, 0)
+	hasLayered, err := windows.HasWindowExStyleBits(hwnd, windows.WSExLayered)
 	if err != nil {
 		return err
 	}
-	_ = windows.UpdateChildWindowsExStyleBits(hwnd, windows.WSExTransparent, windows.WSExLayered)
+	hasTransparent, err := windows.HasWindowExStyleBits(hwnd, windows.WSExTransparent)
+	if err != nil {
+		return err
+	}
+	if hittest {
+		if hasTransparent {
+			err = windows.UpdateWindowExStyleBits(hwnd, 0, windows.WSExTransparent)
+			if err != nil {
+				return err
+			}
+			err = windows.UpdateChildWindowsExStyleBits(hwnd, 0, windows.WSExTransparent)
+			if err != nil {
+				slog.Error("Failed to clear transparent style on child windows", "error", err)
+			}
+		}
+		return nil
+	}
+	setBits := uintptr(windows.WSExTransparent)
+	if !hasLayered {
+		setBits |= windows.WSExLayered
+	}
+	if !hasTransparent || !hasLayered {
+		err = windows.UpdateWindowExStyleBits(hwnd, setBits, 0)
+		if err != nil {
+			return err
+		}
+		err = windows.UpdateChildWindowsExStyleBits(hwnd, windows.WSExTransparent, 0)
+		if err != nil {
+			slog.Error("Failed to set transparent style on child windows", "error", err)
+		}
+	}
 	return nil
 }
 

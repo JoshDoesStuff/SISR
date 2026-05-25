@@ -63,6 +63,10 @@ func ScheduleWindowDispatch[T any](
 			return zero, ErrDispatcherClosed
 		}
 
+		if resultAny == nil {
+			return zero, nil
+		}
+
 		result, ok := resultAny.(T)
 		if !ok {
 			return zero, fmt.Errorf("%w: expected %T, got %T", ErrUnexpectedType, zero, resultAny)
