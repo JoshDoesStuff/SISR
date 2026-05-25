@@ -36,6 +36,72 @@ components:
         - name
         - player_index
       type: object
+    AutoUpdate:
+      additionalProperties: false
+      properties:
+        UpdateNotify:
+          default: stable
+          enum:
+            - none
+            - stable
+            - prerelease
+          type: string
+      required:
+        - UpdateNotify
+      type: object
+    Config:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://127.0.0.1:5746/schemas/Config.json
+          format: uri
+          readOnly: true
+          type: string
+        autoUpdate:
+          $ref: "#/components/schemas/AutoUpdate"
+        controllerEmulation:
+          $ref: "#/components/schemas/ControllerEmulation"
+        keyboardMouseEmulation:
+          $ref: "#/components/schemas/KeyboardMouseEmulation"
+        runMisc:
+          $ref: "#/components/schemas/RunMisc"
+        steam:
+          $ref: "#/components/schemas/Steam"
+        viiper:
+          $ref: "#/components/schemas/Viiper"
+        window:
+          $ref: "#/components/schemas/Window"
+      required:
+        - autoUpdate
+        - runMisc
+        - controllerEmulation
+        - keyboardMouseEmulation
+        - viiper
+        - window
+        - steam
+      type: object
+    ControllerEmulation:
+      additionalProperties: false
+      properties:
+        AllowSteamDesktopLayout:
+          default: false
+          type: boolean
+        DefaultControllerType:
+          default: xbox360
+          enum:
+            - xbox360
+            - dualshock4
+          type: string
+        GyroPassthrough:
+          default: true
+          type: boolean
+      required:
+        - DefaultControllerType
+        - GyroPassthrough
+        - AllowSteamDesktopLayout
+      type: object
     Device:
       additionalProperties: false
       properties:
@@ -136,6 +202,15 @@ components:
       required:
         - is_initial_launch
       type: object
+    KeyboardMouseEmulation:
+      additionalProperties: false
+      properties:
+        KeyboardMouseEmulation:
+          default: false
+          type: boolean
+      required:
+        - KeyboardMouseEmulation
+      type: object
     PingResponse:
       additionalProperties: false
       properties:
@@ -146,6 +221,52 @@ components:
       required:
         - server
         - version
+      type: object
+    RunMisc:
+      additionalProperties: false
+      properties:
+        InitialLaunch:
+          default: false
+          type: boolean
+        NoSteam:
+          default: false
+          type: boolean
+      required:
+        - NoSteam
+        - InitialLaunch
+      type: object
+    ShowHideUI:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - http://127.0.0.1:5746/schemas/ShowHideUI.json
+          format: uri
+          readOnly: true
+          type: string
+        show:
+          type: boolean
+      required:
+        - show
+      type: object
+    Steam:
+      additionalProperties: false
+      properties:
+        CEFRemoteDebugPort:
+          format: int32
+          minimum: 0
+          type: integer
+        InstallDir:
+          type: string
+        UserID:
+          format: int32
+          minimum: 0
+          type: integer
+      required:
+        - InstallDir
+        - UserID
+        - CEFRemoteDebugPort
       type: object
     SteamAndCefStatus:
       additionalProperties: false
@@ -224,11 +345,57 @@ components:
         - version
         - update_available
       type: object
+    Viiper:
+      additionalProperties: false
+      properties:
+        Address:
+          default: localhost:3242
+          type: string
+        Password:
+          type: string
+      required:
+        - Address
+        - Password
+      type: object
+    Window:
+      additionalProperties: false
+      properties:
+        Fullscreen:
+          default: true
+          type: boolean
+        MaxFPS:
+          default: 60
+          format: int32
+          minimum: 0
+          type: integer
+        Show:
+          default: false
+          type: boolean
+      required:
+        - MaxFPS
+        - Fullscreen
+        - Show
+      type: object
 info:
   title: SISR API
-  version: v0.4.2-87-gdd71889
+  version: v0.4.2-91-gdab4f1d
 openapi: 3.1.0
 paths:
+  /api/v1/config:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
   /api/v1/devices:
     get:
       responses:
@@ -298,6 +465,23 @@ paths:
               schema:
                 $ref: "#/components/schemas/SteamAndCefStatus"
           description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/ui:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShowHideUI"
+        required: true
+      responses:
+        "204":
+          description: No Content
         default:
           content:
             application/problem+json:

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/Alia5/SISR/config"
@@ -11,6 +13,9 @@ import (
 	"github.com/Alia5/SISR/update"
 	"github.com/Alia5/SISR/webview"
 )
+
+var ErrDispatcherClosed = errors.New("window dispatcher closed before returning a result")
+var ErrUnexpectedType = errors.New("window dispatcher returned unexpected result type")
 
 type SISRContext struct {
 	WindowDispatcher WindowDispatcher[any]
@@ -37,6 +42,34 @@ type SessionConfig struct {
 type WindowDispatcher[T any] interface {
 	Schedule(f func(w *sdl.Window, wv webview.WebView) T) <-chan T
 	Dispatch(w *sdl.Window, wv webview.WebView)
+}
+
+func ScheduleWindowDispatch[T any](
+	ctx context.Context,
+	dispatcher WindowDispatcher[any],
+	fn func(w *sdl.Window, wv webview.WebView) T,
+) (T, error) {
+	var zero T
+
+	resCh := dispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
+		return fn(w, wv)
+	})
+
+	select {
+	case <-ctx.Done():
+		return zero, ctx.Err()
+	case resultAny, ok := <-resCh:
+		if !ok {
+			return zero, ErrDispatcherClosed
+		}
+
+		result, ok := resultAny.(T)
+		if !ok {
+			return zero, fmt.Errorf("%w: expected %T, got %T", ErrUnexpectedType, zero, resultAny)
+		}
+
+		return result, nil
+	}
 }
 
 type scheduledWindowFunc[T any] struct {
