@@ -31,6 +31,8 @@ type APIGamepad struct {
 	Type        string        `json:"type,omitempty"`
 	RealType    string        `json:"real_type,omitempty"`
 	PlayerIndex int           `json:"player_index"`
+	Path        string        `json:"path,omitempty"`
+	Serial      string        `json:"serial,omitempty"`
 	// TODO: add more fields as required.
 }
 
@@ -95,5 +97,7 @@ func gamepadToAPIType(gp *sdl.Gamepad) *APIGamepad {
 		Type:        gp.Type().Name(),
 		RealType:    gp.RealType().Name(),
 		PlayerIndex: gp.GetPlayerIndex(),
+		Path:        gp.Path(),
+		Serial:      gp.Serial(),
 	}
 }

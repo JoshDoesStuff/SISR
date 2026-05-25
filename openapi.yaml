@@ -18,10 +18,14 @@ components:
           type: integer
         name:
           type: string
+        path:
+          type: string
         player_index:
           format: int64
           type: integer
         real_type:
+          type: string
+        serial:
           type: string
         steam_handle:
           type: string
