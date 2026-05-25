@@ -163,6 +163,9 @@ components:
           type: boolean
         launched_via_steam:
           type: boolean
+        marker_shortcut_present:
+          description: indicator if the SISR marker is present, always true when launched via Steam (due to it not being necessary)
+          type: boolean
         no_steam_mode:
           type: boolean
         steam_app_id:
@@ -180,6 +183,7 @@ components:
         - steam_path
         - cef_debug_enabled
         - cef_debug_reachable
+        - marker_shortcut_present
         - no_steam_mode
         - launched_via_steam
         - steam_game_id
@@ -222,7 +226,7 @@ components:
       type: object
 info:
   title: SISR API
-  version: v0.4.2-79-gbe88bbe
+  version: v0.4.2-87-gdd71889
 openapi: 3.1.0
 paths:
   /api/v1/devices:

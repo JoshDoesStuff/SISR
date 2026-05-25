@@ -15,10 +15,11 @@ type SteamStatusResponse struct {
 }
 
 type SteamAndCefStatus struct {
-	SteamRunning      bool   `json:"steam_running"`
-	SteamPath         string `json:"steam_path"`
-	CEFDebugEnabled   bool   `json:"cef_debug_enabled"`
-	CEFDebugReachable bool   `json:"cef_debug_reachable"`
+	SteamRunning          bool   `json:"steam_running"`
+	SteamPath             string `json:"steam_path"`
+	CEFDebugEnabled       bool   `json:"cef_debug_enabled"`
+	CEFDebugReachable     bool   `json:"cef_debug_reachable"`
+	MarkerShortcutPresent bool   `json:"marker_shortcut_present" doc:"indicator if the SISR marker is present, always true when launched via Steam (due to it not being necessary)"`
 
 	NoSteamMode bool `json:"no_steam_mode"`
 
@@ -65,9 +66,10 @@ func status(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*Steam
 			debugEnableFilePresent = true
 		}
 		launchedViaSteam, _ := steam.LaunchedViaSteam()
+		markerAppIDString := os.Getenv("SISR_MARKER_ID")
 		steamAppIDStr := os.Getenv("SteamAppId")
 		if steamAppIDStr == "" || steamAppIDStr == "0" {
-			steamAppIDStr = os.Getenv("SISR_MARKER_ID")
+			steamAppIDStr = markerAppIDString
 		}
 		steamAppID, err := strconv.ParseUint(steamAppIDStr, 10, 32)
 		if err != nil {
@@ -77,15 +79,19 @@ func status(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*Steam
 
 		steamGameID := os.Getenv("SteamGameId")
 
+		// set this to true when launched via Steam, is not necessary in that case
+		markerShortcutPresent := markerAppIDString != "" && markerAppIDString != "0" || launchedViaSteam
+
 		return &SteamStatusResponse{
 			Body: SteamAndCefStatus{
-				SteamRunning:      steamRunning,
-				SteamPath:         steamPath,
-				CEFDebugEnabled:   debugEnableFilePresent,
-				CEFDebugReachable: debugReachable,
-				LaunchedViaSteam:  launchedViaSteam,
-				SteamAppID:        uint32(steamAppID),
-				SteamGameID:       steamGameID,
+				SteamRunning:          steamRunning,
+				SteamPath:             steamPath,
+				CEFDebugEnabled:       debugEnableFilePresent,
+				CEFDebugReachable:     debugReachable,
+				LaunchedViaSteam:      launchedViaSteam,
+				SteamAppID:            uint32(steamAppID),
+				SteamGameID:           steamGameID,
+				MarkerShortcutPresent: markerShortcutPresent,
 			},
 		}, nil
 	}
