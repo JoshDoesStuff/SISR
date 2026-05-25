@@ -9,7 +9,6 @@ import (
 	"github.com/jchv/go-webview2/pkg/edge"
 
 	"github.com/Alia5/SISR/sdl"
-	"github.com/Alia5/SISR/windows"
 )
 
 type windowsWebView struct {
@@ -19,33 +18,15 @@ type windowsWebView struct {
 	height   int
 }
 
-func prepareWindowForWebView(hwnd uintptr) error {
-	return windows.ClearWindowStyleBits(hwnd, windows.WSClipChildren)
-}
-
 func New(window *sdl.Window, w, h int, debug bool) (WebView, error) {
 	hwnd := window.GetPointerProperty(sdl.WindowPointerPropertyWin32HWND)
 	if hwnd == 0 {
 		return nil, errors.New("webview: could not get HWND from SDL window")
 	}
-	if err := prepareWindowForWebView(hwnd); err != nil {
-		return nil, err
-	}
+
 	chromium := edge.NewChromium()
 	if !chromium.Embed(hwnd) {
 		return nil, errors.New("webview: failed to embed WebView2 into SDL window")
-	}
-	transparent, err := windows.HasWindowExStyleBits(hwnd, windows.WSExTransparent)
-	if err != nil {
-		return nil, err
-	}
-	if transparent {
-		err = windows.UpdateChildWindowsExStyleBits(hwnd, windows.WSExTransparent, windows.WSExLayered)
-	} else {
-		err = windows.UpdateChildWindowsExStyleBits(hwnd, 0, windows.WSExTransparent)
-	}
-	if err != nil {
-		return nil, err
 	}
 	controller2 := chromium.GetController().GetICoreWebView2Controller2()
 	if controller2 != nil {
