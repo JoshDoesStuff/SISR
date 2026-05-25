@@ -1,26 +1,35 @@
 import { clientWithSvelteFetch, wrapClientError } from '$lib/api/client';
 import { log } from '$lib/log';
 
+const TIMEOUT_MS = 1000;
 export const load = async ({ fetch }) => {
 
     const client = clientWithSvelteFetch(fetch);
 
     log.debug('Fetching steam status...');
-    const [steamStatus, inputInfo, updateInfo] = await Promise.all([
-        wrapClientError(client.GET('/api/v1/steam_status', {
-            signal: AbortSignal.timeout(5000)
+    const [steamStatus, devices, viiperInfo, versionInfo, initialLaunch] = await Promise.all([
+        wrapClientError(client.GET('/api/v1/steam/status', {
+            signal: AbortSignal.timeout(TIMEOUT_MS)
         })),
-        wrapClientError(client.GET('/api/v1/input_info', {
-            signal: AbortSignal.timeout(5000)
+        wrapClientError(client.GET('/api/v1/devices', {
+            signal: AbortSignal.timeout(TIMEOUT_MS)
         })),
-        wrapClientError(client.GET('/api/v1/update', {
-            signal: AbortSignal.timeout(5000)
+        wrapClientError(client.GET('/api/v1/viiper/status', {
+            signal: AbortSignal.timeout(TIMEOUT_MS)
+        })),
+        wrapClientError(client.GET('/api/v1/version/info', {
+            signal: AbortSignal.timeout(TIMEOUT_MS)
+        })),
+        wrapClientError(client.GET('/api/v1/initial_launch', {
+            signal: AbortSignal.timeout(TIMEOUT_MS)
         }))
     ]);
 
     return {
         steamStatus: steamStatus,
-        inputInfo: inputInfo,
-        updateInfo: updateInfo
+        devices: devices,
+        viiperInfo: viiperInfo,
+        versionInfo: versionInfo,
+        initialLaunch: initialLaunch
     };
 };
