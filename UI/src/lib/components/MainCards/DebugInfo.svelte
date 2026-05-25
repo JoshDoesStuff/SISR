@@ -10,13 +10,29 @@ import IcoGamepad from '~icons/fluent/xbox-controller-16-filled';
 
 const {
 	steamStatusInfo,
-	inputInfo,
+	devices,
+	viiperInfo,
+	versionInfo,
 	onClose
 }: {
-	steamStatusInfo: components['schemas']['SteamStatus'];
-	inputInfo: components['schemas']['InputInfoResponse'];
+	steamStatusInfo: components['schemas']['SteamAndCefStatus'];
+	devices: components['schemas']['APIDevice'][];
+	viiperInfo: components['schemas']['VIIPERStatus'];
+	versionInfo: components['schemas']['VersionInfo'];
 	onClose?: () => void;
 } = $props();
+
+const usedBusIds = $derived.by(() => {
+	return (
+		devices
+			.flatMap((d) => {
+				return d.viiper_device?.busId;
+			})
+			.filter(Boolean)
+			// filter duplicates
+			.filter((v, idx, arr) => arr.indexOf(v) === idx) as number[]
+	);
+});
 </script>
 
 <FloatingCard>
@@ -30,18 +46,32 @@ const {
 		</div>
 		<div>
 			<div class="heading">
+				<IcoSIAPI style="width: 1.4em; height: 1.4em;" />
+				<h2>General</h2>
+			</div>
+			<dl>
+				<dt>Version</dt>
+				<dd>{versionInfo.version}</dd>
+				<dt>Update available</dt>
+				<dd>{versionInfo.update_available ? 'Yes' : 'No'}</dd>
+				{#if versionInfo.update_available}
+					<dt>New Version</dt>
+					<dd>{versionInfo.new_version}</dd>
+				{/if}
+			</dl>
+			<div class="heading">
 				<IcoVIIPER style="width: 1.4em; height: 1.4em;" />
 				<h2>VIIPER</h2>
 			</div>
 			<dl>
 				<dt>Address</dt>
-				<dd>{inputInfo.viiper.address}</dd>
+				<dd>{viiperInfo.address}</dd>
 				<dt>Reachable</dt>
-				<dd>{inputInfo.viiper.available ? 'Yes' : 'No'}</dd>
+				<dd>{viiperInfo.status?.server == 'VIIPER' ? 'Yes' : 'No'}</dd>
 				<dt>Version</dt>
-				<dd>{inputInfo.viiper.version ?? 'Unknown'}</dd>
+				<dd>{viiperInfo.status?.version ?? 'Unknown'}</dd>
 				<dt>Used BusIDs</dt>
-				<dd>{inputInfo.viiper.bus_ids.map((id) => id).join(', ') || 'None'}</dd>
+				<dd>{usedBusIds.map((id) => id).join(', ') || 'None'}</dd>
 			</dl>
 			<div class="heading">
 				<IcoSteam style="width: 1.4em; height: 1.4em;" />
@@ -51,7 +81,7 @@ const {
 				<dt>GameID</dt>
 				<dd>{steamStatusInfo.steam_game_id}</dd>
 				<dt>AppID</dt>
-				<dd>{steamStatusInfo.marker_app_id}</dd>
+				<dd>{steamStatusInfo.steam_app_id}</dd>
 				<dt>Launched via Steam</dt>
 				<dd>{steamStatusInfo.launched_via_steam ? 'Yes' : 'No'}</dd>
 				<dt>Steam Overlay</dt>
@@ -62,34 +92,58 @@ const {
 				<h2>Controller</h2>
 			</div>
 			<div>
-				{#each Object.entries(inputInfo.devices) as [id, deviceInfo] (deviceInfo)}
-					<h3>{deviceInfo.sdl_devices[0]?.gamepad_infos?.name}</h3>
+				{#each devices as deviceInfo (deviceInfo)}
+					<h3>{deviceInfo.real_device?.name ?? deviceInfo.steam_virtual_device?.name}</h3>
 					<dl style="padding-left: 1em;">
-						<dt>ID</dt>
-						<dd>{id}</dd>
-						<dt>VIIPER type</dt>
-						<dd>{deviceInfo.viiper_type}</dd>
-						<dt>SteamHandle</dt>
-						<dd>{deviceInfo.steam_handle}</dd>
-						<dt>Has VIIPER Device</dt>
-						<dd>{deviceInfo.has_viiper_device ? 'Yes' : 'No'}</dd>
-						<dt>Corresponding Device ID</dt>
-						<dd>{deviceInfo.corresponding_device_id}</dd>
-						<dt>Serial</dt>
+						<dt>ID(s)</dt>
 						<dd>
-							{deviceInfo?.sdl_devices
-								.map((d) => d?.gamepad_infos?.serial ?? d?.joystick_infos?.serial)
-								?.join(', ') || 'N/A'}
+							{#if deviceInfo.real_device?.id}
+								Real GamepadID: {deviceInfo.real_device.id}
+							{/if}
+							{#if deviceInfo.real_device?.id && deviceInfo.steam_virtual_device?.id}
+								<br />
+							{/if}
+							{#if deviceInfo.steam_virtual_device?.id}
+								Steam Virtual Gamepad ID: {deviceInfo.steam_virtual_device.id}
+							{/if}
 						</dd>
-						<dt>Path</dt>
+						<dt>SteamHandle</dt>
+						<dd><code>{deviceInfo.steam_virtual_device?.steam_handle ?? 'N/A'}</code></dd>
+						<dt>Has VIIPER Device</dt>
+						<dd>{deviceInfo.viiper_device ? 'Yes' : 'No'}</dd>
+						{#if deviceInfo.viiper_device}
+							<dt>VIIPER type</dt>
+							<dd>{deviceInfo.viiper_device?.type ?? 'N/A'}</dd>
+						{/if}
+						<dt>Serial(s)</dt>
 						<dd>
-							{deviceInfo?.sdl_devices
-								.map((d) => d?.gamepad_infos?.path ?? d?.joystick_infos?.path)
-								?.join(', ') || 'N/A'}
+							{#if deviceInfo.real_device?.serial}
+								Real Gamepad Serial: <code>{deviceInfo.real_device.serial}</code>
+							{/if}
+							{#if deviceInfo.real_device?.serial && deviceInfo.steam_virtual_device?.serial}
+								<br />
+							{/if}
+							{#if deviceInfo.steam_virtual_device?.serial}
+								Steam Virtual Gamepad Serial: <code
+									>{deviceInfo.steam_virtual_device.serial}</code>
+							{/if}
+						</dd>
+						<dt>Path(s)</dt>
+						<dd>
+							{#if deviceInfo.real_device?.path}
+								Real Gamepad Path: <code>{deviceInfo.real_device.path}</code>
+							{/if}
+							{#if deviceInfo.real_device?.path && deviceInfo.steam_virtual_device?.path}
+								<br />
+							{/if}
+							{#if deviceInfo.steam_virtual_device?.path}
+								Steam Virtual Gamepad Path: <code
+									>{deviceInfo.steam_virtual_device.path}</code>
+							{/if}
 						</dd>
 					</dl>
 				{/each}
-				{#if Object.keys(inputInfo.devices).length === 0}
+				{#if devices?.length === 0}
 					<p>No controllers connected</p>
 				{/if}
 			</div>
