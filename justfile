@@ -111,8 +111,38 @@ build-frontend: install-frontend-deps generate-openapi-frontend-types
 		}
 	}}
 
+[working-directory: 'cefpayloads']
+install-cefpayloads-deps:
+	{{
+		if os_family() == "windows" {
+			"if (!(Test-Path node_modules)) { npm i }"
+		} else {
+			"[ -d node_modules ] || npm i"
+		}
+	}}
+
+[working-directory: 'cefpayloads']
+generate-openapi-cefpayloads-types:
+	{{
+		if os_family() == "windows" {
+			"if (!(Test-Path src/lib/api/openapi.d.ts)) { npm run gen:openapi }"
+		} else {
+			"[ -f src/lib/api/openapi.d.ts ] || npm run gen:openapi"
+		}
+	}}
+
+[working-directory: 'cefpayloads']
+build-cefpayloads: install-cefpayloads-deps generate-openapi-cefpayloads-types
+	{{
+		if os_family() == "windows" {
+			"if (!(Test-Path build)) { npm run build }"
+		} else {
+			"[ -d build ] || npm run build"
+		}
+	}}
+
 [arg("type", long="type", help="Build type (Debug/Release)")]
-build-deps type="Debug": (build-sdl type) (build-frontend)
+build-deps type="Debug": (build-sdl type) (build-frontend) (build-cefpayloads)
 
 build-sisr type="Debug": (build-deps type)
     {{ 
