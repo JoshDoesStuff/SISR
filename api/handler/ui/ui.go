@@ -2,10 +2,12 @@ package ui
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/webview"
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -36,12 +38,20 @@ func showHideUI(c *cmd.SISRContext) func(ctx context.Context, req *ShowHideUIReq
 			if req.Body.Show {
 				w.ShowWindow()
 				wv.SetVisible(true)
+				err := extras.SetCursorHitTest(w, true)
+				if err != nil {
+					slog.Error("Failed setting window cursor hittest", "error", err)
+				}
 				return true
 			} else {
 				if !fullscreen {
 					w.HideWindow()
 				}
 				wv.SetVisible(false)
+				err := extras.SetCursorHitTest(w, false)
+				if err != nil {
+					slog.Error("Failed setting window cursor hittest", "error", err)
+				}
 				return false
 			}
 		})

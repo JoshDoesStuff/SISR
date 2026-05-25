@@ -11,6 +11,7 @@ import (
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/meta"
 	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/webview"
 )
 
@@ -110,15 +111,23 @@ func (t *tray) handleToggleUI(ctx context.Context) {
 		fullscreen := t.Config.Fullscreen
 		t.Config.Unlock()
 		if wv.Visible() {
-			w.ShowWindow()
-			wv.SetVisible(true)
-			return true
-		} else {
 			if !fullscreen {
 				w.HideWindow()
 			}
 			wv.SetVisible(false)
+			err := extras.SetCursorHitTest(w, false)
+			if err != nil {
+				slog.Error("Failed setting window cursor hittest", "error", err)
+			}
 			return false
+		} else {
+			w.ShowWindow()
+			wv.SetVisible(true)
+			err  := extras.SetCursorHitTest(w, true)
+			if err != nil {
+				slog.Error("Failed setting window cursor hittest", "error", err)
+			}
+			return true
 		}
 	})
 	if err != nil {
@@ -143,6 +152,8 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 		}
 		if fullscreen {
 			w.ShowWindow()
+			extras.SetCursorHitTest(w, false)
+
 			err := w.SetWindowFullscreen(true)
 			if err != nil {
 				slog.Debug("Failed to set window fullscreen", "error", err)
@@ -166,6 +177,7 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 		} else {
 			w.HideWindow()
 			wv.SetVisible(true)
+			extras.SetCursorHitTest(w, true)
 			err := w.SetWindowFullscreen(false)
 			if err != nil {
 				slog.Debug("Failed to set window fullscreen", "error", err)

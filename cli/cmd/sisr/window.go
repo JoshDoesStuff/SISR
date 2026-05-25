@@ -7,6 +7,7 @@ import (
 
 	"github.com/Alia5/SISR/config"
 	"github.com/Alia5/SISR/sdl"
+	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/webview"
 	"github.com/Alia5/SISR/windows"
 )
@@ -21,9 +22,11 @@ func (s *SISR) createWindow(
 		return nil, nil, nil, err
 	}
 
-	flags := sdl.WindowFlagVulkan | sdl.WindowFlagTransparent | sdl.WindowFlagResizable
+	flags := sdl.WindowFlagVulkan | sdl.WindowFlagTransparent
 	if cfg.Fullscreen {
-		flags |= sdl.WindowFlagBorderless | sdl.WindowFlagAlwaysOnTop
+		flags |= sdl.WindowFlagBorderless | sdl.WindowFlagAlwaysOnTop | sdl.WindowFlagFullscreen
+	} else {
+		flags |= sdl.WindowFlagResizable
 	}
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(
@@ -66,6 +69,7 @@ func (s *SISR) createWindow(
 	}
 	if cfg.Fullscreen {
 		wv.SetVisible(false)
+		extras.SetCursorHitTest(window, false)
 	}
 
 	return window, renderer, wv, nil

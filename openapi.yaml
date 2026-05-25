@@ -378,7 +378,7 @@ components:
       type: object
 info:
   title: SISR API
-  version: v0.4.2-91-gdab4f1d
+  version: v0.4.2-96-g33c8fca
 openapi: 3.1.0
 paths:
   /api/v1/config:
