@@ -159,12 +159,42 @@ build-sisr type="Debug": (build-deps type)
 build type="Debug": (build-sisr type)
 
 clean-sdl:
-    {{ rm_rf }} deps/SDL/build
+	{{
+		if os_family() == "windows" {
+			"if (Test-Path deps/SDL/build) { Remove-Item -Recurse -Force deps/SDL/build }"
+		} else {
+			"[ ! -d deps/SDL/build ] || rm -rf deps/SDL/build"
+		}
+	}}
 
 clean-polyhook2:
-    {{ rm_rf }} deps/PolyHook2/build
+	{{
+		if os_family() == "windows" {
+			"if (Test-Path deps/PolyHook2/build) { Remove-Item -Recurse -Force deps/PolyHook2/build }"
+		} else {
+			"[ ! -d deps/PolyHook2/build ] || rm -rf deps/PolyHook2/build"
+		}
+	}}
 
-clean-deps: clean-sdl clean-polyhook2
+clean-frontend:
+	{{
+		if os_family() == "windows" {
+			"if (Test-Path UI/build) { Remove-Item -Recurse -Force UI/build }"
+		} else {
+			"[ ! -d UI/build ] || rm -rf UI/build"
+		}
+	}}
+
+clean-cefpayloads:
+	{{
+		if os_family() == "windows" {
+			"if (Test-Path cefpayloads/dist) { Remove-Item -Recurse -Force cefpayloads/dist }"
+		} else {
+			"[ ! -d cefpayloads/dist ] || rm -rf cefpayloads/dist"
+		}
+	}}
+
+clean-deps: clean-sdl clean-polyhook2 clean-frontend clean-cefpayloads
 
 clean: clean-deps
     -{{ rm_rf }} {{ dist_dir }}
