@@ -20,6 +20,8 @@ SISR (pronounced "scissor") redirects Steam Input configurations to the system l
 SISR takes controllers it receives from Steam (via Steam Input)
 and forwards them as emulated but more compatible controllers (indistinguishable from real hardware) to the OS.
 
+This approach makes SISR unique for controller rebinding tools as it uses the established Steam Input system and gives access to it's full feature set and thousands of community configurations (web-browsable on [SteamInputDB](https://steaminputdb.com/)).
+
 It can be used to circumvent issues with games and applications that
 do not support Steam Input or otherwise pose challenges, like (but not limited to):
 
