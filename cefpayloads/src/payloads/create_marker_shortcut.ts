@@ -1,5 +1,5 @@
 __INJECT_RETURN = (async () => {
-    const path = goTmpl('.SISRPath').replace(/\\/g, '/');
+    const path = 'goTmpl(".SISRPath")'.replace(/\\/g, '/');
     const working_directory = path.substring(0, path.lastIndexOf('/'));
 
     let appID = await SteamClient.Apps.AddShortcut(

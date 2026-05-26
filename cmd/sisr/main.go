@@ -31,6 +31,15 @@ func main() {
 
 	applyPlatformStartup(cli.Config)
 
+	if cli.Config.Log.File == "" { // nolint
+		if userCfg != "" {
+			cfgDir := filepath.Dir(userCfg)
+			if cfgDir != "." && cfgDir != "" {
+				cli.Config.Log.File = filepath.Join(cfgDir, "sisr.log") // nolint
+			}
+		}
+	}
+
 	_, closeFiles, err := logging.SetupLogger(cli.Config.Log.Level, cli.Config.Log.File) // nolint
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to setup logger:", err)

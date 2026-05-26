@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -183,4 +184,53 @@ func CEFRemoteDebugEnableFilePresent(cfg *config.Steam) (bool, error) {
 	}
 	slog.Error("Error checking for .cef-enable-remote-debugging file", "error", err)
 	return false, err
+}
+
+func EnableCefRemoteDebug(cfg *config.Steam) (fileCreated bool, err error) {
+	filePresent, err := CEFRemoteDebugEnableFilePresent(cfg)
+	if err != nil {
+		return false, err
+	}
+	if filePresent {
+		return false, nil
+	}
+	steamDir := cfg.InstallDir
+	if steamDir == "" {
+		steamDir, err = ExecuteableDir()
+		if err != nil {
+			return false, err
+		}
+	}
+
+	filePath := filepath.Join(steamDir, ".cef-enable-remote-debugging")
+	if err = os.WriteFile(filePath, nil, 0644); err != nil {
+		if !errors.Is(err, os.ErrPermission) {
+			return false, err
+		}
+		slog.Info("direct file creation failed, attempting elevated creation", "error", err)
+		if err = createCefFileElevated(filePath); err != nil {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+func createCefFileElevated(filePath string) error {
+	if runtime.GOOS != "windows" {
+		return fmt.Errorf("elevated file creation not supported on %s", runtime.GOOS)
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-Command",
+		fmt.Sprintf("Start-Process '%s' -ArgumentList '--create-cef-file','\"%s\"' -Verb RunAs",
+			strings.ReplaceAll(exe, "'", "''"),
+			strings.ReplaceAll(filePath, "'", "''"),
+		))
+	return cmd.Run()
+}
+
+func CreateCefFile(path string) error {
+	return os.WriteFile(path, nil, 0644)
 }

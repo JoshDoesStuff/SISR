@@ -5,6 +5,7 @@ import (
 	"github.com/Alia5/SISR/api/handler/devices"
 	"github.com/Alia5/SISR/api/handler/initiallaunch"
 	"github.com/Alia5/SISR/api/handler/quit"
+	"github.com/Alia5/SISR/api/handler/restart"
 	"github.com/Alia5/SISR/api/handler/steam"
 	"github.com/Alia5/SISR/api/handler/ui"
 	"github.com/Alia5/SISR/api/handler/version"
@@ -22,4 +23,5 @@ func RegisterAPI(hAPI huma.API, c *cmd.SISRContext) {
 	version.Register(hAPI, c)
 	ui.Register(hAPI, c)
 	config.Register(hAPI, c)
+	restart.Register(hAPI, c)
 }

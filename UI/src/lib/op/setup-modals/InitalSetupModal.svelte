@@ -5,6 +5,7 @@ import { toast } from '$lib/toaster/toaster.svelte';
 import { invalidateAll } from '$app/navigation';
 import Spinner from '$lib/components/Spinner.svelte';
 import { fade } from 'svelte/transition';
+import { log } from '$lib/log';
 
 let {
 	modal = $bindable(),
@@ -53,13 +54,14 @@ let loading = $state(false);
 				<button
 					onclick={async () => {
 						loading = true;
-
+						statusText = 'Enabling CEF remote debugging...';
 						try {
-							await wrapClientError(
-								client.POST('/api/v1/enable_cef_remote_debug', {
-									body: { restart_sisr: false }
-								})
-							);
+							await wrapClientError(client.POST('/api/v1/initial_launch'));
+						} catch (e) {
+							log.error('Failed to write initial launch marker file', 'error', e);
+						}
+						try {
+							await wrapClientError(client.POST('/api/v1/steam/enable-cef-remote-debugging'));
 						} catch (e) {
 							loading = false;
 							toast({
@@ -68,8 +70,20 @@ let loading = $state(false);
 							});
 							return;
 						}
+						statusText = 'Restarting Steam...';
 						try {
-							await wrapClientError(client.POST('/api/v1/create_marker_shortcut'));
+							await wrapClientError(client.POST('/api/v1/steam/restart'));
+						} catch (e) {
+							loading = false;
+							toast({
+								color: 'firebrick',
+								message: `Failed to restart Steam.\n Error: ${e}`
+							});
+							return;
+						}
+						statusText = 'Adding marker shortcut...';
+						try {
+							await wrapClientError(client.POST('/api/v1/steam/cef/create-marker-shortcut'));
 						} catch (e) {
 							loading = false;
 							toast({
@@ -78,9 +92,11 @@ let loading = $state(false);
 							});
 							return;
 						}
+						statusText = 'Setup complete! Restarting SISR...';
+						await new Promise((resolve) => setTimeout(resolve, 1000));
 						loading = false;
 						invalidateAll();
-						void wrapClientError(client.POST('/api/v1/restart_sisr')).catch((e) => {
+						void wrapClientError(client.POST('/api/v1/restart-sisr')).catch((e) => {
 							toast({
 								color: 'firebrick',
 								message: `Failed to restart SISR.\n Error: ${e}`
@@ -92,6 +108,7 @@ let loading = $state(false);
 		{#if loading}
 			<div class="spinner-container" transition:fade>
 				<Spinner size="10em" />
+				<p>{statusText}</p>
 			</div>
 		{/if}
 	</div>

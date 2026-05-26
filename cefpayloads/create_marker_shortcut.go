@@ -13,7 +13,7 @@ type CreateMarkerShortcutArgs struct {
 }
 
 type CreateMarkerShortcutExecutor interface {
-	steamcef.Executor[*CreateMarkerShortcutArgs, *struct{}]
+	steamcef.Executor[*CreateMarkerShortcutArgs, uint32]
 }
 
 //go:embed dist/create_marker_shortcut.js.tmpl
@@ -24,5 +24,5 @@ var createMarkerShortcutJS = template.Must(
 )
 
 func NewCreateMarkerShortcut(cfg *config.Steam) CreateMarkerShortcutExecutor {
-	return steamcef.NewExecutor[*CreateMarkerShortcutArgs, *struct{}](cfg, createMarkerShortcutJS)
+	return steamcef.NewExecutor[*CreateMarkerShortcutArgs, uint32](cfg, createMarkerShortcutJS)
 }

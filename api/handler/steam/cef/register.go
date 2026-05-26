@@ -9,5 +9,6 @@ func Register(a huma.API, c *cmd.SISRContext) {
 
 	registerOverlayStateChanged(a, c)
 	registerInjectOverlayNotifier(a, c)
+	registerCreateMarkerShortcut(a, c)
 
 }

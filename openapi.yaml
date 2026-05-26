@@ -56,7 +56,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/Config.json
+            - http://127.0.0.1:53564/schemas/Config.json
           format: uri
           readOnly: true
           type: string
@@ -147,7 +147,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/ErrorModel.json
+            - http://127.0.0.1:53564/schemas/ErrorModel.json
           format: uri
           readOnly: true
           type: string
@@ -194,7 +194,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/InitialLaunch.json
+            - http://127.0.0.1:53564/schemas/InitialLaunch.json
           format: uri
           readOnly: true
           type: string
@@ -218,7 +218,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/OverlayChanged.json
+            - http://127.0.0.1:53564/schemas/OverlayChanged.json
           format: uri
           readOnly: true
           type: string
@@ -257,7 +257,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/ShowHideUI.json
+            - http://127.0.0.1:53564/schemas/ShowHideUI.json
           format: uri
           readOnly: true
           type: string
@@ -290,7 +290,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/SteamAndCefStatus.json
+            - http://127.0.0.1:53564/schemas/SteamAndCefStatus.json
           format: uri
           readOnly: true
           type: string
@@ -332,7 +332,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/VIIPERStatus.json
+            - http://127.0.0.1:53564/schemas/VIIPERStatus.json
           format: uri
           readOnly: true
           type: string
@@ -347,7 +347,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:5746/schemas/VersionInfo.json
+            - http://127.0.0.1:53564/schemas/VersionInfo.json
           format: uri
           readOnly: true
           type: string
@@ -397,7 +397,7 @@ components:
       type: object
 info:
   title: SISR API
-  version: v0.4.2-110-g9bfc309
+  version: v0.4.2-115-gf9eb75f
 openapi: 3.1.0
 paths:
   /api/v1/config:
@@ -475,6 +475,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
+  /api/v1/restart-sisr:
+    post:
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/steam/cef/create-marker-shortcut:
+    post:
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      tags:
+        - steam
+        - cef
+        - inject
   /api/v1/steam/cef/inject-overlay-notifier:
     post:
       responses:
@@ -512,6 +538,28 @@ paths:
         - steam
         - cef
         - callback
+  /api/v1/steam/enable-cef-remote-debugging:
+    post:
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+  /api/v1/steam/restart:
+    post:
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
   /api/v1/steam/status:
     get:
       responses:
@@ -650,4 +698,4 @@ paths:
           description: Error
 servers:
   - description: SISR API
-    url: http://127.0.0.1:5746
+    url: http://127.0.0.1:53564

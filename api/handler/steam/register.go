@@ -14,6 +14,16 @@ func Register(a huma.API, c *cmd.SISRContext) {
 		Path:   "/api/v1/steam/status",
 	}, status(c))
 
+	huma.Register(a, huma.Operation{
+		Method: http.MethodPost,
+		Path:   "/api/v1/steam/enable-cef-remote-debugging",
+	}, enableCEFRemoteDebugging(c))
+
+	huma.Register(a, huma.Operation{
+		Method: http.MethodPost,
+		Path:   "/api/v1/steam/restart",
+	}, restartSteam(c))
+
 	cef.Register(a, c)
 
 }

@@ -48,7 +48,7 @@ let loading = $state(false);
 				<button
 					onclick={() => {
 						loading = true;
-						wrapClientError(client.POST('/api/v1/create_marker_shortcut'))
+						wrapClientError(client.POST('/api/v1/steam/cef/create-marker-shortcut'))
 							.catch((e) => {
 								toast({
 									color: 'firebrick',
@@ -58,7 +58,7 @@ let loading = $state(false);
 							.finally(() => {
 								loading = false;
 								invalidateAll();
-								void wrapClientError(client.POST('/api/v1/restart_sisr')).catch((e) => {
+								void wrapClientError(client.POST('/api/v1/restart-sisr')).catch((e) => {
 									toast({
 										color: 'firebrick',
 										message: `Failed to restart SISR.\n Error: ${e}`

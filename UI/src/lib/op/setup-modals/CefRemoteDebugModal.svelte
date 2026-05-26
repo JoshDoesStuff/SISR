@@ -15,6 +15,7 @@ let {
 } = $props();
 
 let loading = $state(false);
+let statusText = $state('');
 </script>
 
 <Modal bind:this={modal} open={show}>
@@ -42,27 +43,47 @@ let loading = $state(false);
 							});
 					}}>Exit SISR</button>
 				<button
-					onclick={() => {
+					onclick={async () => {
 						loading = true;
-						wrapClientError(
-							client.POST('/api/v1/enable_cef_remote_debug', { body: { restart_sisr: true } })
-						)
-							.catch((e) => {
-								toast({
-									color: 'firebrick',
-									message: `Failed to enable Steam CEF debugging.\n Error: ${e}`
-								});
-							})
-							.finally(() => {
-								loading = false;
-								invalidateAll();
+						statusText = 'Enabling CEF remote debugging...';
+						try {
+							await wrapClientError(client.POST('/api/v1/steam/enable-cef-remote-debugging'));
+						} catch (e) {
+							loading = false;
+							toast({
+								color: 'firebrick',
+								message: `Failed to enable CEF remote debug.\n Error: ${e}`
 							});
+							return;
+						}
+						statusText = 'Restarting Steam...';
+						try {
+							await wrapClientError(client.POST('/api/v1/steam/restart'));
+						} catch (e) {
+							loading = false;
+							toast({
+								color: 'firebrick',
+								message: `Failed to restart Steam.\n Error: ${e}`
+							});
+							return;
+						}
+						statusText = 'Setup complete! Restarting SISR...';
+						await new Promise((resolve) => setTimeout(resolve, 1000));
+						loading = false;
+						invalidateAll();
+						void wrapClientError(client.POST('/api/v1/restart-sisr')).catch((e) => {
+							toast({
+								color: 'firebrick',
+								message: `Failed to restart SISR.\n Error: ${e}`
+							});
+						});
 					}}>Enable and restart Steam</button>
 			</div>
 		</div>
 		{#if loading}
 			<div class="spinner-container" transition:fade>
 				<Spinner size="10em" />
+				<p>{statusText}</p>
 			</div>
 		{/if}
 	</div>

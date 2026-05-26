@@ -11,7 +11,7 @@ const (
 
 type Log struct {
 	Level string `aliases:"l" default:"info" help:"Log level: trace, debug, info, warn, error" env:"SISR_LOG_LEVEL"`
-	File  string `help:"Log file path" env:"SISR_LOG_FILE"`
+	File  string `aliases:"lf" help:"Log file path" env:"SISR_LOG_FILE"`
 }
 
 type Global struct {
