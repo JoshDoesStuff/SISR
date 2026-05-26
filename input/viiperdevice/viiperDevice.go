@@ -3,6 +3,7 @@ package viiperdevice
 import (
 	"context"
 	"encoding"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -36,7 +37,8 @@ type Device struct {
 	FeedbackCh    <-chan encoding.BinaryUnmarshaler
 	FeedbackErrCh <-chan error
 
-	stateChan chan encoding.BinaryMarshaler
+	state     encoding.BinaryMarshaler
+	stateChan chan []byte
 	done      chan struct{}
 }
 
@@ -45,7 +47,7 @@ func New(
 	deviceInfo *apitypes.Device,
 	closeFunc func() error,
 ) *Device {
-	stateChan := make(chan encoding.BinaryMarshaler, stateBufferSize)
+	stateChan := make(chan []byte, stateBufferSize)
 	deviceCtx, cancel := context.WithCancel(context.Background())
 
 	decodeFeedback := readUnknownFeedback
@@ -85,16 +87,27 @@ func (d *Device) Update(gp *sdl.Gamepad) {
 		return
 	}
 
-	var state encoding.BinaryMarshaler
 	switch DeviceType(d.deviceInfo.Type) {
 	case DeviceTypeXbox360:
-		state = toXbox360State(gp)
+		toXbox360State(gp, &d.state)
 	case DeviceTypeDualShock4:
-		state = toDualShock4State(gp)
+		toDualShock4State(gp, &d.state)
 	// case DeviceTypeKeyboard:
 	// 	state = toKeyboardState(gp)
 	default:
 		slog.Warn("Cant update unknown VIIPER device type", "device_type", d.deviceInfo.Type)
+		return
+	}
+
+	if d.state == nil {
+		slog.Warn("No VIIPER state available to marshal", "device_type", d.deviceInfo.Type)
+		return
+	}
+
+	data, err := d.state.MarshalBinary()
+	if err != nil {
+		slog.Error("Failed to marshal VIIPER device state", "error", err)
+		return
 	}
 
 	timer := time.NewTimer(1 * time.Second)
@@ -104,7 +117,7 @@ func (d *Device) Update(gp *sdl.Gamepad) {
 	case <-d.done:
 		slog.Warn("Attempted to update VIIPER device after it was closed")
 		return
-	case d.stateChan <- state:
+	case d.stateChan <- data:
 		// sent successfully
 	case <-timer.C:
 		slog.Warn("Timed out sending state update to VIIPER device;")
@@ -118,8 +131,11 @@ func (d *Device) handleState() {
 		select {
 		case <-d.done:
 			return
-		case state := <-d.stateChan:
-			err := stream.WriteBinary(state)
+		case data := <-d.stateChan:
+			n, err := stream.Write(data)
+			if err == nil && n != len(data) {
+				err = fmt.Errorf("short write: wrote %d of %d bytes", n, len(data))
+			}
 			if err != nil {
 				slog.Error("Failed to send state to VIIPER device", "error", err)
 				d.Close() //nolint
