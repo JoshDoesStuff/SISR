@@ -16,6 +16,7 @@ let {
 } = $props();
 
 let loading = $state(false);
+let statusText = $state('');
 </script>
 
 <Modal bind:this={modal} open={show}>
