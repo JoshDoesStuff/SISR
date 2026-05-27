@@ -93,7 +93,7 @@ func onReady(ctx context.Context, c *cmd.SISRContext, trayNotifyCh TrayNotifyCh)
 		exitItem: exitItem,
 	}
 
-	t.run(ctx)
+	go t.run(ctx)
 }
 
 type tray struct {
