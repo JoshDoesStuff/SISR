@@ -20,6 +20,7 @@ const (
 	DeviceTypeXbox360    Type = "xbox360"
 	DeviceTypeDualShock4 Type = "dualshock4"
 	DeviceTypeKeyboard   Type = "keyboard"
+	DeviceTypeMouse      Type = "mouse"
 )
 
 type Device struct {

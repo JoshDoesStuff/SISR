@@ -40,4 +40,8 @@ func registerEventHandlers(r event.Router, c *cmd.SISRContext, window *sdl.Windo
 	event.RegisterHandler(r, handler.ToggleUIGamepadButtonUp())
 	event.RegisterHandler(r, gamepadupdated.GamepadUpdated(c))
 	event.RegisterHandler(r, sensorupdated.SensorUpdated(c))
+
+	if c.Config.KeyboardMouseEmulation {
+		registerKBMForwardHandlers(r, c)
+	}
 }

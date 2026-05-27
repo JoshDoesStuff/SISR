@@ -30,6 +30,7 @@ type ViiperBridge interface {
 	Info() *apitypes.PingResponse
 	Ready() bool
 	ResolvedAddressAndPort() string
+	IsLoopbackAddress() bool
 }
 
 const minSupportedVIIPERVersion = "v0.6.1"
@@ -227,6 +228,18 @@ func (v *viiperBridge) ResolvedAddressAndPort() string {
 		return fmt.Sprintf("%s:%s", ip.String(), port)
 	}
 	return defaultAddress
+}
+
+func (v *viiperBridge) IsLoopbackAddress() bool {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	address := defaultAddress
+	if v.cfg != nil && v.cfg.Address != "" {
+		address = v.cfg.Address
+	}
+
+	return isLoopbackAddress(address)
 }
 
 func (v *viiperBridge) ensureBus(ctx context.Context) (busID uint32, err error) {

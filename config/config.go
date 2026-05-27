@@ -44,8 +44,8 @@ type AutoUpdate struct {
 
 type Window struct {
 	MaxFPS     uint32 `default:"60" help:"Maximim FPS for SteamOverlay/UI (Does not affect inputs)" env:"SISR_MAX_FPS"`
-	Fullscreen bool   `default:"true" help:"Fullscreen overlay"  aliases:"f" env:"SISR_FULLSCREEN"`
-	Show       bool   `default:"false" help:"Shows window on startup; when used w/ fullscreen=true: will enable Steam Overlay; when used with fullscreen=false: will show UI; when false SISR will only show up in system tray"  aliases:"w" env:"SISR_SHOW_WINDOW"`
+	Fullscreen bool   `default:"true" aliases:"f" help:"Fullscreen overlay"  env:"SISR_FULLSCREEN"`
+	Show       bool   `default:"false" aliases:"w" help:"Shows window on startup; when used w/ fullscreen=true: will enable Steam Overlay; when used with fullscreen=false: will show UI; when false SISR will only show up in system tray"   env:"SISR_SHOW_WINDOW"`
 }
 
 type ControllerEmulation struct {
@@ -60,6 +60,6 @@ type Viiper struct {
 	Password string `aliases:"vp" help:"VIIPER server password" env:"SISR_VIIPER_PASSWORD"`
 }
 
-type KeyboardMouseEmulation struct {
+type KbMEmuation struct {
 	KeyboardMouseEmulation bool `default:"false" aliases:"kbm" help:"Forward Keyboard/Mouse when running over a network" env:"SISR_KBM_EMULATION"`
 }

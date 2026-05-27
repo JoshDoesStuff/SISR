@@ -17,7 +17,7 @@ type Config struct {
 	AutoUpdate             *config.AutoUpdate             `json:"autoUpdate"`
 	RunMisc                *config.RunMisc                `json:"runMisc"`
 	ControllerEmulation    *config.ControllerEmulation    `json:"controllerEmulation"`
-	KeyboardMouseEmulation *config.KeyboardMouseEmulation `json:"keyboardMouseEmulation"`
+	KeyboardMouseEmulation *config.KbMEmuation `json:"keyboardMouseEmulation"`
 	Viiper                 *config.Viiper                 `json:"viiper"`
 	Window                 *config.Window                 `json:"window"`
 	Steam                  *config.Steam                  `json:"steam"`
@@ -41,7 +41,7 @@ func getConfig(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*Co
 				AutoUpdate:             c.Config.AutoUpdate,
 				RunMisc:                c.Config.RunMisc,
 				ControllerEmulation:    c.Config.ControllerEmulation,
-				KeyboardMouseEmulation: c.Config.KeyboardMouseEmulation,
+				KeyboardMouseEmulation: c.Config.KbMEmuation,
 				Viiper: &config.Viiper{
 					Address:  c.Config.Viiper.Address, // nolint
 					Password: "REDACTED",

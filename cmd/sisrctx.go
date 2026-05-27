@@ -32,7 +32,7 @@ type SessionConfig struct {
 	*config.AutoUpdate
 	*config.RunMisc
 	*config.ControllerEmulation
-	*config.KeyboardMouseEmulation
+	*config.KbMEmuation
 	*config.Viiper
 	*config.Window
 	*config.Steam

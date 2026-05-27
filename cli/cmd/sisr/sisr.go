@@ -28,7 +28,7 @@ type SISR struct {
 	config.AutoUpdate             `embed:""`
 	config.RunMisc                `embed:""`
 	config.ControllerEmulation    `embed:""`
-	config.KeyboardMouseEmulation `embed:""`
+	config.KbMEmuation `embed:""`
 	config.API                    `embed:"" prefix:"api."`
 	config.Viiper                 `embed:"" prefix:"viiper."`
 	config.Window                 `embed:"" prefix:"window."`
@@ -113,6 +113,10 @@ func (s *SISR) Run(cfg config.Global) error {
 	}
 	defer deviceStoreClose()
 	viiperBridge := input.NewViiperBridge(ctx, deviceStore, &s.Viiper)
+	if s.KbMEmuation.KeyboardMouseEmulation && viiperBridge.IsLoopbackAddress() {
+		slog.Warn("Keyboard/mouse emulation requires non-loopback VIIPER address; disabling", "viiperAddress", viiperBridge.ResolvedAddressAndPort())
+		s.KbMEmuation.KeyboardMouseEmulation = false
+	}
 	updateChecker := update.NewChecker(
 		s.UpdateNotify,
 		func() {
@@ -145,7 +149,7 @@ func (s *SISR) Run(cfg config.Global) error {
 			AutoUpdate:             &s.AutoUpdate,
 			RunMisc:                &s.RunMisc,
 			ControllerEmulation:    &s.ControllerEmulation,
-			KeyboardMouseEmulation: &s.KeyboardMouseEmulation,
+			KbMEmuation: &s.KbMEmuation,
 			Viiper:                 &s.Viiper,
 			Window:                 &s.Window,
 			Steam:                  &s.Steam,
