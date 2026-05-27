@@ -191,9 +191,16 @@ func (s *SISR) Run(cfg config.Global) error {
 				if !s.Fullscreen {
 					w.HideWindow()
 				} else {
-					err := extras.SetCursorHitTest(w, false)
-					if err != nil {
-						slog.Error("Failed setting window cursor hittest", "error", err)
+					if s.KeyboardMouseEmulation {
+						err := extras.SetCursorHitTest(w, true)
+						if err != nil {
+							slog.Error("Failed setting window cursor hittest", "error", err)
+						}
+					} else {
+						err := extras.SetCursorHitTest(w, false)
+						if err != nil {
+							slog.Error("Failed setting window cursor hittest", "error", err)
+						}
 					}
 				}
 				wv.SetVisible(false)

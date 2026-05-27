@@ -35,6 +35,10 @@ func overlayStateChanged(c *cmd.SISRContext) func(ctx context.Context, req *Over
 	previousHitTest := false
 
 	return func(ctx context.Context, req *OverlayChangedRequest) (*struct{}, error) {
+		c.Config.Lock()
+		kbmEnabled := c.Config.KeyboardMouseEmulation
+		c.Config.Unlock()
+
 		err, dispatchErr := cmd.ScheduleWindowDispatch(
 			ctx,
 			c.WindowDispatcher,
@@ -60,7 +64,11 @@ func overlayStateChanged(c *cmd.SISRContext) func(ctx context.Context, req *Over
 					if previousVisibility {
 						wv.SetVisible(true)
 					}
-					err := extras.SetCursorHitTest(w, previousHitTest)
+					targetHitTest := previousHitTest
+					if kbmEnabled {
+						targetHitTest = true
+					}
+					err := extras.SetCursorHitTest(w, targetHitTest)
 					if err != nil {
 						slog.Error("Failed setting window cursor hittest", "error", err)
 					}

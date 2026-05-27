@@ -170,13 +170,16 @@ func (t *tray) handleToggleUI(ctx context.Context) {
 	_, err := cmd.ScheduleWindowDispatch(ctx, t.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) bool {
 		t.Config.Lock()
 		fullscreen := t.Config.Fullscreen
+		kbmEnabled := t.Config.KeyboardMouseEmulation
 		t.Config.Unlock()
 		windowHidden := w.GetWindowFlags()&sdl.WindowFlagHidden != 0
 		uiVisible := wv.Visible() && !windowHidden
 		if uiVisible {
-			err := extras.SetCursorHitTest(w, false)
-			if err != nil {
-				slog.Error("Failed setting window cursor hittest", "error", err)
+			if !kbmEnabled {
+				err := extras.SetCursorHitTest(w, false)
+				if err != nil {
+					slog.Error("Failed setting window cursor hittest", "error", err)
+				}
 			}
 			if !fullscreen {
 				w.HideWindow()
@@ -211,6 +214,7 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 	t.Config.Lock()
 	t.Config.Fullscreen = t.enableOverlayItem.Checked()
 	fullscreen := t.Config.Fullscreen
+	kbmEnabled := t.Config.KeyboardMouseEmulation
 	t.Config.Unlock()
 
 	err, dispatchErr := cmd.ScheduleWindowDispatch(ctx, t.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) error {
@@ -221,9 +225,12 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 			w.ShowWindow()
 			wv.Eval("window.invalidateAll();")
 			t.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
-				err := extras.SetCursorHitTest(w, false)
-				if err != nil {
-					slog.Error("Failed setting window cursor hittest", "error", err)
+				var err error
+				if !kbmEnabled {
+					err = extras.SetCursorHitTest(w, false)
+					if err != nil {
+						slog.Error("Failed setting window cursor hittest", "error", err)
+					}
 				}
 				err = w.SetWindowFullscreen(true)
 				if err != nil {
@@ -250,7 +257,8 @@ func (t *tray) handleToggleOverlay(ctx context.Context) {
 		} else {
 			w.HideWindow()
 			_ = t.WindowDispatcher.Schedule(func(w *sdl.Window, wv webview.WebView) any {
-				err := extras.SetCursorHitTest(w, true)
+				var err error
+				err = extras.SetCursorHitTest(w, true)
 				if err != nil {
 					slog.Error("Failed setting window cursor hittest", "error", err)
 				}

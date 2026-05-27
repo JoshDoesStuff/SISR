@@ -66,16 +66,23 @@ func (s *SISR) createWindow(
 
 	if cfg.Fullscreen {
 		wv.SetVisible(false)
-		err := extras.SetCursorHitTest(window, false)
-		if err != nil {
-			slog.Error("Failed setting window cursor hittest", "error", err)
-			err = window.SetWindowFullscreen(false)
+		if s.KeyboardMouseEmulation {
+			err := extras.SetCursorHitTest(window, true)
 			if err != nil {
-				slog.Error("Failed to set window fullscreen", "error", err)
+				slog.Error("Failed setting window cursor hittest", "error", err)
 			}
-			err = window.SetWindowResizable(true)
+		} else {
+			err := extras.SetCursorHitTest(window, false)
 			if err != nil {
-				slog.Error("Failed to set window resizable", "error", err)
+				slog.Error("Failed setting window cursor hittest", "error", err)
+				err = window.SetWindowFullscreen(false)
+				if err != nil {
+					slog.Error("Failed to set window fullscreen", "error", err)
+				}
+				err = window.SetWindowResizable(true)
+				if err != nil {
+					slog.Error("Failed to set window resizable", "error", err)
+				}
 			}
 		}
 	}

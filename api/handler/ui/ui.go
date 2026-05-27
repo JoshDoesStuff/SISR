@@ -32,6 +32,7 @@ func showHideUI(c *cmd.SISRContext) func(ctx context.Context, req *ShowHideUIReq
 
 		c.Config.Lock()
 		fullscreen := c.Config.Fullscreen
+		kbmEnabled := c.Config.KeyboardMouseEmulation
 		c.Config.Unlock()
 
 		_, err := cmd.ScheduleWindowDispatch(ctx, c.WindowDispatcher, func(w *sdl.Window, wv webview.WebView) bool {
@@ -53,9 +54,11 @@ func showHideUI(c *cmd.SISRContext) func(ctx context.Context, req *ShowHideUIReq
 					w.HideWindow()
 				}
 				wv.SetVisible(false)
-				err := extras.SetCursorHitTest(w, false)
-				if err != nil {
-					slog.Error("Failed setting window cursor hittest", "error", err)
+				if !kbmEnabled {
+					err := extras.SetCursorHitTest(w, false)
+					if err != nil {
+						slog.Error("Failed setting window cursor hittest", "error", err)
+					}
 				}
 				return false
 			}
