@@ -52,11 +52,11 @@ Unlike its predecessor [GlosSI](https://github.com/Alia5/GlosSI), it does not us
     - Standalone background service (To be improved)
     - Steam overlay window mode
 -  PS4 controller emulation
+    - Gyro Passthrough
 - Networked operation across computers
   - Use devices like a SteamDeck as dedicated controller without streaming the whole game/display
-- ~~🚧 Xbox One controller emulation~~
-- ~~🚧 Generic controller emulation~~
-- 🚧 Gyro Passthrough
+- 🚧 Xbox One controller emulation
+
 - 🚧 Bundling multiple devices into a single controller
 - 🚧 Automatic HidHide integration
 

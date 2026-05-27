@@ -63,11 +63,10 @@ For this Steam must still be running in the background, though.
     - Standalone background service (To be improved)
     - Steam overlay window mode
 -  PS4 controller emulation
+    - Gyro Passthrough
 - Networked operation across computers
-  - Use devices like a SteamDeck as dedicated controller without streaming the whole game/display
-- ~~🚧 Xbox One controller emulation~~
-- ~~🚧 Generic controller emulation~~
-- 🚧 Gyro Passthrough
+    - Use devices like a SteamDeck as dedicated controller without streaming the whole game/display
+- 🚧 Xbox One controller emulation
 - 🚧 Bundling multiple devices into a single controller
 - 🚧 Automatic HidHide integration
 
