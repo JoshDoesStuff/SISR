@@ -6,6 +6,7 @@ package sdl
 #include <stdlib.h>
 
 #include <SDL3/SDL_gamepad.h>
+#include <SDL3/SDL_sensor.h>
 
 static inline int gamepad_binding_input_button(const SDL_GamepadBinding *b)
 {
@@ -78,6 +79,8 @@ type GamepadButtonLabel int32
 // GamepadBindingType describes the type of a gamepad control binding.
 type GamepadBindingType int32
 
+type SensorType int32
+
 const (
 	GamepadTypeUnknown                   GamepadType = C.SDL_GAMEPAD_TYPE_UNKNOWN
 	GamepadTypeStandard                  GamepadType = C.SDL_GAMEPAD_TYPE_STANDARD
@@ -140,6 +143,11 @@ const (
 	GamepadBindingTypeButton GamepadBindingType = C.SDL_GAMEPAD_BINDTYPE_BUTTON
 	GamepadBindingTypeAxis   GamepadBindingType = C.SDL_GAMEPAD_BINDTYPE_AXIS
 	GamepadBindingTypeHat    GamepadBindingType = C.SDL_GAMEPAD_BINDTYPE_HAT
+)
+
+const (
+	SensorTypeAccelerometer SensorType = C.SDL_SENSOR_ACCEL
+	SensorTypeGyroscope     SensorType = C.SDL_SENSOR_GYRO
 )
 
 // GamepadBinding describes one joystick-layer binding for a gamepad.
@@ -721,7 +729,7 @@ func (g *Gamepad) GetTouchpadFinger(touchpad, finger int) (bool, bool, float32, 
 }
 
 // HasSensor queries whether a gamepad has a given sensor type.
-func (g *Gamepad) HasSensor(sensorType int32) bool {
+func (g *Gamepad) HasSensor(sensorType SensorType) bool {
 	if g == nil || g.cGamepad == nil {
 		return false
 	}
@@ -729,7 +737,7 @@ func (g *Gamepad) HasSensor(sensorType int32) bool {
 }
 
 // SetSensorEnabled sets whether sensor data reporting is enabled for a gamepad sensor.
-func (g *Gamepad) SetSensorEnabled(sensorType int32, enabled bool) bool {
+func (g *Gamepad) SetSensorEnabled(sensorType SensorType, enabled bool) bool {
 	if g == nil || g.cGamepad == nil {
 		return false
 	}
@@ -737,7 +745,7 @@ func (g *Gamepad) SetSensorEnabled(sensorType int32, enabled bool) bool {
 }
 
 // SensorEnabled queries whether sensor data reporting is enabled for a gamepad sensor.
-func (g *Gamepad) SensorEnabled(sensorType int32) bool {
+func (g *Gamepad) SensorEnabled(sensorType SensorType) bool {
 	if g == nil || g.cGamepad == nil {
 		return false
 	}
@@ -745,7 +753,7 @@ func (g *Gamepad) SensorEnabled(sensorType int32) bool {
 }
 
 // SensorDataRate gets the data rate of a gamepad sensor.
-func (g *Gamepad) SensorDataRate(sensorType int32) float32 {
+func (g *Gamepad) SensorDataRate(sensorType SensorType) float32 {
 	if g == nil || g.cGamepad == nil {
 		return 0
 	}
@@ -753,7 +761,7 @@ func (g *Gamepad) SensorDataRate(sensorType int32) float32 {
 }
 
 // GetSensorData gets the current state of a gamepad sensor.
-func (g *Gamepad) GetSensorData(sensorType int32, values []float32) bool {
+func (g *Gamepad) GetSensorData(sensorType SensorType, values []float32) bool {
 	if g == nil || g.cGamepad == nil {
 		return false
 	}

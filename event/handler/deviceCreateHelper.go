@@ -10,7 +10,7 @@ import (
 	"github.com/Alia5/SISR/sdl"
 )
 
-func createViiperDevice(ctx context.Context, c *cmd.SISRContext, gpID sdl.GamepadID, dev *input.Device) {
+func CreateViiperDevice(ctx context.Context, c *cmd.SISRContext, gpID sdl.GamepadID, dev *input.Device) {
 	if !c.ViiperBridge.Ready() {
 		return
 	}

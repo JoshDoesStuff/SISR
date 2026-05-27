@@ -122,7 +122,6 @@ const (
 	EventTypeWindowLeaveFullscreen      EventType = C.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN
 	EventTypeWindowDestroyed            EventType = C.SDL_EVENT_WINDOW_DESTROYED
 	EventTypeWindowHDRStateChanged      EventType = C.SDL_EVENT_WINDOW_HDR_STATE_CHANGED
-	EventTypeWindowCurvatureChanged     EventType = C.SDL_EVENT_WINDOW_CURVATURE_CHANGED
 	EventTypeKeyDown                    EventType = C.SDL_EVENT_KEY_DOWN
 	EventTypeKeyUp                      EventType = C.SDL_EVENT_KEY_UP
 	EventTypeTextEditing                EventType = C.SDL_EVENT_TEXT_EDITING
@@ -246,7 +245,6 @@ var eventTypeNames = map[EventType]string{
 	EventTypeWindowLeaveFullscreen:      "WindowLeaveFullscreen",
 	EventTypeWindowDestroyed:            "WindowDestroyed",
 	EventTypeWindowHDRStateChanged:      "WindowHDRStateChanged",
-	EventTypeWindowCurvatureChanged:     "WindowCurvatureChanged",
 	EventTypeKeyDown:                    "KeyDown",
 	EventTypeKeyUp:                      "KeyUp",
 	EventTypeTextEditing:                "TextEditing",
@@ -395,7 +393,6 @@ var eventWrappers = map[EventType]wrapperFn{
 	EventTypeWindowLeaveFullscreen:      wrapWindow,
 	EventTypeWindowDestroyed:            wrapWindow,
 	EventTypeWindowHDRStateChanged:      wrapWindow,
-	EventTypeWindowCurvatureChanged:     wrapWindow,
 	EventTypeGamepadSensorUpdate:        wrapGamepadSensor,
 	EventTypeWindowHitTest:              wrapWindow,
 	EventTypeWindowICCProfChanged:       wrapWindow,

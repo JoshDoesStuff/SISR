@@ -7,6 +7,8 @@ import (
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/event"
 	"github.com/Alia5/SISR/event/handler"
+	"github.com/Alia5/SISR/event/handler/gamepadUpdated"
+	"github.com/Alia5/SISR/event/handler/sensorupdated"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/SISR/sdl/extras"
 	"github.com/Alia5/SISR/webview"
@@ -32,5 +34,6 @@ func registerEventHandlers(r event.Router, c *cmd.SISRContext, window *sdl.Windo
 	event.RegisterHandler(r, handler.WindowResize(c, wv))
 	event.RegisterHandler(r, handler.GamepadAdded(c))
 	event.RegisterHandler(r, handler.GamepadRemoved(c))
-	event.RegisterHandler(r, handler.GamepadUpdated(c))
+	event.RegisterHandler(r, gamepadUpdated.GamepadUpdated(c))
+	event.RegisterHandler(r, sensorupdated.SensorUpdated(c))
 }

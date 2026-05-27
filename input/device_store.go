@@ -136,6 +136,17 @@ func (ds *deviceStore) OpenGamePad(id sdl.GamepadID) (*Device, error) {
 	} else {
 		dev = &Device{RealGamepad: gp}
 		slog.Debug("Opened real gamepad", "id", id, "name", gp.Name())
+		hasGyro := gp.HasSensor(sdl.SensorTypeGyroscope)
+		if hasGyro {
+			enabled := gp.SetSensorEnabled(sdl.SensorTypeGyroscope, true)
+			slog.Debug("Set gamepad gyro sensor enabled", "id", id, "enabled", enabled)
+		}
+
+		hasAccel := gp.HasSensor(sdl.SensorTypeAccelerometer)
+		if hasAccel {
+			enabled := gp.SetSensorEnabled(sdl.SensorTypeAccelerometer, true)
+			slog.Debug("Set gamepad accelerometer sensor enabled", "id", id, "enabled", enabled)
+		}
 	}
 	ds.devices[id] = dev
 

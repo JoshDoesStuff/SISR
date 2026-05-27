@@ -6,22 +6,20 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
-	"time"
 
-	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/apiclient"
 	"github.com/Alia5/VIIPER/apitypes"
 )
 
 const stateBufferSize = 32
 
-type DeviceType string
+type Type string
 
 const (
-	DeviceTypeUnknown    DeviceType = "unknown"
-	DeviceTypeXbox360    DeviceType = "xbox360"
-	DeviceTypeDualShock4 DeviceType = "dualshock4"
-	DeviceTypeKeyboard   DeviceType = "keyboard"
+	DeviceTypeUnknown    Type = "unknown"
+	DeviceTypeXbox360    Type = "xbox360"
+	DeviceTypeDualShock4 Type = "dualshock4"
+	DeviceTypeKeyboard   Type = "keyboard"
 )
 
 type Device struct {
@@ -51,7 +49,7 @@ func New(
 	deviceCtx, cancel := context.WithCancel(context.Background())
 
 	decodeFeedback := readUnknownFeedback
-	switch DeviceType(deviceInfo.Type) {
+	switch Type(deviceInfo.Type) {
 	case DeviceTypeKeyboard:
 		decodeFeedback = readKeyboardFeedback
 	case DeviceTypeDualShock4:
@@ -81,26 +79,41 @@ func (d *Device) Info() apitypes.Device {
 	return *d.deviceInfo
 }
 
-func (d *Device) Update(gp *sdl.Gamepad) {
-	if gp == nil {
-		slog.Warn("Attempted to update VIIPER device with nil gamepad")
-		return
-	}
+func (d *Device) Type() Type {
+	return Type(d.deviceInfo.Type)
+}
 
-	switch DeviceType(d.deviceInfo.Type) {
-	case DeviceTypeXbox360:
-		toXbox360State(gp, &d.state)
-	case DeviceTypeDualShock4:
-		toDualShock4State(gp, &d.state)
-	// case DeviceTypeKeyboard:
-	// 	state = toKeyboardState(gp)
-	default:
-		slog.Warn("Cant update unknown VIIPER device type", "device_type", d.deviceInfo.Type)
-		return
-	}
+func (d *Device) State() *encoding.BinaryMarshaler {
+	return &d.state
+}
 
+// func (d *Device) UpdateFromSDLGamepad(gp *sdl.Gamepad) {
+// 	if gp == nil {
+// 		slog.Warn("Attempted to update VIIPER device with nil gamepad")
+// 		return
+// 	}
+
+// 	switch DeviceType(d.deviceInfo.Type) {
+// 	case DeviceTypeXbox360:
+// 		toXbox360State(gp, &d.state)
+// 	case DeviceTypeDualShock4:
+// 		toDualShock4State(gp, &d.state)
+// 	// case DeviceTypeKeyboard:
+// 	// 	state = toKeyboardState(gp)
+// 	default:
+// 		slog.Warn("Cant update unknown VIIPER device type", "device_type", d.deviceInfo.Type)
+// 		return
+// 	}
+// }
+
+func (d *Device) QueueStateSend() {
 	if d.state == nil {
 		slog.Warn("No VIIPER state available to marshal", "device_type", d.deviceInfo.Type)
+		return
+	}
+
+	if d.IsClosed() {
+		slog.Warn("Attempted to update VIIPER device after it was closed")
 		return
 	}
 
@@ -110,18 +123,16 @@ func (d *Device) Update(gp *sdl.Gamepad) {
 		return
 	}
 
-	timer := time.NewTimer(1 * time.Second)
-	defer timer.Stop()
-
 	select {
 	case <-d.done:
 		slog.Warn("Attempted to update VIIPER device after it was closed")
 		return
 	case d.stateChan <- data:
-		// sent successfully
-	case <-timer.C:
-		slog.Warn("Timed out sending state update to VIIPER device;")
+		return
+	default:
+		// Buffer full: keep freshest state (drop oldest pending packet).
 	}
+
 }
 
 func (d *Device) handleState() {

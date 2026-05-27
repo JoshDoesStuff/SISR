@@ -1,4 +1,4 @@
-package viiperdevice
+package gamepadUpdated
 
 import (
 	"encoding"

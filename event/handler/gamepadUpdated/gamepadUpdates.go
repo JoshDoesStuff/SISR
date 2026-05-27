@@ -1,17 +1,19 @@
-package handler
+package gamepadUpdated
 
 import (
 	"context"
 	"log/slog"
 
 	"github.com/Alia5/SISR/cmd"
+	"github.com/Alia5/SISR/event/handler"
+	"github.com/Alia5/SISR/input/viiperdevice"
 	"github.com/Alia5/SISR/sdl"
 )
 
-func GamepadUpdated(c *cmd.SISRContext) Operation[*sdl.GamepadDeviceEvent] {
-	return Operation[*sdl.GamepadDeviceEvent]{
+func GamepadUpdated(c *cmd.SISRContext) handler.Operation[*sdl.GamepadDeviceEvent] {
+	return handler.Operation[*sdl.GamepadDeviceEvent]{
 		Event:   sdl.EventTypeGamepadUpdateComplete,
-		Handler: HandleFunc(gpUpdate(c)),
+		Handler: handler.HandleFunc(gpUpdate(c)),
 	}
 }
 
@@ -34,7 +36,7 @@ func gpUpdate(c *cmd.SISRContext) func(ctx context.Context, ev *sdl.GamepadDevic
 
 		if dev.ViiperDevice == nil {
 			slog.Debug("No VIIPER device for gamepad found, scheduling create", "id", gpID)
-			createViiperDevice(ctx, c, gpID, dev)
+			handler.CreateViiperDevice(ctx, c, gpID, dev)
 			return nil
 		}
 		if dev.ViiperDevice.IsClosed() {
@@ -43,7 +45,19 @@ func gpUpdate(c *cmd.SISRContext) func(ctx context.Context, ev *sdl.GamepadDevic
 			dev.ViiperDevice = nil
 			return nil
 		}
-		dev.ViiperDevice.Update(dev.SteamVirtualGamepad)
+
+		dType := dev.ViiperDevice.Type()
+		switch dType {
+		case viiperdevice.DeviceTypeXbox360:
+			toXbox360State(dev.SteamVirtualGamepad, dev.ViiperDevice.State())
+		case viiperdevice.DeviceTypeDualShock4:
+			toDualShock4State(dev.SteamVirtualGamepad, dev.ViiperDevice.State())
+		// case viiperdevice.DeviceTypeKeyboard:
+		// 	state = toKeyboardState(gp)
+		default:
+			slog.Warn("Cant update unknown VIIPER device type", "device_type", dType)
+		}
+		dev.ViiperDevice.QueueStateSend()
 
 		return nil
 	}

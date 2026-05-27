@@ -86,8 +86,19 @@ func (s *SISR) Run(cfg config.Global) error {
 	}()
 
 	unhookSteamHid()
-	err = sdl.InitSubSystem(sdl.InitFlagGamepad | sdl.InitFlagSensor | sdl.InitFlagHaptic)
+	err = sdl.InitSubSystem(sdl.InitFlagGamepad)
 	if err != nil {
+		slog.Error("Failed to initialize SDL Gamepad subsystem", "error", err)
+		return err
+	}
+	err = sdl.InitSubSystem(sdl.InitFlagSensor)
+	if err != nil {
+		slog.Error("Failed to initialize SDL Sensor subsystem", "error", err)
+		return err
+	}
+	err = sdl.InitSubSystem(sdl.InitFlagHaptic)
+	if err != nil {
+		slog.Error("Failed to initialize SDL Haptic subsystem", "error", err)
 		return err
 	}
 
