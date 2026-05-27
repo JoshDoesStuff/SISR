@@ -34,6 +34,10 @@ func registerEventHandlers(r event.Router, c *cmd.SISRContext, window *sdl.Windo
 	event.RegisterHandler(r, handler.WindowResize(c, wv))
 	event.RegisterHandler(r, handler.GamepadAdded(c))
 	event.RegisterHandler(r, handler.GamepadRemoved(c))
+	event.RegisterHandler(r, handler.ToggleUIKeyboardDown(c))
+	event.RegisterHandler(r, handler.ToggleUIKeyboardUp())
+	event.RegisterHandler(r, handler.ToggleUIGamepadButtonDown(c))
+	event.RegisterHandler(r, handler.ToggleUIGamepadButtonUp())
 	event.RegisterHandler(r, gamepadupdated.GamepadUpdated(c))
 	event.RegisterHandler(r, sensorupdated.SensorUpdated(c))
 }

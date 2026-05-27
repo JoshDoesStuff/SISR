@@ -56,7 +56,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/Config.json
+            - http://127.0.0.1:48374/schemas/Config.json
           format: uri
           readOnly: true
           type: string
@@ -139,7 +139,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/EnforceInputConfig.json
+            - http://127.0.0.1:48374/schemas/EnforceInputConfig.json
           format: uri
           readOnly: true
           type: string
@@ -166,7 +166,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/ErrorModel.json
+            - http://127.0.0.1:48374/schemas/ErrorModel.json
           format: uri
           readOnly: true
           type: string
@@ -213,7 +213,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/InitialLaunch.json
+            - http://127.0.0.1:48374/schemas/InitialLaunch.json
           format: uri
           readOnly: true
           type: string
@@ -237,7 +237,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/OpenConfiguratorArgs.json
+            - http://127.0.0.1:48374/schemas/OpenConfiguratorArgs.json
           format: uri
           readOnly: true
           type: string
@@ -254,7 +254,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/OverlayChanged.json
+            - http://127.0.0.1:48374/schemas/OverlayChanged.json
           format: uri
           readOnly: true
           type: string
@@ -293,7 +293,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/ShowHideUI.json
+            - http://127.0.0.1:48374/schemas/ShowHideUI.json
           format: uri
           readOnly: true
           type: string
@@ -326,7 +326,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/SteamAndCefStatus.json
+            - http://127.0.0.1:48374/schemas/SteamAndCefStatus.json
           format: uri
           readOnly: true
           type: string
@@ -368,7 +368,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/VIIPERStatus.json
+            - http://127.0.0.1:48374/schemas/VIIPERStatus.json
           format: uri
           readOnly: true
           type: string
@@ -383,7 +383,7 @@ components:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - http://127.0.0.1:16206/schemas/VersionInfo.json
+            - http://127.0.0.1:48374/schemas/VersionInfo.json
           format: uri
           readOnly: true
           type: string
@@ -433,7 +433,7 @@ components:
       type: object
 info:
   title: SISR API
-  version: v0.4.2-131-g346c00c
+  version: v0.4.2-133-g8cc29f4
 openapi: 3.1.0
 paths:
   /api/v1/config:
@@ -772,4 +772,4 @@ paths:
           description: Error
 servers:
   - description: SISR API
-    url: http://127.0.0.1:16206
+    url: http://127.0.0.1:48374
