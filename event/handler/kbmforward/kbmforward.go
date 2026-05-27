@@ -2,6 +2,7 @@ package kbmforward
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/event/handler"
@@ -143,6 +144,7 @@ func MouseWheel(c *cmd.SISRContext, devices *handler.KBMDevices) handler.Operati
 				handler.CreateViiperKBMDevice(ctx, c, "mouse", devices)
 				return nil
 			}
+
 			state := devices.MouseDev.EnsureMouseState()
 			state.Wheel = int16(ev.IntegerY)
 			state.Pan = int16(ev.IntegerX)
@@ -152,12 +154,20 @@ func MouseWheel(c *cmd.SISRContext, devices *handler.KBMDevices) handler.Operati
 	}
 }
 
-func WindowFocusLost(c *cmd.SISRContext, devices *handler.KBMDevices) handler.Operation[*sdl.WindowEvent] {
+func WindowFocusLost(c *cmd.SISRContext, window *sdl.Window, devices *handler.KBMDevices) handler.Operation[*sdl.WindowEvent] {
 	return handler.Operation[*sdl.WindowEvent]{
 		Event: sdl.EventTypeWindowFocusLost,
 		Handler: handler.HandleFunc(func(ctx context.Context, ev *sdl.WindowEvent) error {
 			devices.Lock()
 			defer devices.Unlock()
+			if window != nil {
+				if err := window.SetWindowMouseGrab(false); err != nil {
+					slog.Error("Failed to release window mouse grab on focus lost", "error", err)
+				}
+				if err := window.SetWindowRelativeMouseMode(false); err != nil {
+					slog.Error("Failed to disable relative mouse mode on focus lost", "error", err)
+				}
+			}
 			if devices.KeyboardDev != nil {
 				keyboardState := devices.KeyboardDev.EnsureKeyboardState()
 				keyboardState.Modifiers = 0
@@ -179,12 +189,37 @@ func WindowFocusLost(c *cmd.SISRContext, devices *handler.KBMDevices) handler.Op
 	}
 }
 
-func WindowHidden(c *cmd.SISRContext, devices *handler.KBMDevices) handler.Operation[*sdl.WindowEvent] {
+func WindowFocusGained(c *cmd.SISRContext, window *sdl.Window, devices *handler.KBMDevices) handler.Operation[*sdl.WindowEvent] {
+	return handler.Operation[*sdl.WindowEvent]{
+		Event: sdl.EventTypeWindowFocusGained,
+		Handler: handler.HandleFunc(func(ctx context.Context, ev *sdl.WindowEvent) error {
+			if window != nil {
+				if err := window.SetWindowMouseGrab(true); err != nil {
+					slog.Error("Failed to enable window mouse grab on focus gained", "error", err)
+				}
+				if err := window.SetWindowRelativeMouseMode(true); err != nil {
+					slog.Error("Failed to enable relative mouse mode on focus gained", "error", err)
+				}
+			}
+			return nil
+		}),
+	}
+}
+
+func WindowHidden(c *cmd.SISRContext, window *sdl.Window, devices *handler.KBMDevices) handler.Operation[*sdl.WindowEvent] {
 	return handler.Operation[*sdl.WindowEvent]{
 		Event: sdl.EventTypeWindowHidden,
 		Handler: handler.HandleFunc(func(ctx context.Context, ev *sdl.WindowEvent) error {
 			devices.Lock()
 			defer devices.Unlock()
+			if window != nil {
+				if err := window.SetWindowMouseGrab(false); err != nil {
+					slog.Error("Failed to release window mouse grab on window hidden", "error", err)
+				}
+				if err := window.SetWindowRelativeMouseMode(false); err != nil {
+					slog.Error("Failed to disable relative mouse mode on window hidden", "error", err)
+				}
+			}
 			if devices.KeyboardDev != nil {
 				keyboardState := devices.KeyboardDev.EnsureKeyboardState()
 				keyboardState.Modifiers = 0

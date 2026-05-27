@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	kbmKeyboardVirtualID sdl.GamepadID = -10001
-	kbmMouseVirtualID    sdl.GamepadID = -10002
+	kbmCreateKeyboardVirtualID sdl.GamepadID = -10001
+	kbmCreateMouseVirtualID    sdl.GamepadID = -10002
 )
 
 type KBMDevices struct {
@@ -75,9 +75,9 @@ func CreateViiperKBMDevice(ctx context.Context, c *cmd.SISRContext, deviceType s
 	var virtualID sdl.GamepadID
 	switch deviceType {
 	case string(viiperdevice.DeviceTypeKeyboard):
-		virtualID = kbmKeyboardVirtualID
+		virtualID = kbmCreateKeyboardVirtualID
 	case string(viiperdevice.DeviceTypeMouse):
-		virtualID = kbmMouseVirtualID
+		virtualID = kbmCreateMouseVirtualID
 	default:
 		return
 	}

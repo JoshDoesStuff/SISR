@@ -7,6 +7,10 @@ package sdl
 
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_render.h>
+#include <SDL3/SDL_mouse.h>
+
+extern int sisrSetWindowRelativeMouseModeBridge(void *window, int enabled);
+extern int sisrGetWindowRelativeMouseModeBridge(void *window);
 
 extern SDL_HitTestResult sisrWindowHitTestGoBridge(SDL_Window *win, SDL_Point *area, void *userdata);
 
@@ -315,6 +319,18 @@ func (w *Window) SetWindowMouseGrab(grabbed bool) error {
 	return nil
 }
 
+// SetWindowRelativeMouseMode sets a window's relative mouse mode.
+func (w *Window) SetWindowRelativeMouseMode(enabled bool) error {
+	enabledInt := 0
+	if enabled {
+		enabledInt = 1
+	}
+	if C.sisrSetWindowRelativeMouseModeBridge(unsafe.Pointer(w.cWindow), C.int(enabledInt)) == 0 {
+		return GetError()
+	}
+	return nil
+}
+
 // GetWindowKeyboardGrab gets a window's keyboard grab mode.
 func (w *Window) GetWindowKeyboardGrab() bool {
 	return bool(C.SDL_GetWindowKeyboardGrab(w.cWindow))
@@ -323,6 +339,11 @@ func (w *Window) GetWindowKeyboardGrab() bool {
 // GetWindowMouseGrab gets a window's mouse grab mode.
 func (w *Window) GetWindowMouseGrab() bool {
 	return bool(C.SDL_GetWindowMouseGrab(w.cWindow))
+}
+
+// GetWindowRelativeMouseMode gets a window's relative mouse mode.
+func (w *Window) GetWindowRelativeMouseMode() bool {
+	return C.sisrGetWindowRelativeMouseModeBridge(unsafe.Pointer(w.cWindow)) != 0
 }
 
 // SetWindowFocusable sets whether the window may have input focus.

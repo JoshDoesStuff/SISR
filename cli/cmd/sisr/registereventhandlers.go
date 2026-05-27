@@ -42,6 +42,6 @@ func registerEventHandlers(r event.Router, c *cmd.SISRContext, window *sdl.Windo
 	event.RegisterHandler(r, sensorupdated.SensorUpdated(c))
 
 	if c.Config.KeyboardMouseEmulation {
-		registerKBMForwardHandlers(r, c)
+		registerKBMForwardHandlers(r, c, window)
 	}
 }
