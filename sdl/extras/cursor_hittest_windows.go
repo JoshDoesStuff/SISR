@@ -40,7 +40,7 @@ func SetCursorHitTest(window *sdl.Window, hittest bool) error {
 	}
 	if hittest {
 		if hasTransparent {
-			err = windows.UpdateWindowExStyleBits(hwnd, 0, windows.WSExTransparent)
+			err = windows.UpdateWindowExStyleBits(hwnd, 0, windows.WSExTransparent|windows.WSExLayered)
 			if err != nil {
 				return err
 			}
