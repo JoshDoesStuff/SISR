@@ -18,6 +18,11 @@ func SensorUpdated(c *cmd.SISRContext) handler.Operation[*sdl.GamepadSensorEvent
 }
 
 func sensorUpdate(c *cmd.SISRContext) func(ctx context.Context, ev *sdl.GamepadSensorEvent) error {
+
+	c.Config.Lock()
+	immediateSensorUpdates := c.Config.ImmediateSensorUpdates
+	c.Config.Unlock()
+
 	return func(ctx context.Context, ev *sdl.GamepadSensorEvent) error {
 		gpID := sdl.GamepadID(ev.Which)
 		dev, ok := c.DeviceStore.DeviceForID(gpID)
@@ -46,6 +51,7 @@ func sensorUpdate(c *cmd.SISRContext) func(ctx context.Context, ev *sdl.GamepadS
 			return nil
 		}
 
+		updated := false
 		dType := dev.ViiperDevice.Type()
 		switch dType {
 		case viiperdevice.DeviceTypeXbox360:
@@ -54,13 +60,17 @@ func sensorUpdate(c *cmd.SISRContext) func(ctx context.Context, ev *sdl.GamepadS
 			sensorType := sdl.SensorType(ev.Sensor)
 			if sensorType == sdl.SensorTypeGyroscope || sensorType == sdl.SensorTypeAccelerometer {
 				updateSensorStateDS4(sensorType, [3]float32{ev.Data0, ev.Data1, ev.Data2}, dev.ViiperDevice.State())
+				updated = true
 			}
 		// case viiperdevice.DeviceTypeKeyboard:
 		// 	state = toKeyboardState(gp)
 		default:
 			slog.Warn("Cant update unknown VIIPER device type", "device_type", dType)
 		}
-		// dev.ViiperDevice.QueueStateSend()
+
+		if updated && immediateSensorUpdates {
+			dev.ViiperDevice.QueueStateSend()
+		}
 
 		return nil
 	}

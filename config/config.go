@@ -52,6 +52,7 @@ type ControllerEmulation struct {
 	DefaultControllerType   string `default:"xbox360" aliases:"ct" enum:"xbox360,dualshock4" help:"Default controller type for emulation" env:"SISR_DEFAULT_CONTROLLER_TYPE"`
 	GyroPassthrough         bool   `default:"true" help:"Enable gyro passthrough for supported controllers" env:"SISR_GYRO_PASSTHROUGH"`
 	AllowSteamDesktopLayout bool   `default:"false" help:"Allow/Use Steam's desktop configuration for emulated controllers" env:"SISR_ALLOW_STEAM_DESKTOP_LAYOUT"`
+	ImmediateSensorUpdates  bool   `default:"false" help:"Immediately send sensor updates to VIIPER instead of waiting for the next input report; may reduce latency at the cost of increased CPU usage" env:"SISR_IMMEDIATE_SENSOR_UPDATES"`
 }
 
 type Viiper struct {

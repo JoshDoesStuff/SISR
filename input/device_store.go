@@ -18,21 +18,23 @@ type DeviceStore interface {
 }
 
 type deviceStore struct {
-	devices        map[sdl.GamepadID]*Device
-	deviceIdxOrder []sdl.GamepadID
-	ignoreNext     int
-	noSteamMode    bool
+	devices         map[sdl.GamepadID]*Device
+	deviceIdxOrder  []sdl.GamepadID
+	ignoreNext      int
+	noSteamMode     bool
+	gyroPassthrough bool
 
 	mtx sync.Mutex
 }
 
-func NewDeviceStore(noSteamMode bool) (DeviceStore, func(), error) {
+func NewDeviceStore(noSteamMode bool, gyroPassthrough bool) (DeviceStore, func(), error) {
 
 	opener := &deviceStore{
-		devices:        make(map[sdl.GamepadID]*Device),
-		deviceIdxOrder: make([]sdl.GamepadID, 0),
-		ignoreNext:     0,
-		noSteamMode:    noSteamMode,
+		devices:         make(map[sdl.GamepadID]*Device),
+		deviceIdxOrder:  make([]sdl.GamepadID, 0),
+		ignoreNext:      0,
+		noSteamMode:     noSteamMode,
+		gyroPassthrough: gyroPassthrough,
 	}
 	return opener, opener.quit, nil
 }
@@ -85,6 +87,11 @@ func (ds *deviceStore) OpenGamePad(id sdl.GamepadID) (*Device, error) {
 			RealGamepad:         gp,
 			SteamVirtualGamepad: gp,
 		}
+
+		if ds.gyroPassthrough {
+			enableSensors(gp, id)
+		}
+
 		ds.devices[id] = dev
 		return dev, nil
 	}
@@ -136,16 +143,8 @@ func (ds *deviceStore) OpenGamePad(id sdl.GamepadID) (*Device, error) {
 	} else {
 		dev = &Device{RealGamepad: gp}
 		slog.Debug("Opened real gamepad", "id", id, "name", gp.Name())
-		hasGyro := gp.HasSensor(sdl.SensorTypeGyroscope)
-		if hasGyro {
-			enabled := gp.SetSensorEnabled(sdl.SensorTypeGyroscope, true)
-			slog.Debug("Set gamepad gyro sensor enabled", "id", id, "enabled", enabled)
-		}
-
-		hasAccel := gp.HasSensor(sdl.SensorTypeAccelerometer)
-		if hasAccel {
-			enabled := gp.SetSensorEnabled(sdl.SensorTypeAccelerometer, true)
-			slog.Debug("Set gamepad accelerometer sensor enabled", "id", id, "enabled", enabled)
+		if ds.gyroPassthrough {
+			enableSensors(gp, id)
 		}
 	}
 	ds.devices[id] = dev
@@ -252,4 +251,18 @@ func (ds *deviceStore) Empty() bool {
 	ds.mtx.Lock()
 	defer ds.mtx.Unlock()
 	return len(ds.devices) == 0
+}
+
+func enableSensors(gp *sdl.Gamepad, id sdl.GamepadID) {
+	hasGyro := gp.HasSensor(sdl.SensorTypeGyroscope)
+	if hasGyro {
+		enabled := gp.SetSensorEnabled(sdl.SensorTypeGyroscope, true)
+		slog.Debug("Set gamepad gyro sensor enabled", "id", id, "enabled", enabled)
+	}
+
+	hasAccel := gp.HasSensor(sdl.SensorTypeAccelerometer)
+	if hasAccel {
+		enabled := gp.SetSensorEnabled(sdl.SensorTypeAccelerometer, true)
+		slog.Debug("Set gamepad accelerometer sensor enabled", "id", id, "enabled", enabled)
+	}
 }

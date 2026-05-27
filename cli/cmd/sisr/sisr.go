@@ -107,7 +107,7 @@ func (s *SISR) Run(cfg config.Global) error {
 
 	bindingEnforcer := steaminputbindings.NewEnforcer()
 	eventRouter := event.NewRouter()
-	deviceStore, deviceStoreClose, err := input.NewDeviceStore(s.NoSteam)
+	deviceStore, deviceStoreClose, err := input.NewDeviceStore(s.NoSteam, s.GyroPassthrough)
 	if err != nil {
 		slog.Error("Failed to initialite DeviceStore", "error", err)
 	}
