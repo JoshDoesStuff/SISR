@@ -14,7 +14,7 @@ func toXbox360State(gp *sdl.Gamepad, state *encoding.BinaryMarshaler) {
 		s = &xbox360.InputState{}
 		*state = s
 	}
-
+	s.Buttons = 0
 	if gp.GetButton(sdl.GamepadButtonSouth) {
 		s.Buttons |= xbox360.ButtonA
 	}

@@ -14,7 +14,7 @@ func toDualShock4State(gp *sdl.Gamepad, state *encoding.BinaryMarshaler) {
 		s = &dualshock4.InputState{}
 		*state = s
 	}
-
+	s.Buttons = 0
 	if gp.GetButton(sdl.GamepadButtonSouth) {
 		s.Buttons |= dualshock4.ButtonCross
 	}
