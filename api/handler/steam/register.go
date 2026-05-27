@@ -24,6 +24,11 @@ func Register(a huma.API, c *cmd.SISRContext) {
 		Path:   "/api/v1/steam/restart",
 	}, restartSteam(c))
 
+	huma.Register(a, huma.Operation{
+		Method: http.MethodPost,
+		Path:   "/api/v1/steam/force-config",
+	}, enforceInputConfig(c))
+
 	cef.Register(a, c)
 
 }

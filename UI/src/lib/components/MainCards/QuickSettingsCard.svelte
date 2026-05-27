@@ -43,7 +43,7 @@ let allowDesktopConfig = $derived(config.controllerEmulation.AllowSteamDesktopLa
 						name="allow-desktop-config"
 						onchange={() => {
 							void client
-								.POST('/api/v1/force_controller_config', {
+								.POST('/api/v1/steam/force-config', {
 									body: {
 										enforce: !allowDesktopConfig
 									}
@@ -61,9 +61,9 @@ let allowDesktopConfig = $derived(config.controllerEmulation.AllowSteamDesktopLa
 				<button
 					onclick={() => {
 						void client
-							.POST('/api/v1/open_steam_controller_config', {
+							.POST('/api/v1/steam/cef/open-configurator', {
 								body: {
-									app_id: allowDesktopConfig
+									appId: allowDesktopConfig
 										? STEAM_DESKTOP_CONFIG_APPID
 										: steamStatusInfo.steam_app_id
 								}
