@@ -11,6 +11,7 @@ import (
 	kongyaml "github.com/alecthomas/kong-yaml"
 
 	"github.com/Alia5/SISR/cli"
+	"github.com/Alia5/SISR/helper"
 	"github.com/Alia5/SISR/logging"
 	"github.com/Alia5/SISR/meta"
 )
@@ -32,12 +33,15 @@ func main() {
 	applyPlatformStartup(cli.Config)
 
 	if cli.Config.Log.File == "" { // nolint
-		if userCfg != "" {
-			cfgDir := filepath.Dir(userCfg)
-			if cfgDir != "." && cfgDir != "" {
-				cli.Config.Log.File = filepath.Join(cfgDir, "sisr.log") // nolint
-			}
+		dataDir, err := helper.GetDataDir()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "failed to determine SISR data directory:", err)
+		} else {
+			cli.Config.Log.File = filepath.Join(dataDir, "SISR.log") // nolint
 		}
+	}
+	if cli.Config.Log.File != "" {
+		_ = os.MkdirAll(filepath.Dir(cli.Config.Log.File), 0o755)
 	}
 
 	_, closeFiles, err := logging.SetupLogger(cli.Config.Log.Level, cli.Config.Log.File) // nolint
