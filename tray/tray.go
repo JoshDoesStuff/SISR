@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"runtime"
+	"strconv"
 
 	"fyne.io/systray"
 	"github.com/Alia5/SISR/assets"
+	"github.com/Alia5/SISR/cefpayloads"
 	"github.com/Alia5/SISR/cmd"
 	"github.com/Alia5/SISR/meta"
 	"github.com/Alia5/SISR/sdl"
@@ -66,6 +69,10 @@ func onReady(ctx context.Context, c *cmd.SISRContext, trayNotifyCh TrayNotifyCh)
 		"Uses Steams Desktop Layout instead of SISR Marker (or specific SISR layout when launched via Steam)",
 		c.Config.AllowSteamDesktopLayout,
 	)
+	openConfiguratorItem := systray.AddMenuItem(
+		"Open Steam Input Layout Configurator",
+		"Opens the Steam Input Layout configurator",
+	)
 
 	systray.AddSeparator()
 
@@ -81,6 +88,7 @@ func onReady(ctx context.Context, c *cmd.SISRContext, trayNotifyCh TrayNotifyCh)
 		enableOverlayItem: enableOverlayItem,
 
 		allowDesktopLayoutItem: allowDesktopLayoutItem,
+		openConfiguratorItem:   openConfiguratorItem,
 
 		exitItem: exitItem,
 	}
@@ -99,6 +107,7 @@ type tray struct {
 	enableOverlayItem *systray.MenuItem
 
 	allowDesktopLayoutItem *systray.MenuItem
+	openConfiguratorItem   *systray.MenuItem
 
 	exitItem *systray.MenuItem
 }
@@ -122,6 +131,8 @@ func (t *tray) run(ctx context.Context) {
 			t.handleToggleOverlay(ctx)
 		case <-t.allowDesktopLayoutItem.ClickedCh:
 			t.handleAllowDesktopConfig()
+		case <-t.openConfiguratorItem.ClickedCh:
+			t.handleOpenConfigurator()
 		case <-t.exitItem.ClickedCh:
 			t.QuitFn()
 		}
@@ -304,4 +315,36 @@ func (t *tray) handleAllowDesktopConfig() {
 	t.Config.Lock()
 	t.Config.AllowSteamDesktopLayout = t.allowDesktopLayoutItem.Checked()
 	t.Config.Unlock()
+}
+
+func (t *tray) handleOpenConfigurator() {
+
+	t.Config.Lock()
+	steamCfg := *t.Config.Steam
+	t.Config.Unlock()
+
+	args := &cefpayloads.OpenConfiguratorArgs{
+		AppID: 413080, // Desktop Layout
+	}
+
+	if !t.allowDesktopLayoutItem.Checked() {
+		appIDStr := os.Getenv("SteamAppId")
+		if appIDStr == "" || appIDStr == "0" {
+			appIDStr = os.Getenv("SISR_MARKER_ID")
+		}
+		appID, err := strconv.ParseUint(appIDStr, 10, 32)
+		if err != nil {
+			slog.Error("failed to convert appID", "error", err)
+			return
+		}
+		if appID != 0 {
+			args.AppID = uint32(appID)
+		}
+	}
+
+	_, err := cefpayloads.NewOpenConfigurator(&steamCfg).Execute(context.Background(), args)
+	if err != nil {
+		slog.Error("failed to open configurator", "error", err)
+	}
+
 }
