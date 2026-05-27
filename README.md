@@ -56,14 +56,12 @@ For this Steam must still be running in the background, though.
 - Full SteamInput featureset while emulating compatible controllers (indistinguishable from real hardware)
   - Xbox360 _or_
   - DualShock 4
+      - Gyro Passthrough
 - **Non Steam Mode*
--  Xbox 360 controller emulation
 - Multi-platform support (Windows, Linux)
    Multiple operation modes
     - Standalone background service (To be improved)
     - Steam overlay window mode
--  PS4 controller emulation
-    - Gyro Passthrough
 - Networked operation across computers
     - Use devices like a SteamDeck as dedicated controller without streaming the whole game/display
 - 🚧 Xbox One controller emulation
