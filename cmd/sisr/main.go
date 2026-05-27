@@ -40,8 +40,8 @@ func main() {
 			cli.Config.Log.File = filepath.Join(dataDir, "SISR.log") // nolint
 		}
 	}
-	if cli.Config.Log.File != "" {
-		_ = os.MkdirAll(filepath.Dir(cli.Config.Log.File), 0o755)
+	if cli.Config.Log.File != "" { // nolint
+		_ = os.MkdirAll(filepath.Dir(cli.Config.Log.File), 0o755) // nolint
 	}
 
 	_, closeFiles, err := logging.SetupLogger(cli.Config.Log.Level, cli.Config.Log.File) // nolint
