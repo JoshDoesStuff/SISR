@@ -14,13 +14,13 @@ type ConfigResponse struct {
 }
 
 type Config struct {
-	AutoUpdate             *config.AutoUpdate             `json:"autoUpdate"`
-	RunMisc                *config.RunMisc                `json:"runMisc"`
-	ControllerEmulation    *config.ControllerEmulation    `json:"controllerEmulation"`
-	KeyboardMouseEmulation *config.KbMEmuation `json:"keyboardMouseEmulation"`
-	Viiper                 *config.Viiper                 `json:"viiper"`
-	Window                 *config.Window                 `json:"window"`
-	Steam                  *config.Steam                  `json:"steam"`
+	AutoUpdate             *config.AutoUpdate          `json:"autoUpdate"`
+	RunMisc                *config.RunMisc             `json:"runMisc"`
+	ControllerEmulation    *config.ControllerEmulation `json:"controllerEmulation"`
+	KeyboardMouseEmulation *config.KbMEmuation         `json:"keyboardMouseEmulation"`
+	Viiper                 *config.Viiper              `json:"viiper"`
+	Window                 *config.Window              `json:"window"`
+	Steam                  *config.Steam               `json:"steam"`
 }
 
 func Register(a huma.API, c *cmd.SISRContext) {

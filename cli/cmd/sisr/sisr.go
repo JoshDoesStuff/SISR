@@ -25,14 +25,14 @@ import (
 )
 
 type SISR struct {
-	config.AutoUpdate             `embed:""`
-	config.RunMisc                `embed:""`
-	config.ControllerEmulation    `embed:""`
-	config.KbMEmuation `embed:""`
-	config.API                    `embed:"" prefix:"api."`
-	config.Viiper                 `embed:"" prefix:"viiper."`
-	config.Window                 `embed:"" prefix:"window."`
-	config.Steam                  `embed:"" prefix:"steam."`
+	config.AutoUpdate          `embed:""`
+	config.RunMisc             `embed:""`
+	config.ControllerEmulation `embed:""`
+	config.KbMEmuation         `embed:""`
+	config.API                 `embed:"" prefix:"api."`
+	config.Viiper              `embed:"" prefix:"viiper."`
+	config.Window              `embed:"" prefix:"window."`
+	config.Steam               `embed:"" prefix:"steam."`
 
 	//
 	lastRenderTime      time.Time
@@ -113,9 +113,9 @@ func (s *SISR) Run(cfg config.Global) error {
 	}
 	defer deviceStoreClose()
 	viiperBridge := input.NewViiperBridge(ctx, deviceStore, &s.Viiper)
-	if s.KbMEmuation.KeyboardMouseEmulation && viiperBridge.IsLoopbackAddress() {
+	if s.KeyboardMouseEmulation && viiperBridge.IsLoopbackAddress() {
 		slog.Warn("Keyboard/mouse emulation requires non-loopback VIIPER address; disabling", "viiperAddress", viiperBridge.ResolvedAddressAndPort())
-		s.KbMEmuation.KeyboardMouseEmulation = false
+		s.KeyboardMouseEmulation = false
 	}
 	updateChecker := update.NewChecker(
 		s.UpdateNotify,
@@ -146,13 +146,13 @@ func (s *SISR) Run(cfg config.Global) error {
 		QuitFn:           stop,
 		UpdateChecker:    updateChecker,
 		Config: &cmd.SessionConfig{
-			AutoUpdate:             &s.AutoUpdate,
-			RunMisc:                &s.RunMisc,
-			ControllerEmulation:    &s.ControllerEmulation,
-			KbMEmuation: &s.KbMEmuation,
-			Viiper:                 &s.Viiper,
-			Window:                 &s.Window,
-			Steam:                  &s.Steam,
+			AutoUpdate:          &s.AutoUpdate,
+			RunMisc:             &s.RunMisc,
+			ControllerEmulation: &s.ControllerEmulation,
+			KbMEmuation:         &s.KbMEmuation,
+			Viiper:              &s.Viiper,
+			Window:              &s.Window,
+			Steam:               &s.Steam,
 		},
 	}
 
