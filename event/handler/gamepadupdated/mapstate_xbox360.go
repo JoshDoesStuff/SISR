@@ -64,8 +64,8 @@ func toXbox360State(gp *sdl.Gamepad, state *encoding.BinaryMarshaler) {
 	lt := gp.GetAxis(sdl.GamepadAxisLeftTrigger)
 	rt := gp.GetAxis(sdl.GamepadAxisRightTrigger)
 
-	s.LT = uint8(max(0, min(math.MaxUint8, max(0, int32(lt))*math.MaxUint8/math.MaxInt16)))
-	s.RT = uint8(max(0, min(math.MaxUint8, max(0, int32(rt))*math.MaxUint8/math.MaxInt16)))
+	s.LT = uint8(clamp(int((max(int32(0), int32(lt))*int32(math.MaxUint8))/int32(math.MaxInt16)), 0, math.MaxUint8))
+	s.RT = uint8(clamp(int((max(int32(0), int32(rt))*int32(math.MaxUint8))/int32(math.MaxInt16)), 0, math.MaxUint8))
 
 	// Invert Y axes to match XInput convention
 	// XInput: Negative values signify down or to the left. Positive values signify up or to the right.
@@ -73,8 +73,8 @@ func toXbox360State(gp *sdl.Gamepad, state *encoding.BinaryMarshaler) {
 	// SDL: For thumbsticks, the state is a value ranging from -32768 (up/left) to 32767 (down/right).
 	//      https://wiki.libsdl.org/SDL3/SDL_GetGamepadAxis
 	s.LX = gp.GetAxis(sdl.GamepadAxisLeftX)
-	s.LY = int16(max(math.MinInt16, min(math.MaxInt16, -int32(gp.GetAxis(sdl.GamepadAxisLeftY)))))
+	s.LY = int16(clamp(int(-int32(gp.GetAxis(sdl.GamepadAxisLeftY))), math.MinInt16, math.MaxInt16))
 	s.RX = gp.GetAxis(sdl.GamepadAxisRightX)
-	s.RY = int16(max(math.MinInt16, min(math.MaxInt16, -int32(gp.GetAxis(sdl.GamepadAxisRightY)))))
+	s.RY = int16(clamp(int(-int32(gp.GetAxis(sdl.GamepadAxisRightY))), math.MinInt16, math.MaxInt16))
 
 }

@@ -65,8 +65,8 @@ func toDualShock4State(gp *sdl.Gamepad, state *encoding.BinaryMarshaler) {
 	lt := gp.GetAxis(sdl.GamepadAxisLeftTrigger)
 	rt := gp.GetAxis(sdl.GamepadAxisRightTrigger)
 
-	s.L2 = uint8(max(0, min(math.MaxUint8, max(0, int32(lt))*math.MaxUint8/math.MaxInt16)))
-	s.R2 = uint8(max(0, min(math.MaxUint8, max(0, int32(rt))*math.MaxUint8/math.MaxInt16)))
+	s.L2 = uint8(clamp(int((max(int32(0), int32(lt))*int32(math.MaxUint8))/int32(math.MaxInt16)), 0, math.MaxUint8))
+	s.R2 = uint8(clamp(int((max(int32(0), int32(rt))*int32(math.MaxUint8))/int32(math.MaxInt16)), 0, math.MaxUint8))
 	if lt > 128 {
 		s.Buttons |= dualshock4.ButtonL2
 	}
@@ -74,9 +74,8 @@ func toDualShock4State(gp *sdl.Gamepad, state *encoding.BinaryMarshaler) {
 		s.Buttons |= dualshock4.ButtonR2
 	}
 
-	s.LX = int8(max(math.MinInt8, min(math.MaxInt8, int32(gp.GetAxis(sdl.GamepadAxisLeftX))*(math.MaxInt8+1)/math.MaxInt16)))
-	s.LY = int8(max(math.MinInt8, min(math.MaxInt8, int32(gp.GetAxis(sdl.GamepadAxisLeftY))*(math.MaxInt8+1)/math.MaxInt16)))
-	s.RX = int8(max(math.MinInt8, min(math.MaxInt8, int32(gp.GetAxis(sdl.GamepadAxisRightX))*(math.MaxInt8+1)/math.MaxInt16)))
-	s.RY = int8(max(math.MinInt8, min(math.MaxInt8, int32(gp.GetAxis(sdl.GamepadAxisRightY))*(math.MaxInt8+1)/math.MaxInt16)))
-
+	s.LX = int8(clamp(int((int32(gp.GetAxis(sdl.GamepadAxisLeftX))*int32(math.MaxInt8+1))/int32(math.MaxInt16)), math.MinInt8, math.MaxInt8))
+	s.LY = int8(clamp(int((int32(gp.GetAxis(sdl.GamepadAxisLeftY))*int32(math.MaxInt8+1))/int32(math.MaxInt16)), math.MinInt8, math.MaxInt8))
+	s.RX = int8(clamp(int((int32(gp.GetAxis(sdl.GamepadAxisRightX))*int32(math.MaxInt8+1))/int32(math.MaxInt16)), math.MinInt8, math.MaxInt8))
+	s.RY = int8(clamp(int((int32(gp.GetAxis(sdl.GamepadAxisRightY))*int32(math.MaxInt8+1))/int32(math.MaxInt16)), math.MinInt8, math.MaxInt8))
 }
