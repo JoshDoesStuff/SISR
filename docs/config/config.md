@@ -31,114 +31,153 @@ SISR can be configured via:
   <tbody>
     <tr>
       <td>
-        <div><code>--c file</code></div>
-        <div><code>--config file</code></div>
+        <div><code>--config &lt;FILE&gt;</code></div>
 
       </td>
-      <td>specify config file</td>
+      <td>Path to an explicit configuration file (TOML/YAML/JSON)</td>
       <td></td>
     </tr>
 
     <tr>
-      <td>
-        <div><code>-w [true|false]</code></div>
-        <div><code>--window-create=[true|false]</code></div>
-      </td>
-      <td>Create/Show window at launch</td>
+      <td><code>--console</code> (Windows only)</td>
+      <td>Show console window</td>
       <td><code>false</code></td>
     </tr>
 
     <tr>
-      <td>
-        <div><code>-f [true|false]</code></div>
-        <div><code>--window-fullscreen=[true|false]</code></div>
-      </td>
-      <td>
-        Create a transparent, borderless,always on top,
-          overlay window.<br />
-          used as an overlay-target<br />
-          Window is fully transparent and click-through
-      </td>
-      <td><code>true</code></td>
+      <td><code>--api.listen-address &lt;host:port&gt;</code></td>
+      <td>API listen address; by default will pick a random free port and listen on localhost only</td>
+      <td><code>localhost:0</code></td>
     </tr>
 
     <tr>
-      <td>
-        <div><code>-wcd [true|false]</code></div>
-        <div><code>--window-continuous-draw=[true|false]</code></div>
-      </td>
-      <td>
-
-          Continuously update/draw to the window.<br />
-          May be used when steam overlay detection fails
-          or other issues with the steam overlay occur
-
-      </td>
-      <td><code>true</code></td>
+      <td><code>--api.cors-origins &lt;origins&gt;</code></td>
+      <td>CORS allowed origins</td>
+      <td><code>https://steamloopback.host,http://steamloopback.host</code></td>
     </tr>
 
     <tr>
-      <td><code>--viiper-address &lt;hostname:port&gt;</code></td>
-      <td>
-          VIIPER API-server address<br />
-          Can be specified if VIIPER is run manually,
-          or on another machine
-      </td>
+      <td><code>--viiper.address &lt;host:port&gt;</code></td>
+      <td>VIIPER server address; specify if VIIPER is run manually or on another machine</td>
       <td><code>localhost:3242</code></td>
     </tr>
 
     <tr>
-      <td><code>--viiper-password &lt;password&gt;</code></td>
-      <td>
-          VIIPER API-server password<br />
-          Required for non-localhost connections<br />
-          Password can be found in:<br />
-          <code>%APPDATA%\VIIPER\viiper.key.txt</code> (Windows)<br />
-          <code>~/.config/github.com/Alia5/viiper/viiper.key.txt</code> (Linux)<br />
-          <code>/etc/viiper/viiper.key.txt</code> (Linux root/systemd)
-      </td>
+      <td><code>--viiper.password &lt;password&gt;</code></td>
+      <td>VIIPER server password. Required for non-localhost connections</td>
       <td><i>none</i></td>
     </tr>
 
     <tr>
+      <td><code>--keyboard-mouse-emulation</code>, <code>--kbm</code></td>
+      <td>Forward keyboard and mouse when running over a network</td>
+      <td><code>false</code></td>
+    </tr>
+
+    <tr>
+      <td><code>--update-notify &lt;CHANNEL&gt;</code></td>
+      <td>Update notification level (<code>none</code>, <code>stable</code>, <code>prerelease</code>, <code>always</code>)</td>
+      <td><code>stable</code></td>
+    </tr>
+
+    <tr>
       <td><code>--default-controller-type &lt;type&gt;</code></td>
-      <td>
-          Set the default controller type that should be emulated<br />
-          Possible values: "xbox360", "dualshock4"
-      </td>
-      <td><code>"xbox360"</code></td>
+      <td>Default controller type for emulation (<code>xbox360</code>, <code>dualshock4</code>)</td>
+      <td><code>xbox360</code></td>
+    </tr>
+
+    <tr>
+      <td><code>--gyro-passthrough</code></td>
+      <td>Enable gyro passthrough for supported controllers</td>
+      <td><code>true</code></td>
+    </tr>
+
+    <tr>
+      <td><code>--allow-steam-desktop-layout</code></td>
+      <td>Allow/use Steam's desktop configuration for emulated controllers</td>
+      <td><code>false</code></td>
+    </tr>
+
+    <tr>
+      <td><code>--immediate-sensor-updates</code></td>
+      <td>Immediately send sensor updates to VIIPER instead of waiting for the next input report</td>
+      <td><code>true</code></td>
     </tr>
 
     <tr>
       <td>
-        <div><code>--kbm</code></div>
-        <div><code>--keyboard-mouse-emulation</code></div>
+        <div><code>--w</code></div>
+        <div><code>--window.show [true|false]</code></div>
       </td>
-      <td>
-          Emulate/Forward Keyboard and Mouse inputs<br />
-          Can only be used if the VIIPER-server
-          is running on a different machine
-      </td>
+      <td>Shows window on startup; when used with fullscreen enabled, this will enable Steam Overlay</td>
       <td><code>false</code></td>
+    </tr>
+
+    <tr>
+      <td>
+        <div><code>--f</code></div>
+        <div><code>--window.fullscreen [true|false]</code></div>
+      </td>
+      <td>Create a transparent, borderless, always-on-top overlay window</td>
+      <td><code>true</code></td>
+    </tr>
+
+    <tr>
+      <td><code>--window.max-fps &lt;FPS&gt;</code></td>
+      <td>Maximim FPS for SteamOverlay/UI (Does not affect inputs)</td>
+      <td><code>60</code></td>
+    </tr>
+
+    <tr>
+      <td><code>--log.level &lt;LEVEL&gt;</code></td>
+      <td>Log level (<code>trace</code>, <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>)</td>
+      <td><code>info</code></td>
+    </tr>
+
+    <tr>
+      <td><code>--log.file &lt;FILE&gt;</code></td>
+      <td>Write logs to a file</td>
+      <td><i>none</i></td>
+    </tr>
+
+    <tr>
+      <td><code>--no-steam</code></td>
+      <td>Run in no-Steam mode</td>
+      <td><code>false</code></td>
+    </tr>
+
+    <tr>
+      <td><code>--steam.install-dir &lt;PATH&gt;</code></td>
+      <td>Steam installation directory (optional, will attempt to auto-detect if not set)</td>
+      <td><i>auto-detect</i></td>
+    </tr>
+
+    <tr>
+      <td><code>--steam.user-id &lt;ID&gt;</code></td>
+      <td>Active Steam user ID (optional, will attempt to auto-detect if not set)</td>
+      <td><i>auto-detect</i></td>
+    </tr>
+
+    <tr>
+      <td><code>--steam.cef-remote-debug-port &lt;PORT&gt;</code></td>
+      <td>CEF remote debugging port (optional, will attempt to auto-detect if not set)</td>
+      <td><i>auto-detect</i></td>
     </tr>
   </tbody>
 </table>
 
 ## Config file discovery
 
-SISR looks for these names and extensions:
+SISR looks for these names and extensions in the current working directory:
 
 - Names: `SISR`, `config`
 - Extensions: `.toml`, `.yaml`, `.yml`, `.json`
 
 Search locations:
 
-- Your platform config directory
-    - Windows: `%APPDATA%\SISR\config` (example: `C:\Users\<UserName>\AppData\Roaming\SISR\config`)
-    - Linux: `$XDG_CONFIG_HOME/sisr` (or `~/.config/sisr`)
-- The directory next to the SISR executable
+- The current working directory
 
-You can also explicitly provide a config file path via `--config <FILE>`.
+You can also explicitly provide a config file path via `--config <FILE>` or the `SISR_CONFIG` environment variable.
 
 ### Discovery order and precedence
 
@@ -146,8 +185,9 @@ When multiple sources provide the same configuration option, the latest one in t
 
 1. Defaults
 2. Discovered config files (in this exact order):  
-     1. In the platform config dir:
-     2. Next to the SISR executable:
+     1. `github.com/Alia5/SISR.{json,yaml,yml,toml}`
+     2. `SISR.{json,yaml,yml,toml}`
+     3. `config.{json,yaml,yml,toml}`
 3. Your explicit `--config <FILE>` (if provided)
 4. CLI flags and environment variables
 
@@ -163,68 +203,74 @@ All values are optional.
 # On other platforms this key is ignored
 console = false
 
-# Enable/disable system tray icon
-tray = true
+# API server address; 0 picks a random free port
+[api]
+listen-address = "localhost:0"
+
+# Optional CORS origins
+cors-origins = "https://steamloopback.host,http://steamloopback.host"
 
 # VIIPER API server address
-viiper_address = "localhost:3242"
+[viiper]
+address = "localhost:3242"
 
 # VIIPER API server password
-viiper_password = ""
+password = ""
 
 # Enable keyboard/mouse emulation.
 # Will only work if the specified VIIPER server does not run on localhost
-kbm_emulation = false
+keyboard-mouse-emulation = false
 
 # Update notification channel
-# Allowed: "none", "stable", "prerelease"
-update_notify = "stable"
+# Allowed: "none", "stable", "prerelease", "always"
+update-notify = "stable"
 
-# SISR API server port (0 = random free port)
-port = 0
-
-[controller_emulation]
 # Default controller type for emulation
-# Allowed: "xbox360", "dualshock4"
-default_controller_type = "xbox360"
+default-controller-type = "xbox360"
 
-# Allows / re-uses Steam Desktop Layout instead of SISRs marker
-allow_desktop_config = true
+# Allow/re-use Steam's desktop configuration for emulated controllers
+allow-steam-desktop-layout = false
 
 # Enable gyro passthrough for supported controllers
-gyro_passthrough = true
+gyro-passthrough = true
 
-require_controllers_connected_before_launch = false
+# Send sensor updates immediately instead of waiting for the next input report
+immediate-sensor-updates = true
 
+# No-Steam mode
+no-steam = false
+
+# Window behavior
 [window]
 # Create/Show window at launch
-create = false
+show = false
 
 # Create a transparent fullscreen (borderless) overlay window
 fullscreen = true
 
-# Enable continuous redraw
-# May be used when steam overlay detection fails or other issues with the steam overlay occur
-# may increase CPU/GPU usage
-continuous_draw = true
+# Maximum FPS for the Steam overlay/UI
+max-fps = 60
 
+# Logging
 [log]
 # Logging level
-# Allowed: "error", "warn", "info", "debug", "trace"
+# Allowed: "trace", "debug", "info", "warn", "error"
 level = "info"
 
-# write logs to a file
-# Default (Linux): ~/.local/share/sisr/SISR.log  (or $XDG_DATA_HOME/sisr/SISR.log)
-path = "C:/Users/<UserName>/AppData/Roaming/SISR/data/SISR.log"
+# Write logs to a file.
+# Default path:
+#   Windows: %APPDATA%/SISR/data/SISR.log
+#   Linux: ~/.config/SISR/data/SISR.log
+file = "C:/Users/<UserName>/AppData/Roaming/SISR/data/SISR.log"
 
-# logging level for the file only
-# If omitted, SISR uses `log.level`
-file_level = "info"
-
+# Steam integration
 [steam]
-# Support redirecting controllers WITHOUT Steam running
-no_steam = false
+# Steam installation directory, normally auto-detected
+install-dir = "C:/Program Files (x86)/Steam"
 
-# explicit Steam path, normally auto inferred to something like:
-steam_path = "C:/Program Files (x86)/Steam"
+# Active Steam user ID (optional)
+user-id = 0
+
+# CEF remote debugging port (optional)
+cef-remote-debug-port = 8080
 ```

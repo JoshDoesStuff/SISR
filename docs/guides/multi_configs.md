@@ -24,7 +24,8 @@ as well as access to Touch/Radial menus and other Steam overlay features.
 <div class="inline end">
 <div class="admonition warning inline end">
 <p class="admonition-title">Marker shortcut</p>
-<p>You should <strong>not</strong> re-use the <em>"SISR Marker"</em> shortcut or add the <code>--marker</code> launch option here!</p>
+<p>You should <strong>not</strong> re-use the <em>"SISR Marker"</em> shortcut or
+add the <code>--marker</code> launch option here!</p>
 </div>
 
 <div class="admonition tip inline end">
@@ -35,7 +36,7 @@ as well as access to Touch/Radial menus and other Steam overlay features.
 
 - <h3>**1.** Add SISR as a non-Steam game in your Steam library</h3>
       Provide the following flags as launch options  
-      - `-w -f`  
+      - `--w --f`  
       <sup>show-window, fullscreen</sup>  
 
       You can rename the shortcut to something meaningful, like _"SISR - Game XYZ"_
@@ -64,7 +65,6 @@ as well as access to Touch/Radial menus and other Steam overlay features.
     If you want to exit SISR or change settings while in-game,
     you can toggle the SISR overlay by using the keyboard-shortcut or controller-chord  
     (**`CTRL+SHIFT+ALT+S`**, **`LB+RB+BACK+A`** _"A" button needs to be pressed last_)
-
 
 !!! tip "Playstation Controller emulation"
     If you want SISR to emulate a Playstation controller instead of the default Xbox360 controller,

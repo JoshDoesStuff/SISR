@@ -4,33 +4,41 @@
 
 ### General
 
-#### `-c`, `--config <FILE>`
+#### `--config <FILE>`
 
 Path to an explicit configuration file (TOML/YAML/JSON)
 
-#### `--cli`, `--console` (Windows only)
+#### `--console` (Windows only)
 
-show console window
+Show console window
 
 - Default: `false`
+- Env var: `SISR_CONSOLE`
 
-#### `-t`, `--tray [true|false]`
+#### `--api.listen-address <host:port>`
 
-Enable the system tray icon
+API listen address; by default will pick a random free port and listen on localhost only
 
-- Default: `true`
-- Env var: `SISR_TRAY`
+- Default: `localhost:0`
+- Env var: `SISR_API_LISTEN_ADDRESS`
 
-#### `--viiper-address <host:port>`, `--va <host:port>`
+#### `--api.cors-origins <origins>`
 
-VIIPER API-server address. Specify if VIIPER is run manually or on another machine
+CORS allowed origins
+
+- Default: `https://steamloopback.host,http://steamloopback.host`
+- Env var: `SISR_API_CORS_ORIGINS`
+
+#### `--viiper.address <host:port>`, `--va <host:port>`
+
+VIIPER server address. Specify if VIIPER is run manually or on another machine
 
 - Default: `localhost:3242`
 - Env var: `SISR_VIIPER_ADDRESS`
 
-#### `--viiper-password <password>`, `--vp <password>`
+#### `--viiper.password <password>`, `--vp <password>`
 
-VIIPER API-server password. Required for non-localhost connections
+VIIPER server password. Required for non-localhost connections
 
 Password can be found on the machine running VIIPER in:
 
@@ -40,32 +48,25 @@ Password can be found on the machine running VIIPER in:
 
 - Env var: `SISR_VIIPER_PASSWORD`
 
-#### `--keyboard-mouse-emulation [true|false]`, `--kbm [true|false]`
+#### `--keyboard-mouse-emulation`, `--kbm`
 
-Emulate/forward keyboard and mouse inputs
+Forward keyboard and mouse when running over a network
 
 - Default: `false`
 - Env var: `SISR_KBM_EMULATION`
 
 #### `--update-notify <CHANNEL>`
 
-Update notification channel
+Update notification level
 
-- Allowed: `none`, `stable`, `prerelease`
+- Allowed: `none`, `stable`, `prerelease`, `always`
 - Default: `stable`
 - Env var: `SISR_UPDATE_NOTIFY`
-
-#### `--port <PORT>`
-
-Port for the SISR API server to listen on
-
-- Default: `0` (random free port)
-- Env var: `SISR_PORT`
 
 !!! info "Keyboard/Mouse Emulation"
 
     Can only be used if the VIIPER-server is running on a different machine.  
-    If VIIPER-address resolves to localhost, this option is ignored
+    If VIIPER address resolves to localhost, this option is ignored
 
 ### Controller Emulation
 
@@ -77,13 +78,6 @@ Default controller type for emulation
 - Default: `xbox360`
 - Env var: `SISR_DEFAULT_CONTROLLER_TYPE`
 
-#### `--require-controllers-connected-before-launch [true|false]`
-
-Ignore controllers connected after SISR starts. Prevents controller doubling issues
-
-- Default: `false`
-- Env var: `SISR_REQUIRE_CONTROLLERS_CONNECTED_BEFORE_LAUNCH`
-
 #### `--gyro-passthrough [true|false]`
 
 Enable gyro passthrough for supported controllers
@@ -91,43 +85,62 @@ Enable gyro passthrough for supported controllers
 - Default: `true`
 - Env var: `SISR_GYRO_PASSTHROUGH`
 
-### Window
+#### `--allow-steam-desktop-layout [true|false]`
 
-#### `-w`, `--window-create [true|false]`
-
-Create/show window at launch
+Allow/use Steam's desktop configuration for emulated controllers
 
 - Default: `false`
-- Env var: `SISR_WINDOW_CREATE`
+- Env var: `SISR_ALLOW_STEAM_DESKTOP_LAYOUT`
 
-#### `-f`, `--window-fullscreen [true|false]`
+#### `--immediate-sensor-updates [true|false]`
 
-Create a transparent, borderless, always-on-top overlay window  
-Window is fully transparent and click-through
-
-- Default: `true`
-- Env var: `SISR_WINDOW_FULLSCREEN`
-
-#### `--window-continuous-draw [true|false]`, `--wcd [true|false]`
-
-Continuously update/redraw the window  
-Use when Steam overlay detection fails or other overlay issues occur  
-May increase CPU/GPU usage
+Immediately send sensor updates to VIIPER instead of waiting for the next input report;  
+may reduce latency at the cost of increased CPU usage
 
 - Default: `true`
-- Env var: `SISR_WINDOW_CONTINUOUS_DRAW`
+- Env var: `SISR_IMMEDIATE_SENSOR_UPDATES`
+
+#### `--no-steam [true|false]`
+
+Run in no-Steam mode
+
+- Default: `false`
+- Env var: `SISR_NO_STEAM`
+
+### Window
+
+#### `--w`, `--window.show [true|false]`
+
+Shows window on startup; when used with fullscreen enabled, this will enable Steam Overlay
+
+- Default: `false`
+- Env var: `SISR_SHOW_WINDOW`
+
+#### `--f`, `--window.fullscreen [true|false]`
+
+Create a transparent, borderless, always-on-top overlay window
+
+- Default: `true`
+- Env var: `SISR_FULLSCREEN`
+
+#### `--window.max-fps <FPS>`
+
+Maximim FPS for SteamOverlay/UI (Does not affect inputs)
+
+- Default: `60`
+- Env var: `SISR_MAX_FPS`
 
 ### Logging
 
-#### `-l`, `--log-level <LEVEL>`
+#### `--l`, `--log.level <LEVEL>`
 
 Logging level
 
-- Allowed: `error`, `warn`, `info`, `debug`, `trace`
+- Allowed: `trace`, `debug`, `info`, `warn`, `error`
 - Default: `info`
 - Env var: `SISR_LOG_LEVEL`
 
-#### `--log-file <FILE> [FILE_LEVEL]`
+#### `--log.file <FILE>`
 
 Write logs to a file
 
@@ -136,26 +149,26 @@ Write logs to a file
     - Linux: `~/.config/SISR/data/SISR.log`
 - Env var: `SISR_LOG_FILE`
 
-File logging level used together with `--log-file`
-
-- Allowed: `error`, `warn`, `info`, `debug`, `trace`
-- Default: same as `--log-level`
-
 ### Steam
 
-#### `--no-steam [true|false]`
-
-Support redirecting controllers WITHOUT Steam running
-
-- Default: `false`
-- Env var: `SISR_NO_STEAM`
-
-#### `--steam-path <PATH>`
+#### `--steam.install-dir <PATH>`
 
 Explicit Steam installation path  
 _(normally autodetected)_
 
-- Env var: `SISR_STEAM_PATH`
+- Env var: `SISR_STEAM_INSTALL_DIR`
+
+#### `--steam.user-id <ID>`
+
+Active Steam user ID (optional, will attempt to auto-detect if not set)
+
+- Env var: `SISR_STEAM_USER_ID`
+
+#### `--steam.cef-remote-debug-port <PORT>`
+
+CEF remote debugging port (optional, will attempt to auto-detect if not set)
+
+- Env var: `SISR_STEAM_CEF_REMOTE_DEBUG_PORT`
 
 ### Special
 

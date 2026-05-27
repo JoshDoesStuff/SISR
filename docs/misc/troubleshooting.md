@@ -174,7 +174,6 @@
     - If yes, you are doing it wrong  
     - If no, tough luck
 
-
 ### My controller doesn't work properly when SISR is running and I launch a game from Steam {.toc-anchor}
 
 ??? question "My controller doesn't work properly when SISR is running and I launch a game from Steam"
@@ -192,7 +191,7 @@
 ??? question "I can't see the UI / The UI doesn't show up"
 
     It's a system tray app. Right-click the tray icon to toggle the UI (among other things)
-    **Or** launch with `-w --window-fullscreen false` to show the window at startup
+    **Or** launch with `--w --window.fullscreen false` to show the window at startup
     **If** the window runs **as overlay** press **`Ctrl+Shift+Alt+S`**
         or **`LB+RB+BACK+A`** (_A button needs to be pressed last_) to toggle UI visibility.
 
@@ -221,7 +220,7 @@
     3. Firewall blocking the connection?  
         Allow VIIPER through your firewall
     4. Correct address?  
-        Default is `localhost:3242`. Change with `--viiper-address`
+        Default is `localhost:3242`. Change with `--viiper.address`
     5. **If** using remote VIIPER: Is the remote machine reachable?  
         Try pinging it
 
@@ -244,8 +243,8 @@
         - **Linux (root/systemd)**: `/etc/viiper/viiper.key.txt`
 
     2. Provide the password to SISR using one of these methods:  
-        - Launch argument: `--viiper-password <password>`
-        - Config file: `viiper_password = "<password>"`
+        - Launch argument: `--viiper.password <password>`
+        - Config file: `[viiper] password = "<password>"`
         - Environment variable: `SISR_VIIPER_PASSWORD=<password>`
 
 ### VIIPER version too old {.toc-anchor}
@@ -297,7 +296,7 @@
     Ensure Steam is installed and the installation directory exists  
     On Windows, check the registry entry for Steam  
 
-    You can also specify the path explicitly with `--steam-path`
+    You can also specify the path explicitly with `--steam.install-dir`
 
 ### Failed to create CEF debug enable file in Steam directory {.toc-anchor}
 
@@ -336,7 +335,7 @@
 
     SISR disables KB/M emulation on **localhost/loopback** as it makes no sense there  
 
-    To enable: Run VIIPER on a different machine and run SISR with `--viiper-address=<remote-ip>:3242 --keyboard-mouse-emulation=true`
+    To enable: Run VIIPER on a different machine and run SISR with `--viiper.address=<remote-ip>:3242 --keyboard-mouse-emulation=true`
 
 ## 🏎️ Performance {#performance}
 

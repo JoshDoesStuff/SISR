@@ -16,9 +16,11 @@ This introduction is mostly targeted at those who recently got their shiny new S
 to use this software on Windows.  
 It is dumbed down to what I would consider the bare minimum a user needs to know before getting started.  
 
-If you are **not** one of those users, check out the rest of the documentation, you'll most likely find everything you need to know there.  
+If you are **not** one of those users, check out the rest of the documentation,
+you'll most likely find everything you need to know there.  
 Or just fuck around and find out.  
-<sup>(_**Note**: While linux builds exist, this software is **not** really useful on Linux, aside from forwarding SteamInput to another machine_)</sup>
+<sup>(_**Note**: While linux builds exist, this software is **not** really
+useful on Linux, aside from forwarding SteamInput to another machine_)</sup>
 
 ## Okay so what is SISR?
 
@@ -101,16 +103,17 @@ The Steam Input controller layout of the `SISR Marker` essentially acts as a **r
 _while SISR is running_ when it is run from the Desktop or Start menu.  
 
 Even touch- and radial-menus work, when the `Enable Steam Overlay` option is enabled from the tray menu,
-or SISR's configuration makes this the default (`-w true -f true` flags).
+or SISR's configuration makes this the default (`--w true --f true` flags).
 
 ![SISR-Desktop-Touch-Menu](../assets/SISR-Desktop-Touch-Menu.gif)
 
 #### Running SISR from Steam
 
-In case you want to have more than a single Steam Input layout, you can also **run SISR from Steam.**    
+In case you want to have more than a single Steam Input layout, you can also
+**run SISR from Steam.**  
 You can even add SISR **multiple times** to Steam, and have a different Steam Input layout for each of those shortcuts.
 
-To enable the Steam Overlay, add the flags `-w true -f true` to the launch options of the SISR shortcut in Steam.
+To enable the Steam Overlay, add the flags `--w true --f true` to the launch options of the SISR shortcut in Steam.
 
 ![SISR from Steam](../assets/SISR-From-Steam.gif)
 
