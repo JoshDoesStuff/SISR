@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/Alia5/SISR/cmd"
+	"github.com/Alia5/SISR/helper"
 	"github.com/danielgtaylor/huma/v2"
 )
 
@@ -47,18 +48,13 @@ func status(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*Initi
 func writeInitialLaunchDoneFile(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*InitialLaunchResponse, error) {
 	return func(ctx context.Context, req *struct{}) (*InitialLaunchResponse, error) {
 
-		ownExeDir, err := os.Executable()
+		ownExecutable, err := helper.GetOwnExecutablePath()
 		if err != nil {
 			slog.Error("Failed to get own executable path", "error", err)
 			return nil, err
 		}
-		ownExeDir, err = filepath.EvalSymlinks(ownExeDir)
-		if err != nil {
-			slog.Error("Failed to evaluate symlinks for own executable path", "error", err)
-			return nil, err
-		}
 
-		markerPath := filepath.Join(filepath.Dir(ownExeDir), ".initial_setup_done")
+		markerPath := filepath.Join(filepath.Dir(ownExecutable), ".initial_setup_done")
 		err = os.WriteFile(markerPath, []byte{}, 0644)
 		if err != nil {
 			slog.Error("Failed to write initial setup marker file", "error", err)

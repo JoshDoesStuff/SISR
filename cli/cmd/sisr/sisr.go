@@ -278,17 +278,12 @@ func (s *SISR) checkInitialLaunch() {
 		// is ignored / irrelevant
 		return
 	}
-	ownExeDir, err := os.Executable()
+	ownExecutable, err := helper.GetOwnExecutablePath()
 	if err != nil {
 		slog.Error("Failed to get own executable path", "error", err)
 		return
 	}
-	ownExeDir, err = filepath.EvalSymlinks(ownExeDir)
-	if err != nil {
-		slog.Error("Failed to evaluate symlinks for own executable path", "error", err)
-		return
-	}
-	markerPath := filepath.Join(filepath.Dir(ownExeDir), ".initial_setup_done")
+	markerPath := filepath.Join(filepath.Dir(ownExecutable), ".initial_setup_done")
 	if _, err := os.Stat(markerPath); os.IsNotExist(err) {
 		s.InitialLaunch = true
 	}

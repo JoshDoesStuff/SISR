@@ -9,6 +9,7 @@ import (
 
 	"github.com/Alia5/SISR/cefpayloads"
 	"github.com/Alia5/SISR/cmd"
+	"github.com/Alia5/SISR/helper"
 	"github.com/danielgtaylor/huma/v2"
 )
 
@@ -26,7 +27,7 @@ func createMarkerShortcut(c *cmd.SISRContext) func(ctx context.Context, req *str
 		steamCfg := *c.Config.Steam
 		c.Config.Unlock()
 
-		SISRPath, err := os.Executable()
+		SISRPath, err := helper.GetOwnExecutablePath()
 		if err != nil {
 			slog.Error("Failed to get SISR executable path", "error", err)
 			return nil, err

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Alia5/SISR/config"
+	"github.com/Alia5/SISR/helper"
 )
 
 const defaultCEFRemoteDebugPort = 8080
@@ -219,7 +220,7 @@ func createCefFileElevated(filePath string) error {
 	if runtime.GOOS != "windows" {
 		return fmt.Errorf("elevated file creation not supported on %s", runtime.GOOS)
 	}
-	exe, err := os.Executable()
+	exe, err := helper.GetOwnExecutablePath()
 	if err != nil {
 		return err
 	}

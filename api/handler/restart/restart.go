@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/Alia5/SISR/cmd"
+	"github.com/Alia5/SISR/helper"
 	"github.com/danielgtaylor/huma/v2"
 )
 
@@ -20,7 +21,7 @@ func Register(a huma.API, c *cmd.SISRContext) {
 func restart(c *cmd.SISRContext) func(ctx context.Context, req *struct{}) (*struct{}, error) {
 	return func(ctx context.Context, req *struct{}) (*struct{}, error) {
 
-		ownExecutable, err := os.Executable()
+		ownExecutable, err := helper.GetOwnExecutablePath()
 		if err != nil {
 			return nil, err
 		}

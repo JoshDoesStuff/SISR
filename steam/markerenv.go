@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/Alia5/SISR/helper"
 	"github.com/Alia5/SISR/steam/vdf"
 )
 
@@ -76,21 +76,9 @@ func MarkerAppID(shortcutsPath string) (uint32, error) {
 		return 0, err
 	}
 
-	runningPath := os.Getenv("APPIMAGE")
-	if runningPath == "" {
-		runningPath, err = os.Executable()
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	resolvedPath, err := filepath.EvalSymlinks(runningPath)
-	if err == nil {
-		runningPath = resolvedPath
-	}
-	absolutePath, err := filepath.Abs(runningPath)
-	if err == nil {
-		runningPath = absolutePath
+	runningPath, err := helper.GetOwnExecutablePath()
+	if err != nil {
+		return 0, err
 	}
 	runningPath = strings.ToLower(strings.ReplaceAll(runningPath, "\\", "/"))
 

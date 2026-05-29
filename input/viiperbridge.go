@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/Alia5/SISR/config"
+	"github.com/Alia5/SISR/helper"
 	"github.com/Alia5/SISR/input/viiperdevice"
 	"github.com/Alia5/SISR/sdl"
 	"github.com/Alia5/VIIPER/apiclient"
@@ -350,15 +351,11 @@ func isLoopbackAddress(addr string) bool {
 
 func (v *viiperBridge) trySpawnViiperServer() {
 	slog.Debug("Attempting to spawn bundled VIIPER")
-	ownExecutable, err := os.Executable()
+	ownExecutable, err := helper.GetOwnExecutablePath()
 	if err != nil {
 		slog.Error("viiper_spawn: couldn't detect own executable", "error", err)
 	}
-	ownPath, err := filepath.EvalSymlinks(ownExecutable)
-	if err != nil {
-		slog.Error("viiper_spawn: couldn't evaluate symlinks for executable path", "path", ownExecutable, "error", err)
-	}
-	viiperPath := filepath.Join(filepath.Dir(ownPath), "viiper.exe")
+	viiperPath := filepath.Join(filepath.Dir(ownExecutable), "viiper.exe")
 	if _, err := os.Stat(viiperPath); os.IsNotExist(err) {
 		slog.Error("viiper_spawn: viiper.exe not found next to SISR executable", "path", viiperPath)
 		return
